@@ -71,7 +71,7 @@
 </div><button class="lang" id="lang"></button></div>
   <div class="strip"><i></i><i></i><i></i><i></i></div>
   
-  <p><b>TEST BUILD — SLOOP 2.3 + the DX7 engine + the PUNCH latch option.</b> Not a SLOOP release: it comes from the <a href="https://github.com/majnikool/sloop-fm1/tree/dx7">dx7 branch</a> of a fork, for a test on an FM-1 before a pull request. Back up with the editor first (Projects → Save a backup). Voices are loaded from the editor's Library tab or sent straight from Dexed; the <a href="https://github.com/majnikool/sloop-fm1/releases/tag/v2.4-dx7-test1">release notes</a> say how. To go back, install <a href="https://isod89.github.io/sloop-fm1/">SLOOP 2.3</a> from its own page.</p>
+  <p><b>TEST BUILD 12 — SLOOP 2.3 + the DX7 engine + the PUNCH latch option.</b> Built 2026-10-06 from <a href="https://github.com/majnikool/sloop-fm1/commits/test-build">test-build</a> commit <code>ef97a85</code>; the FM-1 shows <b>2.3-DX7 BETA</b> and this date under HOME menu → ABOUT. Not a SLOOP release: the <a href="https://github.com/majnikool/sloop-fm1/tree/dx7">dx7</a> and <a href="https://github.com/majnikool/sloop-fm1/tree/punch-latch">punch-latch</a> branches merged (upstream PRs <a href="https://github.com/isod89/sloop-fm1/pull/27">#27</a> and <a href="https://github.com/isod89/sloop-fm1/pull/28">#28</a>). Back up with the editor first (Projects → Save a backup). To go back, install <a href="https://isod89.github.io/sloop-fm1/">SLOOP 2.3</a> from its own page.</p>
 
   <h1>Firmware for the M-VAVE FM-1</h1>
   <p class="lead">A groovebox you play live: four tracks — three synths and a drum machine — 9 synth engines, 68 sounds, 37 drum kits from 808 to techno, amapiano and ambient, your own samples, 16 punch-in effects. House, techno, hip-hop, drum &amp; bass, synthwave, lo-fi, ambient: make what you want. No factory patterns, nothing to load: everything you hear, you play.</p>
@@ -480,7 +480,7 @@ const sayK = (k, arg = "") => { lastKey = k; lastArg = arg; $("status").textCont
 const say = (txt) => { lastKey = null; $("status").textContent = txt; };
 const log = (t) => { $("log").textContent += t + "\n"; };
 let image = null;
-const meta = {"version": "2.4-dx7", "product": "FM-1_924", "pkg": "../../firmware/sloop-2.4-dx7.fwsc", "sha256": "802d00c2508e993afad6766e8b0edaefdb11fdece287176c7461ee9cebbfb044"};
+const meta = {"version": "2.3-dx7", "product": "FM-1_923", "pkg": "../../firmware/sloop-2.3-dx7.fwsc", "sha256": "52dfecae095ccced124d105aafa961271b0618f1eeb4c02364ef6af44c1f35f0"};
 
 let writing = false, stock = null;
 const lockAll = (on) => {
