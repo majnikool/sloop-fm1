@@ -245,6 +245,38 @@ int main(int argc, char **argv)
         }
     }
 
+    {   /* FX > FILTER, KNOB 2 = KEEP: a punch-in kept on with no key held (PHONE, WOBBLE, HALF), a setting of
+         * the FM-1; the FILTER page keeps its layout (one more big value) */
+        uint32_t i, x, disc = 0;
+        for (i = 0; i < NPAGES; i++) if (!strcmp(PAGES[i].title, "FILTER")) break;
+        song.sel = 0;
+        open_family(FAM_FX); ui.page = (uint8_t)i; ui.fam_last[FAM_FX] = (uint8_t)i; page_entered(); ui.force = 1; frame();
+        check(i < NPAGES && punch.req == -1 && punch_keep == 0u && !strcmp(ui.big_l[1], "KEEP") && !strcmp(ui.big_v[1], "OFF"),
+              "FILTER page: KNOB 2 reads KEEP OFF, no effect");
+        encs[panel.enc[EN_K2]] = 1; frame();
+        check(punch_keep == 1u && punch.req == PX_TEL && !punch.keybit && !strcmp(ui.big_v[1], "PHONE"),
+              "KEEP: KNOB 2 -> PHONE, the effect runs with no key held");
+        check(((lights_word() >> 21) & 3u) == 1u, "KEEP: kept in the settings word (bits 21..22)");
+        ui.force = 1; frame(); ppm("page-filter-keep");
+        go_home(); ui.force = 1; frame(); ppm("tracks-keep");
+        for (x = 144; x < 153u; x++) disc |= swap16(screen[29 * 240 + x]) == TE_DRUM;
+        check(disc, "KEEP: TRACKS shows the kept effect (disc + name) under the loop position");
+        press(B_FX); frames(12);
+        fm1_in.notes = 1u << 12; frame();                /* the 8th white key: HALF while held */
+        check(punch.req == PX_HALF && punch.keybit, "KEEP + FX held + key 8: HALF plays while the key is held");
+        fm1_in.notes = 0; frame();
+        check(punch.req == PX_TEL && !punch.keybit, "KEEP: the key up brings PHONE back");
+        release(B_FX); frames(2);
+        check(punch.req == PX_TEL, "KEEP: FX let go: PHONE stays");
+        lights_from_word(lights_word() & ~(3u << 21)); frame();
+        check(punch_keep == 0u && punch.req == -1, "KEEP read back from the settings word: OFF ends it");
+        go_home(); ui.force = 1; frame();
+        disc = 0;
+        for (x = 120; x < 200u; x++) disc |= swap16(screen[29 * 240 + x]) == TE_DRUM;
+        check(!disc, "KEEP off: TRACKS clears");
+        ui.fam_last[FAM_FX] = (uint8_t)page_first(FAM_FX);   /* (the tests below open FX on its first page) */
+    }
+
     /* ---- taps open pages, holds are layers */
     go_home(); ui.force = 1; frame();
     { uint8_t was = song.sel; song.sel = 0; check(keys_guide() == 0u, "synth track, no layer: no landmarks (a piano)"); song.sel = was; }
@@ -783,8 +815,8 @@ int main(int argc, char **argv)
         tap(B_FX); SEL(1);
         check(!strcmp(PT(), "FILTER"), "SELECT on FX: next page, the track FILTER");
         TSEL->p[P_TFLT] = -32; ui.force = 1; frames(2); ppm("page-filter");
-        check(!strcmp(ui.big_l[0], "FILT") && !strcmp(ui.big_v[0], "LP50") && !ui.big_l[1][0],
-              "FILTER page: its one value drawn large (LP50 %)");
+        check(!strcmp(ui.big_l[0], "FILT") && !strcmp(ui.big_v[0], "LP50") && !strcmp(ui.big_l[1], "KEEP") && !ui.big_l[2][0],
+              "FILTER page: its value drawn large (LP50 %), KEEP beside it, the rest empty");
         {   /* the big value in the graph strip: white pixels in the middle of the screen */
             uint32_t x, y, lit = 0;
             for (y = Y_GRAPH + 30; y < Y_GRAPH + 90; y++)

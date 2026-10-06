@@ -371,6 +371,13 @@ static void edit_param(uint32_t slot, int32_t steps)
         tracks_edit(slot, steps);
         return;
     }
+    if (id == ID_KEEP) {                                  /* FX > FILTER, KNOB 2: the punch-in kept on (OFF, PHONE, WOBBLE, HALF) */
+        punch_keep = (uint8_t)clamp((int32_t)punch_keep + steps, 0, 3);
+        settings_save();
+        punch_keep_poll();
+        ui.force = 1;
+        return;
+    }
     if (pg->graph == GR_BROWSE) {                         /* KNOB 1: one preset, KNOB 2: the next / previous engine,
                                                            * KNOB 3: the next / previous kind (basses, keys, ... the user presets) */
         if (slot == 0u && !is_drum(TSEL)) {
@@ -802,6 +809,7 @@ static void ui_input(void)
     if (pressed || notes)
         ui_input_ms = fm1_ms;
     fm6_poll();                                         /* FM6: PTCH turned -> its patch */
+    punch_keep_poll();                                  /* FX > KEEP: the kept punch-in runs with no key held */
     if (home == BT_HOLD) {                              /* HOME held: open the menu, or leave it */
         if (ui.menu) {
             menu_close();
@@ -955,7 +963,7 @@ static void ui_input(void)
         if ((s = panel_enc(EN_K1 + k)) == 0)
             continue;
         if (ui.home || pg->scope == SC_STEP || pg->scope == SC_TRK || page_desc(pg, k, &hv) ||
-            (pg->graph == GR_USER && k == 0u)) {     /* (not an empty column, nor "DRUM TRACK") */
+            (pg->graph == GR_USER && k == 0u) || pg->id[k] == ID_KEEP) {     /* (not an empty column, nor "DRUM TRACK") */
             ui.hot_col = (uint8_t)k;
             ui.hot_t = 40;
         }

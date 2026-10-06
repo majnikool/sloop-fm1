@@ -323,7 +323,7 @@ All seven layers at a glance:
 
 | Control | Does |
 | --- | --- |
-| **FX + key 1–16** | the [punch-in effect](#punch-in-effects) of that key, on the whole mix, for as long as the key is held |
+| **FX + key 1–16** | the [punch-in effect](#punch-in-effects) of that key, on the whole mix, for as long as the key is held. Three of them — **PHONE, WOBBLE, HALF** — can be left on instead: FX → FILTER, **KNOB 2 KEEP**. A kept effect shows in the header (a disc and its name under the loop position; in the top bar of the sound pages), a key still plays over it, and the key up brings it back |
 | **FX + KNOB 1** | master **FILTER**: left a low-pass, right a high-pass, centre off |
 | **FX + KNOB 2** | master **DUST** (old sampler and vinyl) |
 | **FX + KNOB 3** | master **DUCK** (sidechain pump from the kick) |
@@ -640,7 +640,7 @@ Tap a button to open its first page (or the last one you used); **tap it again**
 | **LFO** | **LFO** | RATE (Hz) | WAVE: SIN, TRI, SAW, SQR, S&H | PHS phase | FADE (fade-in time) |
 | | **LFO DEST** | PIT: vibrato | FLT: filter wobble | SHP: shape | AMP: tremolo |
 | **FX** | **FX** (sends) | DST drive | CHO chorus send | DLY delay send | REV reverb send |
-| | **FILTER** | FILT: one-knob filter of the track — left LP, right HP, centre OFF | — | — | — |
+| | **FILTER** | FILT: one-knob filter of the track — left LP, right HP, centre OFF | **KEEP**: a punch-in kept on with no key held — OFF, PHONE, WOBBLE, HALF (a setting of the FM-1, not of a project) | — | — |
 | | **SLICER** | SLCR: OFF, GATE, STUT (stutter) | PAT: pattern 1–16 | RATE: 1/8, 1/16, 1/32, 8T, 16T, 32T | DEPTH |
 | | **DLY** (global) | TIME: 1/4, 1/8, 1/16, 1/32, 8T, 16T, 1/8D, 1/16D | FDBK feedback | COLR colour (tone of the repeats) | MIX |
 | | **REV/CHO** (global) | SIZE reverb size | DAMP reverb damping | CRT chorus rate | CDP chorus depth |
@@ -755,7 +755,7 @@ On FX + KNOB 1–3, or GLO → MASTER:
 
 ### Per track
 
-- **FILTER** (FX → FILTER, or **FX + KNOB 4** for the selected track): one knob, left a low-pass, right a high-pass, centre off. It stays when you change the sound, can be locked on a step, and is saved with the project.
+- **FILTER** (FX → FILTER, or **FX + KNOB 4** for the selected track): one knob, left a low-pass, right a high-pass, centre off. It stays when you change the sound, can be locked on a step, and is saved with the project. **KNOB 2 on that page is KEEP**: OFF, or one of the three punch-ins worth leaving on for a section — PHONE (the telephone), WOBBLE (tape wobble), HALF (a half-speed loop of the last beat) — kept until you turn it off, across a power cycle too (a setting of the FM-1). The other punch-ins are a beat long by nature, and the filters, crush, gate and echo have staying forms on the FX pages and the master.
 - **Sends** (FX page): DST drive, CHO chorus, DLY delay, REV reverb. The delay and the reverb / chorus settings are global (DLY and REV/CHO pages). The delay's TIME includes dotted 1/8 and 1/16.
 - **SLICER** (FX → SLICER): a tempo gate (GATE) or stutter (STUT), 16 patterns, 1/8 to 32T, with a depth.
 

@@ -34,6 +34,24 @@ static struct {
     int32_t f1l, f2l, f1r, f2r, f3l, f4l, f3r, f4r;   /* filter states */
     int32_t cut;                  /* sweep, 0..127 << 8 */
 } punch = {.req = -1, .cur = -1};
+/* FX > FILTER, KNOB 2 = KEEP (params.c ID_KEEP): a punch-in effect kept on with no key held — OFF, or PHONE, WOBBLE, HALF, the
+ * three worth leaving on for a section (the loops, stutter, reverse, stop and the sweeps are a beat long by
+ * nature; the filters, crush, alias, gate and echo have staying forms on the FX pages and the master). A
+ * setting of the FM-1 (panel.c lights_word bits 21..22), not of a project: it stays as you leave it, across
+ * a power cycle too. FX held + a key plays that effect instead while the key is down; the key up brings the
+ * kept one back (seq.c key_up). STOP leaves it on: it is a setting, not a performance */
+static uint8_t punch_keep;
+static const char *const N_KEEP[4] = {"OFF", "PHONE", "WOBBLE", "HALF"};
+static const int8_t PUNCH_KEEP_FX[4] = {-1, PX_TEL, PX_WOBBLE, PX_HALF};
+static int32_t punch_keep_req(void) { return PUNCH_KEEP_FX[punch_keep & 3u]; }
+/* main loop, every frame: with no key holding an effect, the mix runs the kept one (or none) */
+static void punch_keep_poll(void)
+{
+    if (!punch.keybit && punch.req != (int8_t)punch_keep_req())
+        punch.req = (int8_t)punch_keep_req();
+}
+/* the effect on, or -1: the headers show it while it runs (ui_studio.c te_header, ui_draw.c draw_head) */
+static int32_t punch_shown(void) { return punch.req; }
 
 static uint32_t beat_samples(void) { return (uint32_t)FS * 60u / (uint32_t)song.g[G_BPM]; }
 

@@ -1463,9 +1463,9 @@ static void key_up(uint32_t k)
     kb_kind[k] = KS_NONE;
     switch (kind) {
     case KS_FX:
-        if (punch.keybit == 1u << k) {                /* its key is up: the mix comes back */
+        if (punch.keybit == 1u << k) {                /* its key is up: the mix comes back (or the kept effect) */
             punch.keybit = 0;
-            punch.req = -1;
+            punch.req = (int8_t)punch_keep_req();
         }
         return;
     case KS_UI:
