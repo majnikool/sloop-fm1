@@ -354,25 +354,35 @@ static void project_new(void)
     ui.force = 1;
 }
 
-/* FX > FILTER, KNOB 3 = RESET (params.c ID_DRY): the SELECTED track's effects back to what its sound came with —
- * the sends to what its preset says (ui.c fx_defaults_of: a bell keeps the reverb it was designed with, a bass
- * its near-dry setting, a user preset the sends saved with it), the SLICER off, the track's filter centred; on the
- * drum track its sends and the drums' reverb. One click, no arming: it only restores, so a brush of the knob
- * costs nothing, and the page it sits on is per track like every FX page. The master section (GLO > MASTER) and
- * KEEP (KNOB 2 beside it) are global and stay. The owner asked for it on 2026-10-08: effects pile up over a
- * session, each sound should go back to ITS OWN defaults, on the track he is on, without ceremony. */
-static void fx_reset_track(track_t *t)
+/* FX > KEEP, KNOB 4 = RESET (params.c ID_FXRST): every effect back to its default. The SELECTED track's sends
+ * go back to what its sound came with (ui.c fx_defaults_of: a bell keeps the reverb it was designed with, a bass
+ * its near-dry setting, a user preset the sends saved with it), its SLICER off, its filter centred; and everything
+ * the tracks share goes to its default — the delay and reverb / chorus settings (the DLY and REV/CHO pages), the
+ * master DUST / DUCK / FILT, the drums' reverb, and the kept punch-in off. Sounds, patterns and the mix are left
+ * alone: this is "undo the effects I piled up", not INIT. Two detents on the same knob, like the TOOLS buttons: the
+ * owner wanted it inside FX, easy, and confirmed by "a close-by key" — the second click of the knob is the closest.
+ * The owner, 2026-10-08: each sound to ITS OWN defaults, the active track, and "it should reset everything". */
+static void fx_reset(void)
 {
+    static const uint8_t SHARED[] = {G_DTIME, G_DFDBK, G_DCOLOR, G_DMIX, G_RSIZE, G_RDAMP, G_CRATE, G_CDEPTH,
+                                     G_DUST, G_DUCK, G_FILT, G_DRREV};
+    track_t *t = TSEL;
     uint32_t k;
     int16_t fx[4];
-    if (is_drum(t)) {
+    if (is_drum(t))
         for (k = 0; k < 4u; k++) fx[k] = TP[P_DIST + k].def;
-        song.g[G_DRREV] = GP[G_DRREV].def;
-    } else
+    else
         fx_defaults_of(t, fx);
     for (k = 0; k < 4u; k++) t->p[P_DIST + k] = fx[k];
     t->p[P_SLCR] = TP[P_SLCR].def;
     t->p[P_TFLT] = TP[P_TFLT].def;
+    for (k = 0; k < NELEM(SHARED); k++)
+        song.g[SHARED[k]] = GP[SHARED[k]].def;
+    if (punch_keep) {
+        punch_keep = 0;
+        settings_save();
+        punch_keep_poll();
+    }
 }
 static void edit_param(uint32_t slot, int32_t steps)
 {
@@ -391,18 +401,29 @@ static void edit_param(uint32_t slot, int32_t steps)
         tracks_edit(slot, steps);
         return;
     }
-    if (id == ID_DRY) {                                   /* FX > FILTER, KNOB 3: this track's effects back to its sound's own, one click */
-        if (steps <= 0)
+    if (ID_IS_KEEP(id)) {                                 /* FX > KEEP, KNOB 1-3: PHONE / TAPE / HALF kept on — ON / OFF each, one at a time */
+        uint32_t k = ID_KEEP_N(id);
+        uint8_t want = steps > 0 ? (uint8_t)k : (punch_keep == k ? 0u : punch_keep);
+        if (want == punch_keep)
             return;
-        fx_reset_track(TSEL);
-        ui_say("RESET: ", is_drum(TSEL) ? "DRUM FX" : "FX AS LOADED");
+        punch_keep = want;
+        settings_save();
+        punch_keep_poll();
         ui.force = 1;
         return;
     }
-    if (id == ID_KEEP) {                                  /* FX > FILTER, KNOB 2: the punch-in kept on (OFF, PHONE, WOBBLE, HALF) */
-        punch_keep = (uint8_t)clamp((int32_t)punch_keep + steps, 0, 3);
-        settings_save();
-        punch_keep_poll();
+    if (id == ID_FXRST) {                                 /* FX > KEEP, KNOB 4: every effect to its default — one detent arms, a second acts */
+        if (steps <= 0) { ui.arm = 0; ui.force = 1; return; }
+        if (ui.arm != ID_FXRST) {
+            ui.arm = ID_FXRST;
+            ui.arm_t = 90;
+            ui_say("AGAIN: ", "RESET");
+            ui.force = 1;
+            return;
+        }
+        ui.arm = 0;
+        fx_reset();
+        ui_say("RESET: ", "FX DONE");
         ui.force = 1;
         return;
     }
@@ -991,7 +1012,7 @@ static void ui_input(void)
         if ((s = panel_enc(EN_K1 + k)) == 0)
             continue;
         if (ui.home || pg->scope == SC_STEP || pg->scope == SC_TRK || page_desc(pg, k, &hv) ||
-            (pg->graph == GR_USER && k == 0u) || pg->id[k] == ID_KEEP || pg->id[k] == ID_DRY) {     /* (not an empty column, nor "DRUM TRACK") */
+            (pg->graph == GR_USER && k == 0u) || ID_IS_KEEP(pg->id[k]) || pg->id[k] == ID_FXRST) {     /* (not an empty column, nor "DRUM TRACK") */
             ui.hot_col = (uint8_t)k;
             ui.hot_t = 40;
         }

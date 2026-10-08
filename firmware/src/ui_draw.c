@@ -383,8 +383,8 @@ static uint32_t graph_signature(void)
     for (i = 0; i < P_COUNT; i++)
         h = (h ^ (uint32_t)t->p[i]) * 16777619u;
     h ^= (uint32_t)TSEL->preset * 7u + (uint32_t)song.g[G_SLOT] * 13u + TSEL->user * 257u + up_gen * 7919u + ui.uslot * 104729u;
-    if (pg->id[1] == ID_KEEP)                        /* FX > FILTER: KEEP on KNOB 2 */
-        h ^= (uint32_t)punch_keep * 2654435761u;
+    if (pg->id[0] == ID_KEEP1)                       /* FX > KEEP: PHONE / TAPE / HALF on KNOB 1-3, RESET on KNOB 4 */
+        h ^= (uint32_t)punch_keep * 2654435761u ^ (ui.arm == ID_FXRST ? 40503u : 0u);
     if (pg->graph == GR_SLCR && t->p[P_SLCR])        /* the SLICER's step playing */
         h ^= (sl[song.sel].idx + 1u) * 2654435761u;
     if (pg->graph == GR_SLOTS)                       /* (a checksum over each slot) */
@@ -941,12 +941,14 @@ static void draw_columns(void)
     for (c = 0; c < 4u; c++) {
         int16_t *vp;
         const param_desc_t *d;
-        if (cur_page()->id[c] == ID_KEEP) {              /* FX > FILTER, KNOB 2: a punch-in kept on (punch.c) */
-            draw_column(c, "KEEP", N_KEEP[punch_keep & 3u], "", VAL(c), (int32_t)(punch_keep & 3u) * 1000 / 3, ICON_AUTO);
+        if (ID_IS_KEEP(cur_page()->id[c])) {             /* FX > KEEP, KNOB 1-3: PHONE / TAPE / HALF kept on (punch.c), one at a time */
+            static const char *const KEEP_LBL[4] = {"", "PHONE", "TAPE", "HALF"};   /* (a column label holds five) */
+            uint32_t k = ID_KEEP_N(cur_page()->id[c]);
+            draw_column(c, KEEP_LBL[k], punch_keep == k ? "ON" : "OFF", "", VAL(c), punch_keep == k ? 1000 : 0, ICON_AUTO);
             continue;
         }
-        if (cur_page()->id[c] == ID_DRY) {               /* FX > FILTER, KNOB 3: every effect off, on the second detent */
-            draw_column(c, "RESET", "TURN", "", VAL(c), 0, ICON_AUTO);
+        if (cur_page()->id[c] == ID_FXRST) {             /* FX > KEEP, KNOB 4: every effect to its default, on the second detent */
+            draw_column(c, "RESET", ui.arm == ID_FXRST ? "GO?" : "--", "", VAL(c), ui.arm == ID_FXRST ? 1000 : 0, ICON_AUTO);
             continue;
         }
         d = page_desc(cur_page(), c, &vp);

@@ -313,47 +313,63 @@ int main(int argc, char **argv)
         }
     }
 
-    {   /* FX > FILTER, KNOB 2 = KEEP: a punch-in kept on with no key held (PHONE, WOBBLE, HALF), a setting of
-         * the FM-1; the FILTER page keeps its layout (one more big value) */
+    {   /* FX > KEEP (the page after FILTER): PHONE / TAPE / HALF kept on with no key held, ON / OFF each, one at a time,
+         * a setting of the FM-1; KNOB 4 RESET. FILTER itself is upstream's page again */
         uint32_t i, x, disc = 0;
-        for (i = 0; i < NPAGES; i++) if (!strcmp(PAGES[i].title, "FILTER")) break;
+        for (i = 0; i < NPAGES; i++) if (!strcmp(PAGES[i].title, "KEEP")) break;
         song.sel = 0;
         open_family(FAM_FX); ui.page = (uint8_t)i; ui.fam_last[FAM_FX] = (uint8_t)i; page_entered(); ui.force = 1; frame();
-        check(i < NPAGES && punch.req == -1 && punch_keep == 0u && !strcmp(ui.big_l[1], "KEEP") && !strcmp(ui.big_v[1], "OFF"),
-              "FILTER page: KNOB 2 reads KEEP OFF, no effect");
+        check(i < NPAGES && !strcmp(PAGES[i - 1u].title, "FILTER") && punch.req == -1 && punch_keep == 0u
+              && !strcmp(ui.big_l[0], "PHONE") && !strcmp(ui.big_v[0], "OFF") && !strcmp(ui.big_l[1], "TAPE") && !strcmp(ui.big_l[2], "HALF")
+              && !strcmp(ui.big_v[2], "OFF") && !strcmp(ui.big_l[3], "RESET") && !strcmp(ui.big_v[3], "--"),
+              "KEEP page, after FILTER: PHONE / TAPE / HALF all OFF, RESET --, no effect");
+        encs[panel.enc[EN_K1]] = 1; frame();
+        check(punch_keep == 1u && punch.req == PX_TEL && !punch.keybit && !strcmp(ui.big_v[0], "ON"),
+              "KEEP: KNOB 1 up -> PHONE ON, the effect runs with no key held");
         encs[panel.enc[EN_K2]] = 1; frame();
-        check(punch_keep == 1u && punch.req == PX_TEL && !punch.keybit && !strcmp(ui.big_v[1], "PHONE"),
-              "KEEP: KNOB 2 -> PHONE, the effect runs with no key held");
+        check(punch_keep == 2u && punch.req == PX_WOBBLE && !strcmp(ui.big_v[1], "ON") && !strcmp(ui.big_v[0], "OFF"),
+              "KEEP: KNOB 2 up -> TAPE ON and PHONE OFF: one at a time, as the punch engine runs them");
+        encs[panel.enc[EN_K1]] = -1; frame();
+        check(punch_keep == 2u, "KEEP: KNOB 1 down on a switch that is OFF changes nothing");
+        encs[panel.enc[EN_K2]] = -1; frame();
+        check(punch_keep == 0u && punch.req == -1 && !strcmp(ui.big_v[1], "OFF"), "KEEP: KNOB 2 down -> TAPE OFF, nothing kept");
+        encs[panel.enc[EN_K1]] = 1; frame();
+        check(punch_keep == 1u && punch.req == PX_TEL, "KEEP: PHONE ON again");
+        song.sel = 3; ui.force = 1; frame();
+        check(!strcmp(ui.big_l[0], "PHONE") && !strcmp(ui.big_v[0], "ON"), "KEEP page on the drum track: the same switches");
+        song.sel = 0; ui.force = 1; frame();
         check(((lights_word() >> 21) & 3u) == 1u, "KEEP: kept in the settings word (bits 21..22)");
-        {   /* KNOB 3 = RESET: one click puts the SELECTED track's effects back to what its sound came with — its
-             * preset's sends, slicer off, filter centred; the other tracks, the master and KEEP are not touched */
+        {   /* KNOB 4 = RESET: two detents put the SELECTED track's effects back to what its sound came with and
+             * everything shared to its default — the DLY and REV/CHO pages, the master, the drums' reverb, the kept punch-in */
             static int16_t keep_p[NTRK][P_COUNT], keep_g[sizeof song.g / sizeof song.g[0]];
             int16_t own0[4];
-            uint32_t k;
+            uint32_t k, tp;
             for (k = 0; k < NTRK; k++) memcpy(keep_p[k], trk[k].p, sizeof keep_p[k]);
             memcpy(keep_g, song.g, sizeof keep_g);
             fx_defaults_of(&trk[0], own0);
             check(own0[2] == trk[0].p[P_DLY] && own0[3] == trk[0].p[P_REV], "a freshly loaded sound sits on its preset's own sends");
             trk[0].p[P_DLY] = 99; trk[0].p[P_REV] = 99; trk[0].p[P_SLCR] = 1; trk[0].p[P_TFLT] = -20;
-            trk[2].p[P_REV] = 99; song.g[G_DUST] = 30;
-            check(!strcmp(ui.big_l[2], "RESET"), "FILTER page: KNOB 3 reads RESET");
-            ui.force = 1; frame(); ppm("page-filter-reset");
-            encs[panel.enc[EN_K3]] = 1; frame();
-            check(trk[0].p[P_DLY] == own0[2] && trk[0].p[P_REV] == own0[3] && !trk[0].p[P_SLCR] && !trk[0].p[P_TFLT] && !ui.arm,
-                  "RESET, one click: track 1's sends back to its preset's, its slicer off, its filter centred");
-            check(trk[2].p[P_REV] == 99 && song.g[G_DUST] == 30 && punch_keep == 1u && punch.req == PX_TEL,
-                  "RESET touches nothing else: track 3, the master and KEEP as they were");
-            encs[panel.enc[EN_K3]] = -1; frame();
-            check(trk[0].p[P_DLY] == own0[2], "RESET: turning it down does nothing");
-            song.sel = 3; trk[3].p[P_TFLT] = -20; song.g[G_DRREV] = (int16_t)(GP[G_DRREV].def + 9);
-            encs[panel.enc[EN_K3]] = 1; frame();
-            check(!trk[3].p[P_TFLT] && song.g[G_DRREV] == GP[G_DRREV].def, "RESET on the drum track: its filter centred and the drums' reverb back to default");
-            song.sel = 0;
+            trk[2].p[P_REV] = 99;
+            song.g[G_DUST] = 30; song.g[G_DFDBK] = (int16_t)(GP[G_DFDBK].def + 7); song.g[G_RSIZE] = (int16_t)(GP[G_RSIZE].def + 7);
+            song.g[G_DRREV] = (int16_t)(GP[G_DRREV].def + 9);
+            (void)tp;
+            ui.force = 1; frame(); ppm("page-keep");
+            encs[panel.enc[EN_K4]] = 1; frame();
+            check(ui.arm == ID_FXRST && trk[0].p[P_DLY] == 99 && punch_keep == 1u && !strcmp(ui.big_v[3], "GO?"), "RESET: one detent only arms (AGAIN), nothing changes");
+            ui.force = 1; frame(); ppm("page-keep-reset");
+            encs[panel.enc[EN_K4]] = 1; frame();
+            check(!ui.arm && trk[0].p[P_DLY] == own0[2] && trk[0].p[P_REV] == own0[3] && !trk[0].p[P_SLCR] && !trk[0].p[P_TFLT],
+                  "RESET: the second detent puts track 1's sends back to its preset's, its slicer off, its filter centred");
+            check(song.g[G_DUST] == GP[G_DUST].def && song.g[G_DFDBK] == GP[G_DFDBK].def && song.g[G_RSIZE] == GP[G_RSIZE].def
+                  && song.g[G_DRREV] == GP[G_DRREV].def && punch_keep == 0u && punch.req == -1 && !strcmp(ui.big_v[0], "OFF"),
+                  "RESET: the shared delay and reverb settings, the master, the drums' reverb and the kept punch-in are at their defaults");
+            check(trk[2].p[P_REV] == 99, "RESET: another track's own sends are left alone (select it and reset again)");
+            encs[panel.enc[EN_K4]] = 1; frame(); encs[panel.enc[EN_K4]] = -1; frame();
+            check(!ui.arm, "RESET: turning back down disarms");
             for (k = 0; k < NTRK; k++) memcpy(trk[k].p, keep_p[k], sizeof keep_p[k]);   /* the sounds as they were, for the checks below */
             memcpy(song.g, keep_g, sizeof keep_g);
             punch_keep = 1; punch_keep_poll();                /* the KEEP checks below continue from PHONE */
         }
-        ui.force = 1; frame(); ppm("page-filter-keep");
         go_home(); ui.force = 1; frame(); ppm("tracks-keep");
         for (x = 144; x < 153u; x++) disc |= swap16(screen[29 * 240 + x]) == TE_DRUM;
         check(disc, "KEEP: TRACKS shows the kept effect (disc + name) under the loop position");
@@ -911,8 +927,8 @@ int main(int argc, char **argv)
         tap(B_FX); SEL(1);
         check(!strcmp(PT(), "FILTER"), "SELECT on FX: next page, the track FILTER");
         TSEL->p[P_TFLT] = -32; ui.force = 1; frames(2); ppm("page-filter");
-        check(!strcmp(ui.big_l[0], "FILT") && !strcmp(ui.big_v[0], "LP50") && !strcmp(ui.big_l[1], "KEEP") && !strcmp(ui.big_l[2], "DRY") && !ui.big_l[3][0],
-              "FILTER page: its value drawn large (LP50 %), KEEP and DRY beside it, the last column empty");
+        check(!strcmp(ui.big_l[0], "FILT") && !strcmp(ui.big_v[0], "LP50") && !ui.big_l[1][0] && !ui.big_l[3][0],
+              "FILTER page: its value drawn large (LP50 %), the rest empty (upstream's page)");
         {   /* the big value in the graph strip: white pixels in the middle of the screen */
             uint32_t x, y, lit = 0;
             for (y = Y_GRAPH + 30; y < Y_GRAPH + 90; y++)

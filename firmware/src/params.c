@@ -282,8 +282,15 @@ enum { FAM_HOME, FAM_ENV, FAM_LFO, FAM_FX, FAM_SCL, FAM_EDIT, FAM_GLO, FAM_SAVE,
 enum { SC_TRACK, SC_GLOBAL, SC_ENGINE, SC_STEP, SC_TRK, SC_SONG, SC_DRUM };
 enum { GR_NONE, GR_ADSR, GR_LFO, GR_STEPS, GR_ARP, GR_SCALE, GR_FX, GR_ROLL, GR_BROWSE, GR_SLOTS, GR_USER, GR_TRK,
        GR_SLCR };
-#define ID_KEEP 0xFEu                 /* a page slot that is not a parameter: FX > KEEP (punch.c punch_keep), on the FILTER page */
-#define ID_DRY 0xFDu                  /* likewise: FX > RESET, this track's effects to its sound's own (ui_input.c fx_reset_track), KNOB 3 there */
+/* page slots that are not parameters (ui_input.c / ui_draw.c handle them): the three punch-ins worth keeping on, as
+ * ON / OFF switches on the KEEP page (punch.c punch_keep: one at a time, as the punch engine runs them), and the FX
+ * reset beside them on KNOB 4 (ui_input.c fx_reset) */
+#define ID_KEEP1 0xFEu                /* PHONE  (punch_keep == 1) */
+#define ID_KEEP2 0xFDu                /* WOBBLE (2) */
+#define ID_KEEP3 0xFCu                /* HALF   (3) */
+#define ID_FXRST 0xFBu                /* FX > KEEP, KNOB 4: every effect back to its default */
+#define ID_IS_KEEP(id) ((id) >= ID_KEEP3 && (id) <= ID_KEEP1)
+#define ID_KEEP_N(id) (ID_KEEP1 - (id) + 1u)
 
 typedef struct {
     const char *title;
@@ -297,7 +304,8 @@ static const page_t PAGES[] = {
     {"LFO", FAM_LFO, SC_TRACK, GR_LFO, {P_LRATE, P_LWAVE, P_LPHASE, P_LFADE}},
     {"LFO DEST", FAM_LFO, SC_TRACK, GR_NONE, {P_LD_PIT, P_LD_FLT, P_LD_SHP, P_LD_AMP}},
     {"FX", FAM_FX, SC_TRACK, GR_FX, {P_DIST, P_CHOR, P_DLY, P_REV}},
-    {"FILTER", FAM_FX, SC_TRACK, GR_NONE, {P_TFLT, ID_KEEP, ID_DRY, 0xFF}},   /* the track's filter (drum track too); KNOB 2: a punch-in kept on; KNOB 3: RESET, this track's effects to its sound's own */
+    {"FILTER", FAM_FX, SC_TRACK, GR_NONE, {P_TFLT, 0xFF, 0xFF, 0xFF}},   /* the track's filter (drum track too) */
+    {"KEEP", FAM_FX, SC_GLOBAL, GR_NONE, {ID_KEEP1, ID_KEEP2, ID_KEEP3, ID_FXRST}},   /* the fork: PHONE / TAPE / HALF kept on, and RESET (global: the drum track too) */
     {"SLICER", FAM_FX, SC_TRACK, GR_SLCR, {P_SLCR, P_SLPAT, P_SLRATE, P_SLDEPTH}},   /* drum track too */
     {"DLY", FAM_FX, SC_GLOBAL, GR_NONE, {G_DTIME, G_DFDBK, G_DCOLOR, G_DMIX}},
     {"REV/CHO", FAM_FX, SC_GLOBAL, GR_NONE, {G_RSIZE, G_RDAMP, G_CRATE, G_CDEPTH}},
@@ -340,8 +348,8 @@ static int page_for_drum(const page_t *pg)
 static const param_desc_t *page_desc(const page_t *pg, uint32_t slot, int16_t **valp)
 {
     uint32_t id = pg->id[slot];
-    if (id == 0xFFu || id == ID_KEEP || id == ID_DRY || (is_drum(TSEL) && (!page_for_drum(pg) || (pg->scope == SC_GLOBAL && id == G_INITSND)))) {
-        *valp = 0;                                    /* (ID_KEEP: not a parameter; ui_input.c / ui_draw.c handle it) */
+    if (id == 0xFFu || ID_IS_KEEP(id) || id == ID_FXRST || (is_drum(TSEL) && (!page_for_drum(pg) || (pg->scope == SC_GLOBAL && id == G_INITSND)))) {
+        *valp = 0;                                    /* (ID_KEEP*, ID_FXRST: not parameters; ui_input.c / ui_draw.c handle them) */
         return 0;
     }
     if (pg->scope == SC_STEP || pg->scope == SC_TRK) {
