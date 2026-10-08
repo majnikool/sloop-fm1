@@ -548,27 +548,27 @@
         <div class="card" id="dxgroup" hidden>
           <h2 data-t="dxTitle" data-ic="symbol_audio"></h2>
           <p class="dim" data-t="dxHelp"></p>
-          <div class="bar"><select id="dxbank"></select> <b id="dxhead"></b></div>
+          <div class="bar"><select id="dxbank" data-tip="tipDxBank"></select> <b id="dxhead"></b></div>
           <div class="list" id="dxlist"></div>
           <p class="bar" style="margin-top:6px">
-            <button id="dxplay" class="pri" data-t="dxPlay" data-ic="symbol_audio"></button>
-            <button id="dxload" data-t="dxLoad" data-ic="symbol_upload"></button>
-            <button id="dxexport" data-t="dxExport" data-ic="symbol_download"></button>
-            <button id="dxerase" class="warn" data-t="dxErase" data-ic="symbol_trash"></button>
-            <button id="dxrefresh" data-t="reload" data-ic="control_arrow_loop"></button>
+            <button id="dxplay" class="pri" data-t="dxPlay" data-ic="symbol_audio" data-tip="tipDxPlay"></button>
+            <button id="dxload" data-t="dxLoad" data-ic="symbol_upload" data-tip="tipDxLoad"></button>
+            <button id="dxexport" data-t="dxExport" data-ic="symbol_download" data-tip="tipDxExport"></button>
+            <button id="dxerase" class="warn" data-t="dxErase" data-ic="symbol_trash" data-tip="tipDxErase"></button>
+            <button id="dxrefresh" data-t="reload" data-ic="control_arrow_loop" data-tip="tipDxReload"></button>
             <input type="file" id="dxfile" accept=".syx,.SYX,application/octet-stream" hidden>
           </p>
           <p class="bar" style="margin-top:6px">
-            <label><input type="checkbox" id="dxautofill"> <span data-t="dxAutoFill"></span></label>
-            <button id="dxfactory" data-t="dxFactory" data-ic="symbol_download"></button>
-            <button id="dxloadall" data-t="dxLoadAll" data-ic="symbol_upload"></button>
+            <label data-tip="tipDxAuto"><input type="checkbox" id="dxautofill"> <span data-t="dxAutoFill"></span></label>
+            <button id="dxfactory" data-t="dxFactory" data-ic="symbol_download" data-tip="tipDxFactory"></button>
+            <button id="dxloadall" data-t="dxLoadAll" data-ic="symbol_upload" data-tip="tipDxLoadAll"></button>
             <input type="file" id="dxfiles" accept=".syx,.SYX,application/octet-stream" multiple hidden>
           </p>
           <p class="bar" style="margin-top:6px">
-            <button id="dxdelete" class="warn" data-t="dxDelete" data-ic="symbol_trash"></button>
-            <button id="dxmove" data-t="dxMove" data-ic="symbol_folder_open"></button> <select id="dxmoveto"></select>
-            <button id="dxtidy" data-t="dxTidy" data-ic="control_arrow_loop"></button>
-            <button id="dxrename" data-t="dxRename" data-ic="symbol_folder"></button>
+            <button id="dxdelete" class="warn" data-t="dxDelete" data-ic="symbol_trash" data-tip="tipDxDelete"></button>
+            <button id="dxmove" data-t="dxMove" data-ic="symbol_folder_open" data-tip="tipDxMove"></button> <select id="dxmoveto" data-tip="tipDxMoveTo"></select>
+            <button id="dxtidy" data-t="dxTidy" data-ic="control_arrow_loop" data-tip="tipDxTidy"></button>
+            <button id="dxrename" data-t="dxRename" data-ic="symbol_folder" data-tip="tipDxRename"></button>
           </p>
           <div id="dxauto" class="dim"></div>
         </div>
@@ -3070,6 +3070,15 @@ const TEXT = {
     dxDeleted: "音色を削除しました: ", dxMoved: "{name} をバンク {n} のスロット {s} へ移動しました", dxMoveSame: "同じバンクです", dxTargetFull: "バンク {n} は一杯です",
     dxTidied: "バンクを詰めました: {v} 音色が先頭から並びます", dxTidyNone: "空きはありません", dxNoVoice: "先に音色を選んでください",
     dxRenamePrompt: "バンク {n} の名前（このエディタでの表示。FM-1 では DX{n}）。空にすると消えます:",
+    dxConfirmDelete: "バンク {n} から {name} を削除しますか？ スロットは空になり、使っていたプロジェクトは FM6 の初期音色になります。",
+    dxConfirmTidy: "バンク {n} を詰めます: {v} 音色が前に詰まり D 番号が変わります（プロジェクトは番号を覚えています）。続けますか？",
+    tipDxPlay: "選択中の音色を選択中のトラックに設定し、FM-1 で和音を鳴らす", tipDxLoad: ".syx を 1 つ読み込む（32 音色ならバンクへ、1 音色なら選択スロットへ）",
+    tipDxExport: "このバンクを Dexed で開ける .syx に保存", tipDxErase: "このバンクを空にする（確認あり）", tipDxReload: "FM-1 からバンクを読み直す",
+    tipDxAuto: "接続時、空のバンク 1〜4 に FM-1 の工場出荷音色を入れる（取得して検証）", tipDxFactory: "工場出荷の 4 バンクを戻す（確認あり）",
+    tipDxLoadAll: "複数の .syx を選ぶ: それぞれ検証し、工場出荷の 4 つより上の空バンクへファイル名順に入れる",
+    tipDxDelete: "選択スロットを空にする（確認あり）", tipDxMove: "選択中の音色を選んだバンクの最初の空きスロットへ移す", tipDxMoveTo: "移動先のバンク",
+    tipDxTidy: "このバンクの空きを詰める — 番号が変わる（確認あり）", tipDxRename: "このバンクにエディタ用の名前を付ける（FM-1 は DX 番号表示）",
+    tipDxBank: "表示するバンク: 名前、音色数、最初の音色",
     dxConfirmErase: "バンク {n} を消去しますか？", dxConfirmBank: "バンク {n} の全音色を置き換えますか？", dxConfirmVoice: "{name} を置き換えますか？",
 
     fm6Init: "初期音色", fm6Voice: "ボイス", fm6Ops: "オペレーター", fm6Carriers: "キャリア", fm6Feedback: "フィードバック",
@@ -3234,6 +3243,15 @@ const TEXT = {
     dxDeleted: "Voice deleted: ", dxMoved: "Moved {name} to Bank {n}, slot {s}", dxMoveSame: "That is the bank it is in", dxTargetFull: "Bank {n} is full",
     dxTidied: "Bank tidied: the voices moved up, {v} in a row", dxTidyNone: "No gaps to close", dxNoVoice: "Select a voice first",
     dxRenamePrompt: "A name for Bank {n} (shown in this editor; the FM-1 shows DX{n}). Empty removes it:",
+    dxConfirmDelete: "Delete {name} from Bank {n}? The slot becomes empty; a project that used it plays FM6's init voice.",
+    dxConfirmTidy: "Tidy Bank {n}: its {v} voices move up to fill the gaps, so their D numbers change (a project that used one keeps the number, not the voice). Continue?",
+    tipDxPlay: "Put the selected voice on the selected track and sound a chord on the FM-1", tipDxLoad: "Load one .syx into this bank (32 voices) or into the selected slot (one voice)",
+    tipDxExport: "Save this bank as a .syx Dexed opens", tipDxErase: "Empty this bank — asks first", tipDxReload: "Read the banks from the FM-1 again",
+    tipDxAuto: "On connect, fill any empty bank 1–4 with the FM-1's factory voices (fetched and checked)", tipDxFactory: "Put the four factory banks back — asks first",
+    tipDxLoadAll: "Pick several .syx: each is checked, then they fill the empty banks above the factory four in file-name order",
+    tipDxDelete: "Empty the selected slot — asks first", tipDxMove: "Move the selected voice to the chosen bank's first empty slot", tipDxMoveTo: "The bank to move the selected voice into",
+    tipDxTidy: "Close the gaps in this bank — the voices' numbers change; asks first", tipDxRename: "Give this bank a name for the editor's lists (the FM-1 shows DX numbers)",
+    tipDxBank: "Which bank the list shows: its name, how many voices, the first voice",
     dxConfirmErase: "Erase bank {n}?", dxConfirmBank: "Replace every voice in bank {n}?", dxConfirmVoice: "Replace {name}?",
 
     fm6Init: "Init voice", fm6Voice: "Voice", fm6Ops: "Operators", fm6Carriers: "carriers", fm6Feedback: "feedback",
@@ -3298,6 +3316,7 @@ function sayK(k, arg = "") {
 function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-t]").forEach((e) => setLabel(e, t(e.dataset.t)));
+  document.querySelectorAll("[data-tip]").forEach((e) => { e.title = t(e.dataset.tip); });   /* hover help, in the page's language */
   $("lang").textContent = t("other");
   setLabel($("connect"), t(dev ? "disconnect" : "connect"));
   if (lastKey) $("status").textContent = t(lastKey) + lastArg;
@@ -6276,6 +6295,7 @@ $("dxdelete").addEventListener("click", async () => {
   const voices = DX7.voicesOf(dxBanks[dxBank]), v = voices[dxSel];
   if (!v) return;
   const name = DX7.name(v).trim();
+  if (!confirm(t("dxConfirmDelete").replace("{name}", name).replace("{n}", dxBank + 1))) return;
   voices[dxSel] = null;
   await dxWrite(dxBank, voices, null);
   sayK("dxDeleted", name);
@@ -6301,6 +6321,7 @@ $("dxtidy").addEventListener("click", async () => {
   if (!dev) return;
   const voices = DX7.voicesOf(dxBanks[dxBank]), kept = voices.filter(Boolean);
   if (kept.every((x, i) => voices[i] === x)) { sayK("dxTidyNone"); return; }
+  if (!confirm(t("dxConfirmTidy").replace("{n}", dxBank + 1).replace("{v}", kept.length))) return;
   await dxWrite(dxBank, kept.concat(new Array(DX7.N - kept.length).fill(null)), null);
   dxSel = null;
   say(t("dxTidied").replace("{v}", kept.length));

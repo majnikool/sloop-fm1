@@ -324,6 +324,26 @@ int main(int argc, char **argv)
         check(punch_keep == 1u && punch.req == PX_TEL && !punch.keybit && !strcmp(ui.big_v[1], "PHONE"),
               "KEEP: KNOB 2 -> PHONE, the effect runs with no key held");
         check(((lights_word() >> 21) & 3u) == 1u, "KEEP: kept in the settings word (bits 21..22)");
+        {   /* KNOB 3 = DRY: two detents take every effect off, on every track, the master too, and KEEP */
+            static int16_t keep_p[NTRK][P_COUNT], keep_g[sizeof song.g / sizeof song.g[0]];
+            uint32_t k;
+            for (k = 0; k < NTRK; k++) memcpy(keep_p[k], trk[k].p, sizeof keep_p[k]);
+            memcpy(keep_g, song.g, sizeof keep_g);
+            trk[0].p[P_DLY] = 40; trk[2].p[P_REV] = 60; trk[1].p[P_SLCR] = 1; trk[3].p[P_TFLT] = -20;
+            song.g[G_DUST] = 30; song.g[G_DUCK] = 50; song.g[G_FILT] = 22; song.g[G_DRREV] = 25;
+            check(!strcmp(ui.big_l[2], "DRY") && !strcmp(ui.big_v[2], "--"), "FILTER page: KNOB 3 reads DRY --");
+            encs[panel.enc[EN_K3]] = 1; frame();
+            check(ui.arm == ID_DRY && trk[0].p[P_DLY] == 40 && punch_keep == 1u && !strcmp(ui.big_v[2], "GO?"), "DRY: one detent only arms (AGAIN), nothing changes");
+            ui.force = 1; frame(); ppm("page-filter-dry");
+            encs[panel.enc[EN_K3]] = 1; frame();
+            check(!ui.arm && !trk[0].p[P_DLY] && !trk[2].p[P_REV] && !trk[1].p[P_SLCR] && !trk[3].p[P_TFLT] && !song.g[G_DUST] && !song.g[G_DUCK] && !song.g[G_FILT]
+                  && !song.g[G_DRREV] && punch_keep == 0u && punch.req == -1, "DRY: the second detent clears the sends, slicer, track filters, master and KEEP on every track");
+            encs[panel.enc[EN_K3]] = 1; frame(); encs[panel.enc[EN_K3]] = -1; frame();
+            check(!ui.arm, "DRY: turning back down disarms");
+            for (k = 0; k < NTRK; k++) memcpy(trk[k].p, keep_p[k], sizeof keep_p[k]);   /* the sounds as they were, for the checks below */
+            memcpy(song.g, keep_g, sizeof keep_g);
+            punch_keep = 1; punch_keep_poll();                /* the KEEP checks below continue from PHONE */
+        }
         ui.force = 1; frame(); ppm("page-filter-keep");
         go_home(); ui.force = 1; frame(); ppm("tracks-keep");
         for (x = 144; x < 153u; x++) disc |= swap16(screen[29 * 240 + x]) == TE_DRUM;
@@ -882,8 +902,8 @@ int main(int argc, char **argv)
         tap(B_FX); SEL(1);
         check(!strcmp(PT(), "FILTER"), "SELECT on FX: next page, the track FILTER");
         TSEL->p[P_TFLT] = -32; ui.force = 1; frames(2); ppm("page-filter");
-        check(!strcmp(ui.big_l[0], "FILT") && !strcmp(ui.big_v[0], "LP50") && !strcmp(ui.big_l[1], "KEEP") && !ui.big_l[2][0],
-              "FILTER page: its value drawn large (LP50 %), KEEP beside it, the rest empty");
+        check(!strcmp(ui.big_l[0], "FILT") && !strcmp(ui.big_v[0], "LP50") && !strcmp(ui.big_l[1], "KEEP") && !strcmp(ui.big_l[2], "DRY") && !ui.big_l[3][0],
+              "FILTER page: its value drawn large (LP50 %), KEEP and DRY beside it, the last column empty");
         {   /* the big value in the graph strip: white pixels in the middle of the screen */
             uint32_t x, y, lit = 0;
             for (y = Y_GRAPH + 30; y < Y_GRAPH + 90; y++)

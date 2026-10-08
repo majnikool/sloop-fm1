@@ -354,6 +354,28 @@ static void project_new(void)
     ui.force = 1;
 }
 
+/* FX > FILTER, KNOB 3 = DRY (params.c ID_DRY): every effect back to nothing, on every track at once — the sends
+ * (DST, CHO, DLY, REV), the SLICER, the track's own filter, the drums' reverb, the master DUST / DUCK / FILT, and
+ * KEEP. The sounds, the patterns and the mix are left alone: this is "let me hear the plain sound again", not INIT.
+ * Two detents, like the TOOLS buttons, so a brush of the knob cannot strip a mix. The owner asked for it on
+ * 2026-10-08: effects piled up over a session and nothing on the device took them all off at once. */
+static void fx_reset_all(void)
+{
+    uint32_t i;
+    for (i = 0; i < NTRK; i++) {                           /* the three synth tracks and the drum track */
+        track_t *t = &trk[i];
+        t->p[P_DIST] = 0; t->p[P_CHOR] = 0; t->p[P_DLY] = 0; t->p[P_REV] = 0;
+        t->p[P_SLCR] = 0;
+        t->p[P_TFLT] = 0;
+    }
+    song.g[G_DUST] = 0; song.g[G_DUCK] = 0; song.g[G_FILT] = 0;
+    song.g[G_DRREV] = 0;
+    if (punch_keep) {
+        punch_keep = 0;
+        settings_save();
+        punch_keep_poll();
+    }
+}
 static void edit_param(uint32_t slot, int32_t steps)
 {
     int16_t *vp;
@@ -369,6 +391,21 @@ static void edit_param(uint32_t slot, int32_t steps)
     }
     if (pg->scope == SC_TRK) {
         tracks_edit(slot, steps);
+        return;
+    }
+    if (id == ID_DRY) {                                   /* FX > FILTER, KNOB 3: every effect back to nothing — one detent arms, a second acts */
+        if (steps <= 0) { ui.arm = 0; ui.force = 1; return; }
+        if (ui.arm != ID_DRY) {
+            ui.arm = ID_DRY;
+            ui.arm_t = 90;
+            ui_say("AGAIN: ", "DRY");
+            ui.force = 1;
+            return;
+        }
+        ui.arm = 0;
+        fx_reset_all();
+        ui_say("DRY: ", "ALL FX OFF");
+        ui.force = 1;
         return;
     }
     if (id == ID_KEEP) {                                  /* FX > FILTER, KNOB 2: the punch-in kept on (OFF, PHONE, WOBBLE, HALF) */
@@ -963,7 +1000,7 @@ static void ui_input(void)
         if ((s = panel_enc(EN_K1 + k)) == 0)
             continue;
         if (ui.home || pg->scope == SC_STEP || pg->scope == SC_TRK || page_desc(pg, k, &hv) ||
-            (pg->graph == GR_USER && k == 0u) || pg->id[k] == ID_KEEP) {     /* (not an empty column, nor "DRUM TRACK") */
+            (pg->graph == GR_USER && k == 0u) || pg->id[k] == ID_KEEP || pg->id[k] == ID_DRY) {     /* (not an empty column, nor "DRUM TRACK") */
             ui.hot_col = (uint8_t)k;
             ui.hot_t = 40;
         }
