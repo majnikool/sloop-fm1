@@ -154,6 +154,10 @@ static void fm1_main(void)
     fm1_adc_init();
     panel_init();
     felucca_init();
+#if FELUCCA_FLASH
+    if (flash_ok)
+        dx_claim_banks();                               /* the fork: banks newly claimed from USR4 start empty (panel.c) */
+#endif
     audio_init();
 #if FELUCCA_CDC
     usb_cdc_on = usb_serial;                            /* menu USB SERIAL (persist_boot read it): before USB starts */

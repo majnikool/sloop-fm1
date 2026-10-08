@@ -50,6 +50,8 @@ static struct { uint32_t magic, stage, page, home, ui_frames; } felucca_dbg;
 #define SCOPE_N 512u
 static int16_t scope_buf[SCOPE_N], scope_bufr[SCOPE_N];
 static uint32_t scope_w;
+static uint32_t host_dx_erase(uint32_t b) { memset(dx_host_store + b * 4096u, 0xFF, 4096u); dx_gen++; return 0; }
+#define DX_CLAIM_ERASE(b) host_dx_erase(b)
 #include "../firmware/src/panel.c"
 #include "../firmware/src/ui.c"
 static uint32_t saves, loads;
@@ -207,6 +209,18 @@ int main(int argc, char **argv)
         open_family(FAM_SAVE); ui.page = (uint8_t)i; ui.fam_last[FAM_SAVE] = (uint8_t)i; page_entered(); ui.force = 1; frame(); ppm("page-presets-dx");
         go_home(); frame();
         preset_go(0); fm6_poll();
+        {   /* banks claimed from USR4 start empty: whatever an earlier firmware left there is erased once (panel.c) */
+            for (i = 4; i < 8; i++) memcpy(dx_host_store + i * 4096u, dx_host_store, 4096u);   /* banks 5-8 "full" of leftovers */
+            dx_gen++;
+            check(dx_bank_used(7) == 32u && dx_count() == 33u + 128u, "leftovers: banks 5-8 read as 128 voices before the claim");
+            dx_layout = 0;
+            check(dx_claim_banks() == 4u && dx_layout == 8u && dx_bank_used(0) == 32u && dx_bank_used(2) == 1u && !dx_bank_used(4) && !dx_bank_used(7)
+                  && dx_count() == 33u, "dx_claim_banks: banks 5-8 erased once, 1-4 kept, the layout recorded");
+            memcpy(dx_host_store + 7u * 4096u, dx_host_store, 4096u); dx_gen++;
+            check(dx_claim_banks() == 0u && dx_bank_used(7) == 32u && dx_layout == 8u, "claimed already: a bank loaded since is left alone");
+            dx_layout = 6;
+            check(dx_claim_banks() == 2u && !dx_bank_used(7) && dx_layout == 8u, "a layout of six: only banks 7 and 8 are claimed");
+        }
         memset(dx_host_store, 0xFF, sizeof dx_host_store); dx_gen++;
         check(dx_count() == 0u, "banks erased: the list is as before");
     }

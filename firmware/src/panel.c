@@ -85,12 +85,14 @@ static const uint16_t LIGHTS_NS[LIGHTS_N] = {0u, 500u, 1000u, 2000u};   /* the b
                                                 * LED ~95 us, the glow (landmarks) 4 us (fm1_input.h) */
 static uint8_t usb_serial;                      /* menu USB SERIAL: 1 = the serial console presented (usb.c) */
 static uint8_t vis_style;                       /* the visualiser's style, 0..11 (ui_vis.c) */
+static uint8_t dx_layout;                       /* the fork: DX7 banks this device has claimed from USR4 (dx_claim_banks) */
 static uint32_t lights_word(void)
 {
     return (uint32_t)lights_lvl | (uint32_t)lights_keys << 4 | (uint32_t)(lights_notes != 0u) << 8 |
            (uint32_t)(rec_tempo != 0u) << 9 | (uint32_t)(rec_count != 0u) << 10 | (uint32_t)(usb_full != 0u) << 11 |
            (uint32_t)(lights_sync % 3u) << 12 | (uint32_t)(lights_mout != 0u) << 14 | (uint32_t)(lights_min != 0u) << 15 |
-           (uint32_t)(usb_serial != 0u) << 16 | (uint32_t)(vis_style % 12u) << 17 | (uint32_t)(punch_keep & 3u) << 21;
+           (uint32_t)(usb_serial != 0u) << 16 | (uint32_t)(vis_style % 12u) << 17 | (uint32_t)(punch_keep & 3u) << 21 |
+           (uint32_t)(dx_layout & 15u) << 23;
 }
 static void lights_from_word(uint32_t w)
 {
@@ -105,10 +107,36 @@ static void lights_from_word(uint32_t w)
     lights_min = (uint8_t)((w >> 15) & 1u);     /* GLO > SYSTEM > IN (seq.c) */
     usb_serial = (uint8_t)((w >> 16) & 1u);
     vis_style = (uint8_t)(((w >> 17) & 15u) % 12u);
-    punch_keep = (uint8_t)((w >> 21) & 3u);      /* FX > KEEP (punch.c): a punch-in kept on */   /* the visualiser (ui_vis.c); 0 in 2.3 = OSCILLOSCOPE */     /* menu USB SERIAL (usb.c usb_cdc_on, at the next start); 0 in 2.3 = OFF */
+    punch_keep = (uint8_t)((w >> 21) & 3u);      /* FX > KEEP (punch.c): a punch-in kept on */
+    dx_layout = (uint8_t)((w >> 23) & 15u);      /* the fork: banks claimed (0 = the first builds' four) */   /* the visualiser (ui_vis.c); 0 in 2.3 = OSCILLOSCOPE */     /* menu USB SERIAL (usb.c usb_cdc_on, at the next start); 0 in 2.3 = OFF */
 }
 
 static void settings_save(void);              /* project.c: flash copy (FELUCCA_FLASH) */
+
+/* The fork: a DX7 bank claimed from USR4 holds whatever an earlier firmware left in that flash — real voices,
+ * even (the stock firmware kept presets there: FROGBELL, LOG DRUM, COWBELL turned up as "bank 8" on the owner's
+ * FM-1 the day eight banks shipped), and nothing but a first erase tells a leftover from a loaded one. dx_layout
+ * (settings bits 23..26) is the bank count this device has already claimed: at boot, every bank from there up to
+ * DX_USER_BANKS is erased once, then the count is kept. 0 — a build before this, or a fresh device — counts as
+ * the first builds' four, so banks 1-4 and whatever the editor put in them are never touched. The layout is
+ * recorded only when every erase succeeded, so a failed one is retried at the next boot. */
+#ifndef DX_CLAIM_ERASE
+static uint32_t dx_bank_write(uint32_t b, uint8_t *data);   /* editor.c: data 0 = erase, then the XIP cache */
+#define DX_CLAIM_ERASE(b) dx_bank_write((b), 0)
+#endif
+static uint32_t dx_claim_banks(void)                          /* -> banks erased */
+{
+    uint32_t from = dx_layout ? dx_layout : 4u, b, n = 0;
+    if (from >= DX_USER_BANKS)
+        return 0;
+    for (b = from; b < DX_USER_BANKS; b++)
+        n += DX_CLAIM_ERASE(b) ? 0u : 1u;
+    if (n == DX_USER_BANKS - from) {
+        dx_layout = (uint8_t)DX_USER_BANKS;
+        settings_save();
+    }
+    return n;
+}
 static uint8_t settings_later;                 /* changed while playing: saved once stopped (project.c) */
 
 static void settings_init(void)
