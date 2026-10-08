@@ -34,7 +34,7 @@ const E = vm.runInNewContext(proto + `
    CHOP, chopNovelty, chopHits, chopSnap, chopGrid, chopEqual, chopList, chopPick, chopFit, chopZones, wavFile, zipStore, crc32,
    UP, bank, capturePatch, auditionPatch, startWatch, libraryFile, readLibraryFile, paramKeys, patternFromSteps, stepsFromPattern, upName,
    mixer, GM_DRUM, drumName, parseNotes, fmtValue, F, DRUM_LANES, LV_NAMES, emptyDrum, lockable, MICRO, FC, fillGet, fillSet, pack7, unpack7,
-   backupCapture, backupRestore, backupObjects, b64enc, b64dec, FM6, KIT, kitPad, kitZones, kitLen, kitBytes, kitFit, kitSplit, kitLaneOf, kitPlace, zipRead })`,
+   backupCapture, backupRestore, backupObjects, b64enc, b64dec, FM6, DX7, bkGetObjects, bkPutObject, KIT, kitPad, kitZones, kitLen, kitBytes, kitFit, kitSplit, kitLaneOf, kitPlace, zipRead })`,
 { setTimeout, clearTimeout, setInterval, clearInterval, console, TextEncoder, TextDecoder, Blob, Response, DecompressionStream });
 
 async function editorMock() {
@@ -524,7 +524,7 @@ async function editorBackup() {
   const info = E.parse[C.INFO](await rq(E.req.info()));
   ok(info.proto >= 6, "backup: INFO protocol v6 or later");
   const ec = readFileSync(join(HERE, "../firmware/src/editor.c"), "utf8");
-  ok(/ED_BK_IDS\[\] = \{0, 1, 2, 3, 4, 5, 6, 7, 8, 32, 33, 34, 35\}/.test(ec), "backup: the object ids == editor.c ED_BK_IDS (35: USR4)");
+  ok(/ED_BK_IDS\[\] = \{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 32, 33, 34, 35\}/.test(ec), "backup: the object ids == editor.c ED_BK_IDS (9..12: the DX7 banks; 35: USR4)");
   await rq(E.req.upStore(3, "BACKUP ME"));
   await rq(E.req.project(1, 2), { timeout: 4000, retries: 0 });
   const s = Int16Array.from({ length: 3000 }, (_, i) => Math.round(8000 * Math.sin(i / 7)));
@@ -1098,4 +1098,30 @@ chopTests();
 await packages();
 await updater();
 console.log(failed ? `WEB TESTS FAILED (${failed})` : "web tests passed");
+/* ------------------------------------- the fork: the DX7 voice banks (DX7 object) --- */
+{
+  const D = E.DX7;
+  ok(D.name(D.INIT) === "INIT VOICE" && !D.check(D.INIT) && !D.blank(D.INIT), "DX7: the init voice is named, usable, not blank");
+  const voices = Array.from({ length: 32 }, (_, i) => { const v = D.INIT.slice(); v.set(Array.from(`VOICE ${String(i + 1).padStart(2, "0")}`.padEnd(10), (c) => c.charCodeAt(0)), 118); return v; });
+  const syx = D.bankSyx(voices), back = D.parse(syx);
+  ok(syx.length === 4104 && back.kind === "bank" && back.voices.length === 32 && eq(back.voices[7], voices[7]) && D.name(back.voices[31]) === "VOICE 32",
+    "DX7: a 32-voice dump round-trips through bankSyx and parse");
+  const bad = syx.slice(); bad[4102] ^= 1;
+  let threw = ""; try { D.parse(bad); } catch (e) { threw = e.message; }
+  ok(threw === "checksum", "DX7: a wrong checksum is refused");
+  const obj = D.objectOf([voices[0], null, voices[2]]), vo = D.voicesOf(obj);
+  ok(obj.length === 4096 && obj[128] === 0xFF && vo[0] && !vo[1] && vo[2] && D.name(vo[2]) === "VOICE 03" && D.objectOf([null, null]).length === 0,
+    "DX7: a bank object keeps the voices, erases the blanks, and is empty when none");
+  const vced = new Uint8Array(155); vced.set(D.INIT.subarray(0, 0));   /* a single-voice dump of the init voice, built from a packed one */
+  const single = new Uint8Array(163); single.set([0xF0, 0x43, 0x00, 0x00, 0x01, 0x1B]); single[162] = 0xF7;
+  { /* unpack the packed init voice by hand into VCED, then pack it back */
+    const p = D.INIT, v = vced;
+    for (let j = 0; j < 6; j++) { const s = v.subarray(j * 21, j * 21 + 21), o = p.subarray(j * 17, j * 17 + 17); s.set(o.subarray(0, 11)); s[11] = o[11] & 3; s[12] = o[11] >> 2 & 3; s[13] = o[12] & 7; s[20] = o[12] >> 3 & 15; s[14] = o[13] & 3; s[15] = o[13] >> 2 & 7; s[16] = o[14]; s[17] = o[15] & 1; s[18] = o[15] >> 1 & 31; s[19] = o[16]; }
+    v.set(p.subarray(102, 110), 126); v[134] = p[110]; v[135] = p[111] & 7; v[136] = p[111] >> 3 & 1; v.set(p.subarray(112, 116), 137); v[141] = p[116] & 1; v[142] = p[116] >> 1 & 7; v[143] = p[116] >> 4 & 7; v[144] = p[117]; v.set(p.subarray(118, 128), 145);
+    single.set(v, 6); single[161] = (-v.reduce((x, y) => x + y, 0)) & 0x7F;
+  }
+  const one = D.parse(single);
+  ok(one.kind === "voice" && eq(one.voices[0], D.INIT), "DX7: a single-voice dump packs back to the same 128 bytes");
+}
+
 process.exit(failed ? 1 : 0);

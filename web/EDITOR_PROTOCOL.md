@@ -348,6 +348,10 @@ armed fill.
   plays as it records any section change. A device that does not know these commands (v7 and older) sends no reply:
   use `INFO`'s version byte.
 
+## The fork: the DX7 voice banks and KEEP
+
+`INFO` carries one more byte after the protocol version: **1** = this build has the four DX7 voice banks and FX > FILTER KEEP (upstream SLOOP ends at the version, and an editor reads 0). The banks are **backup objects 9..12**, 4096 bytes each (32 packed 128-byte voices, an erased slot 0xFF; length 0 = empty), listed by `BK_LIST`, read by `BK_GET`, written whole by `BK_PUT` (begin with the length and CRC, data, commit; a damaged voice in the data is blanked, not refused; rc 3 while the song plays). FM6's `PTCH` runs to 162: D1..D128 after B27. `FM6_LIST` is unchanged (FM6's own bank only).
+
 ## v9: FM6 patches (SLOOP 2.4)
 
 `INFO` ends with 9; the engine list gains **FM6** (engine 9, after GRAIN; SLICE, when built, is 10). The commands keep

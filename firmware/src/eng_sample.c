@@ -42,6 +42,7 @@ static uint32_t pow2_q16(int32_t d16)
 #define SMP_USER_BASE 0xA0000u                      /* USR1..USR3: 0xA0000..0xDBFFF */
 #define SMP_USER4_BASE 0xE7000u                     /* USR4 (2.4): the free flash after the FM6 bank, 0xE7000..0xFAFFF */
 #define SMP_USER_SIZE 0x14000u
+#define SMP_USER_SIZE_OF(k) ((k) < 3u ? SMP_USER_SIZE : SMP_USER_SIZE - 4u * 0x1000u)   /* USR4: 64 KiB here, the DX7 banks have its last 16 */
 #define SMP_USER_OFF(k) ((k) < 3u ? SMP_USER_BASE + (k) * SMP_USER_SIZE : SMP_USER4_BASE)
 #define SMP_USER_DATA 512u
 #define SMP_USER_MAGIC 0x504D5346u                  /* "FSMP" */
@@ -86,7 +87,7 @@ static void smp_user_scan(uint32_t k)
     usr_nz[k] = 0;                                  /* (from here no new voice takes the slot) */
     slc_user_scan(k, 0);
     if (h->magic != SMP_USER_MAGIC || h->version != 1 || !h->nz || h->nz > 16u ||
-        h->data_len > SMP_USER_SIZE - SMP_USER_DATA)
+        h->data_len > SMP_USER_SIZE_OF(k) - SMP_USER_DATA)
         return;
     base = (uint32_t)(uintptr_t)(smp_user_xip(k) + SMP_USER_DATA) - (uint32_t)(uintptr_t)SMP_DATA;
     for (i = 0; i < h->nz; i++) {                   /* checked in a copy: a voice still playing the slot */

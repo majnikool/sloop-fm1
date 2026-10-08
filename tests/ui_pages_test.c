@@ -170,6 +170,46 @@ int main(int argc, char **argv)
     host_tracks_init();
     for (i = 0; i < NPART; i++) { set_engine_of(&trk[i], TRK_DEF[i][0]); apply_preset_to(&trk[i], TRK_DEF[i][1]); trk[i].engine = trk[i].eng_req; }
     TDRUM->p[P_E0] = DRUM_DEFAULT_KIT;
+    {   /* the DX7 voice banks (the fork, eng_fm6.c dx_*): loaded voices in the PRESETS list by name after the factory
+         * sounds, tagged by bank; a pick puts the FM6 engine on that slot; the jump by kind walks the banks that hold voices */
+        uint32_t i, total, n, k, e;
+        char nm[13];
+        for (i = 0; i < 32u; i++) {                       /* bank 1 full: the init voice named VOICE 1..32 */
+            uint8_t *v = dx_host_store + i * 128u;
+            memcpy(v, FM6_INIT, 128);
+            memcpy(v + 118, "VOICE     ", 10);
+            v[124] = (uint8_t)('0' + (i + 1u) / 10u); v[125] = (uint8_t)('0' + (i + 1u) % 10u);
+        }
+        memcpy(dx_host_store + 2u * 4096u, FM6_INIT, 128);   /* bank 3: one voice */
+        memcpy(dx_host_store + 2u * 4096u + 118, "LONE ONE  ", 10);
+        dx_gen++;
+        check(dx_count() == 33u && dx_bank_used(0) == 32u && dx_bank_used(2) == 1u && !dx_bank_used(1), "DX7 banks: 33 voices loaded (bank 1 full, one in bank 3)");
+        preset_pos(&total);
+        check(total == NBANK + 33u + up_count(), "the PRESETS list: the factory sounds, the 33 voices, the user presets");
+        e = preset_at(NBANK + 5u, &k);
+        check(e == PRESET_DX && k == 5u && !strcmp(preset_kind(NBANK + 5u), "DX1"), "list entry NBANK+5: voice slot 6, tagged DX1");
+        e = preset_at(NBANK + 32u, &k);
+        check(e == PRESET_DX && k == 64u && !strcmp(preset_kind(NBANK + 32u), "DX3"), "list entry NBANK+32: bank 3's voice, tagged DX3");
+        track_select(0); preset_go(NBANK + 5u); fm6_poll();
+        trk_short_name(0, nm);
+        check(TSEL->eng_req == ENGI_FM6 && TSEL->p[P_E7] == (int16_t)(FM6_DX0 + 5u) && fm6_slot[0] == FM6_DX0 + 5u && !strcmp(nm, "VOICE 06"),
+              "picking it: the FM6 engine on PTCH D6, the voice loaded, TRACKS names it");
+        check(preset_pos(&total) == NBANK + 5u, "preset_pos finds the voice again");
+        n = preset_group_jump(NBANK - 1u, 1);
+        check(n == NBANK && preset_group(n) == PG_DX0, "kind jump from FX: the first DX1 voice");
+        n = preset_group_jump(n, 1);
+        check(n == NBANK + 32u && preset_group(n) == PG_DX0 + 2u, "kind jump: DX3 (bank 2 holds none, skipped)");
+        n = preset_group_jump(n, 1);
+        check(n == NBANK + 33u && preset_group(n) == PG_USER, "kind jump: the user presets");
+        check(preset_group_jump(0, -1) == NBANK + 33u && preset_group_jump(NBANK + 33u, -1) == NBANK + 32u, "kind jump back: USER, then DX3");
+        go_home(); ui.force = 1; frame(); ppm("tracks-dx");
+        for (i = 0; i < NPAGES; i++) if (!strcmp(PAGES[i].title, "PRESETS")) break;
+        open_family(FAM_SAVE); ui.page = (uint8_t)i; ui.fam_last[FAM_SAVE] = (uint8_t)i; page_entered(); ui.force = 1; frame(); ppm("page-presets-dx");
+        go_home(); frame();
+        preset_go(0); fm6_poll();
+        memset(dx_host_store, 0xFF, sizeof dx_host_store); dx_gen++;
+        check(dx_count() == 0u, "banks erased: the list is as before");
+    }
     sloop_splash(); ppm("page-splash");
     ui.menu = 2; ui.force = 1; frame(); ppm("page-about"); ui.menu = 0;
     go_home(); ui.force = 1; frame(); ppm("page-tracks");

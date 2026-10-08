@@ -387,36 +387,62 @@ static void bank_resolve(void)
     }
     bank_ready = 1;
 }
+/* the list: the factory sounds by kind, then the loaded DX7 voices (the fork: eng_fm6.c dx_*, by name, tagged
+ * DX1..DX4), then the user presets. preset_at: an engine and its preset, PRESET_DX and a voice slot, or NENGINES
+ * and a user slot */
+#define PRESET_DX (NENGINES + 1u)
 static uint32_t preset_pos(uint32_t *total)          /* list index of the selected track's preset */
 {
-    uint32_t i, cur = 0;
+    uint32_t i, cur = 0, ndx = dx_count();
     if (!bank_ready)
         bank_resolve();
     for (i = 0; i < NBANK; i++)
         if (BANK[i].e == TSEL->eng_req && bank_pi[i] == TSEL->preset)
             cur = i;
+    if (TSEL->eng_req == ENGI_FM6 && TSEL->p[P_E7] >= (int16_t)FM6_DX0 && dx_loaded((uint32_t)TSEL->p[P_E7] - FM6_DX0))
+        cur = NBANK + dx_rank((uint32_t)TSEL->p[P_E7] - FM6_DX0);
     if (user_of(TSEL) < UP_SLOTS)
-        cur = NBANK + up_rank(user_of(TSEL));
-    *total = NBANK + up_count();
+        cur = NBANK + ndx + up_rank(user_of(TSEL));
+    *total = NBANK + ndx + up_count();
     return cur;
 }
 
 /* list index n (< total) -> engine, *k its preset; NENGINES = user preset, *k its slot */
 static uint32_t preset_at(uint32_t n, uint32_t *k)
 {
+    uint32_t ndx = dx_count();
     if (!bank_ready)
         bank_resolve();
-    if (n >= NBANK) {
-        *k = up_nth(n - NBANK);
+    if (n >= NBANK + ndx) {
+        *k = up_nth(n - NBANK - ndx);
         return NENGINES;
+    }
+    if (n >= NBANK) {
+        *k = dx_nth(n - NBANK);
+        return PRESET_DX;
     }
     *k = bank_pi[n] == 0xFF ? 0u : bank_pi[n];
     return BANK[n].e;
 }
-static const char *preset_kind(uint32_t n) { return n < NBANK ? BANK_KIND[BANK[n].kind] : "USER"; }
-/* the kind of list index n as a number: a bank kind, then the user presets (one group) */
-#define PG_USER (BK_FX + 1u)
-static uint32_t preset_group(uint32_t n) { return n < NBANK ? BANK[n].kind : PG_USER; }
+static const char *preset_kind(uint32_t n)
+{
+    if (n < NBANK)
+        return BANK_KIND[BANK[n].kind];
+    if (n < NBANK + dx_count())
+        return DX_KIND[dx_nth(n - NBANK) / DX_BANK_N];
+    return "USER";
+}
+/* the kind of list index n as a number: a bank kind, then each DX7 bank with voices, then the user presets */
+#define PG_DX0 (BK_FX + 1u)
+#define PG_USER (PG_DX0 + DX_USER_BANKS)
+static uint32_t preset_group(uint32_t n)
+{
+    if (n < NBANK)
+        return BANK[n].kind;
+    if (n < NBANK + dx_count())
+        return PG_DX0 + dx_nth(n - NBANK) / DX_BANK_N;
+    return PG_USER;
+}
 /* the first entry of the next (dir > 0) or the previous kind from list index cur, round the list:
  * HOME held + PRESETS, and KNOB 3 on the PRESETS page. Backwards goes to the START of the previous
  * kind (as a knob should), never to its last entry */
@@ -457,6 +483,14 @@ static void preset_go(uint32_t n)                    /* load list index n into t
         return;                                      /* one GM kit: nothing to browse */
     if (e == NENGINES) {
         up_load(k);
+        return;
+    }
+    if (e == PRESET_DX) {                            /* a DX7 voice: the FM6 engine on its first sound, PTCH = the slot */
+        if (TSEL->eng_req != ENGI_FM6)
+            select_engine(ENGI_FM6);
+        apply_preset(0);
+        TSEL->p[P_E7] = (int16_t)(FM6_DX0 + k);
+        ui.force = 1;
         return;
     }
     if (e != TSEL->eng_req)

@@ -100,7 +100,7 @@ static uint32_t ed_smp_slot(uint32_t k) { return SMP_USER_OFF(k); }
 static void ed_smp_inval(uint32_t k)
 {
     fm1_irq_off();
-    fl_inval(ed_smp_slot(k), SMP_USER_SIZE);
+    fl_inval(ed_smp_slot(k), SMP_USER_SIZE_OF(k));
     fm1_irq_on();
 }
 static int ed_smp_erase(uint32_t k, uint32_t all)  /* header sector, or the whole slot */
@@ -110,7 +110,7 @@ static int ed_smp_erase(uint32_t k, uint32_t all)  /* header sector, or the whol
     usr_nz[k] = 0;
     for (i = 0; i < 16u; i++)
         usr_zone[k][i].n = 0;                     /* a sounding voice ends instead of reading 0xFF */
-    for (i = 0; i < (all ? SMP_USER_SIZE / 0x1000u : 1u) && !rc; i++) {
+    for (i = 0; i < (all ? SMP_USER_SIZE_OF(k) / 0x1000u : 1u) && !rc; i++) {
         rc = fl_erase4k_quiet(ed_smp_slot(k) + i * 0x1000u, &took);
         fm1_wdt_feed();
     }
@@ -126,7 +126,7 @@ static int ed_smp_end(uint32_t k, const uint8_t *a, uint32_t na)
     if (ed_unpack7(a, na, ed_smp_buf, sizeof(smp_user_hdr_t)) != sizeof(smp_user_hdr_t))
         return 1;
     if (h->magic != SMP_USER_MAGIC || h->version != 1 || !h->nz || h->nz > 16u ||
-        h->data_len > SMP_USER_SIZE - SMP_USER_DATA)
+        h->data_len > SMP_USER_SIZE_OF(k) - SMP_USER_DATA)
         return 2;
     for (i = 0; i < h->nz; i++)                    /* the zones checked before anything is written */
         if (!smp_zone_ok(&h->zone[i], h->data_len))
@@ -430,26 +430,63 @@ static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such obj
             *len = sizeof(fm6_bank_t);
         return (const uint8_t *)fm6_bank_flash(fm6_bank_cur < 0 ? 0u : (uint32_t)fm6_bank_cur);
     }
+    if (id >= 9u && id <= 12u) {                         /* a DX7 voice bank, in flash (XIP): 4096 bytes, 0 = empty */
+        if (dx_bank_used(id - 9u))
+            *len = DX_BANK_N * DX_VOICE;
+        return dx_user_xip() + (id - 9u) * 0x1000u;
+    }
     if (id >= 32u && id < 32u + SMP_USER_SLOTS) {
         const smp_user_hdr_t *h = (const smp_user_hdr_t *)smp_user_xip(id - 32u);
         if (h->magic == SMP_USER_MAGIC && h->version == 1u && h->nz && h->nz <= 16u &&
-            h->data_len <= SMP_USER_SIZE - SMP_USER_DATA)
+            h->data_len <= SMP_USER_SIZE_OF(id - 32u) - SMP_USER_DATA)
             *len = SMP_USER_DATA + h->data_len;
         return smp_user_xip(id - 32u);
     }
     return 0;
 }
-static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 32, 33, 34, 35};   /* 35: USR4 (2.4) */
+static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 32, 33, 34, 35};   /* 9..12: the DX7 banks (the fork); 35: USR4 (2.4) */
+static uint8_t ed_dx_stage[DX_BANK_N * DX_VOICE] __attribute__((aligned(4)));   /* a DX7 bank being restored */
+/* DX7 bank b <- 32 packed voices (data: the staging RAM, 4 KiB; 0 = erase the bank): 0 ok, 4 flash. A damaged
+ * voice (an 8-bit byte, a bad name: a write cut by a power loss leaves one) is blanked, not refused, so a bank
+ * with one can always be rewritten and restored; the parts re-read their voice afterwards (dx_gen) */
+static uint32_t dx_bank_write(uint32_t b, uint8_t *data)
+{
+    uint32_t off = DX_USER_BASE + b * 0x1000u, i, took;
+    if (data)
+        for (i = 0; i < DX_BANK_N; i++)
+            if (dx_voice_check(data + i * DX_VOICE) == DXV_BAD)
+                memset(data + i * DX_VOICE, 0xFF, DX_VOICE);
+    if (fl_erase4k_quiet(off, &took))
+        return 4;
+    if (data && fl_write(off, data, DX_BANK_N * DX_VOICE))
+        return 4;
+    fm1_irq_off();
+    fl_inval(off, 0x1000u);
+    fm1_irq_on();
+    dx_gen++;
+    return data && memcmp(dx_user_xip() + b * 0x1000u, data, DX_BANK_N * DX_VOICE) ? 4u : 0u;
+}
+/* the staging RAM of object id: the project buffer, or the DX7 bank's own */
+static uint8_t *ed_bk_raw(uint32_t id) { return id >= 9u && id <= 12u ? ed_dx_stage : ED_BK_RAW; }
 
 /* a flash erase silences the audio for ~50 ms and stalls USB: only while stopped (as the panel) */
 static uint32_t ed_flash_busy(void) { return song.playing || transport_req; }
 
 static uint32_t ed_bk_commit(void)
 {
-    uint8_t *raw = ED_BK_RAW;
+    uint8_t *raw = ed_bk_raw(ed_bk_id);
     uint32_t id = ed_bk_id, n = ed_bk_len;
     if (ed_bk_pos != n || st_crc32(raw, n) != ed_bk_crc)
         return 2;
+    if (id >= 9u && id <= 12u) {                          /* a DX7 bank (n 0: erase it) */
+        if (n && n != sizeof ed_dx_stage)
+            return 2;
+        if (ed_flash_busy())
+            return 3;
+        if (!flash_ok)
+            return 4;
+        return dx_bank_write(id - 9u, n ? raw : 0);
+    }
     if (id == 1u)
         return settings_restore(raw, n);
     if (id <= 5u)
@@ -525,10 +562,10 @@ static int ed_backup(uint32_t cmd, const uint8_t *a, uint32_t na)   /* 1: a back
         rc = 1;
         if (!flash_ok) {
             rc = 4;
-        } else if (op == 0u && na == 12u && (id <= 8u)) {  /* begin: id, length (5), CRC-32 (5) */
+        } else if (op == 0u && na == 12u && (id <= 12u)) {  /* begin: id, length (5), CRC-32 (5) */
             len = ed_bk_r32(a + 2);
             if (id >= 2u || len) {                        /* (the working project and the settings are never empty) */
-                if (len <= sizeof proj_tmp) {
+                if (len <= (id >= 9u ? sizeof ed_dx_stage : sizeof proj_tmp)) {
                     ed_bk_put = 1;
                     ed_bk_valid = 0;                      /* (the staging RAM is the snapshot's) */
                     ed_bk_id = (uint8_t)id;
@@ -544,7 +581,7 @@ static int ed_backup(uint32_t cmd, const uint8_t *a, uint32_t na)   /* 1: a back
         } else if (op == 1u && na >= 9u && ed_bk_r32(a + 2) == ed_bk_pos) {   /* data: off (5), pack7 */
             uint32_t k = ed_unpack7(a + 7, na - 7u, ed_smp_buf, 256u);
             if (k && k <= ed_bk_len - ed_bk_pos) {
-                memcpy(ED_BK_RAW + ed_bk_pos, ed_smp_buf, k);
+                memcpy(ed_bk_raw(id) + ed_bk_pos, ed_smp_buf, k);
                 ed_bk_pos += k;
                 ed_bk_ms = fm1_ms;
                 rc = 0;
@@ -609,6 +646,8 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
             ed_str(ENGINES[i]->name, 8);
         ed_b(NTRK);                                       /* v3 */
         ed_b(ED_PROTO);                                   /* v5..: the protocol version (9: FM6 patches) */
+        ed_b(1);                                          /* the fork: 1 = the DX7 voice banks (backup objects 9..12,
+                                                           * PTCH D1..D128) and FX > FILTER KEEP; upstream ends after 9 */
         break;
     case ED_GET:
     case ED_SET:
@@ -721,7 +760,7 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
             return;
         off = (uint32_t)a[1] | (uint32_t)a[2] << 7 | (uint32_t)a[3] << 14;
         len = ed_unpack7(a + 4, na - 4u, ed_smp_buf, 256u);
-        if (off < SMP_USER_DATA || (off & 0xFFu) || !len || off + len > SMP_USER_SIZE)
+        if (off < SMP_USER_DATA || (off & 0xFFu) || !len || off + len > SMP_USER_SIZE_OF(a[0]))
             rc = 1;
         else if (usr_nz[a[0]] || !ed_smp_open[a[0]])
             rc = 4;                                        /* slot in use: SMP_BEGIN first (voices read it) */

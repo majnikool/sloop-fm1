@@ -414,6 +414,9 @@ static void graph_browse(void)
         if (e == NENGINES) {                             /* user preset: "U07" and its name */
             up_slot_label(tag, k);
             up_name(k, nm);
+        } else if (e == PRESET_DX) {                     /* a DX7 voice: its bank and its name */
+            str_cpy(tag, preset_kind(n), sizeof tag);
+            dx_slot_name(k, nm);
         } else {                                         /* its kind: BASS, KEYS, PAD... */
             str_cpy(tag, preset_kind(n), sizeof tag);
             str_cpy(nm, ENGINES[e]->presets[k].name, sizeof nm);
@@ -502,6 +505,8 @@ static void trk_short_name(uint32_t c, char *b)      /* the track's sound, b hol
         str_cpy(b, "DRUM", 13);
     else if (user_of(t) < UP_SLOTS)
         up_name(user_of(t), b);
+    else if (t->eng_req == ENGI_FM6 && t->p[P_E7] >= (int16_t)FM6_DX0)   /* a DX7 voice: its name */
+        dx_slot_name((uint32_t)t->p[P_E7] - FM6_DX0, b);
     else if (e->npresets)
         str_cpy(b, e->presets[t->preset % e->npresets].name, 13);
     else
@@ -772,6 +777,8 @@ static void draw_foot(void)
         str_cpy(pn, DRUM_KIT_NAMES[drum_kit()], sizeof pn);
     else if (user_of(t) < UP_SLOTS)
         up_name(user_of(t), pn);                       /* a user preset */
+    else if (t->eng_req == ENGI_FM6 && t->p[P_E7] >= (int16_t)FM6_DX0)
+        dx_slot_name((uint32_t)t->p[P_E7] - FM6_DX0, pn);   /* a DX7 voice (the fork) */
     else if (e->npresets)
         str_cpy(pn, e->presets[TSEL->preset % e->npresets].name, sizeof pn);
     if (ui.home) {

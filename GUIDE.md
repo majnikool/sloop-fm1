@@ -719,6 +719,14 @@ The **SAMPLE** sets are free recordings (CC0: Versilian Studios VSCO-2 CE and VC
 
 Edit full patches in the web editor's **FM6** panel (Sound page, on an FM6 track): every operator, **Send to track**, **Store in bank** (B1–B27), **Import SysEx** (a DX7 voice or a 32-voice bank: thousands of DX7 and Dexed patches play on the FM-1) and **Export SysEx**. A project keeps the track's **PTCH**, not the patch itself: store an edited patch in the bank to keep it.
 
+
+### The DX7 voice banks (this fork)
+
+FM6's own bank holds 27 patches. This build adds **four banks of 32 DX7 voices** in flash after it — the FM-1's own 128 factory sounds fit exactly — as **PTCH D1–D128**, and puts them **in the PRESETS list by name**, tagged DX1 to DX4, after the factory sounds and before your user presets. Turn PRESETS on a synth track and the loaded voices go by like any other sound; land on one and the track is FM6 on that voice. **Hold HOME and turn PRESETS** to jump a bank at a time; the PRESETS page's KIND knob does the same. TRACKS and the footer show the voice's name.
+
+Loading them is the editor's **Library** page, *DX7 voice banks*: pick a bank, **Load .syx** — a 32-voice bank replaces the bank, a single voice goes into the selected slot — with the device stopped. **Play on this track** puts the selected voice on the track (the FM6 engine, PTCH = the slot). **Export .syx** writes a bank back as a file Dexed opens; **Erase bank** clears it. A **backup** carries the four banks (objects 9–12) and a restore puts them back; on upstream SLOOP a restore skips them.
+
+A project or a user preset keeps the track's **PTCH**, as with every FM6 patch: replace the voice in its slot and the sound follows. The FM6 macros (ALG, FB, MLVL, MRAT, MEG, VMOD, DTUN) work on a bank voice as on any patch. **USR4 is 64 KiB on this build** (80 on upstream): the banks took its last four sectors, so a USR3+4 kit holds about 2 s less.
 ---
 
 ## 18. Effects: master, punch-in, per track

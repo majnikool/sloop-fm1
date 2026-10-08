@@ -33,8 +33,105 @@
 
 #define FM6_POLY 6               /* engine_t.poly */
 #define FM6_BANK_N 27u           /* patch bank slots (fm6_bank.c) */
-#define FM6_NSLOT (FM6_NFACTORY + FM6_BANK_N)   /* PTCH: F1..F8, B1..B27 */
 #define FM6_PACKED 128u
+
+/* ---- the DX7 voice banks (the fork): 128 packed voices in four flash sectors at FL_DX_LO (fm1_flash.h), the
+ * PTCH slots D1..D128 after F1..F8 and B1..B27. Read in place (XIP); written a bank at a time by the editor
+ * (editor.c dx_bank_write: backup objects 9..12, 4096 bytes each — a 32-voice .syx as it is). The loaded
+ * voices are in the PRESETS list by name, tagged DX1..DX4 (ui.c preset_*). An empty or damaged slot plays the
+ * init voice. */
+#define DX_VOICE 128u
+#define DX_BANK_N 32u
+#define DX_USER_BANKS 4u
+#define DX_USER_SLOTS (DX_USER_BANKS * DX_BANK_N)
+#define DX_USER_BASE 0xF7000u
+#ifndef DX_USER_XIP                         /* host tests: a RAM image of the store */
+#define DX_USER_XIP fm1_xip_ptr(DX_USER_BASE)
+#endif
+#define FM6_DX0 (FM6_NFACTORY + FM6_BANK_N)       /* the PTCH value of D1 */
+#define FM6_NSLOT (FM6_DX0 + DX_USER_SLOTS)      /* PTCH: F1..F8, B1..B27, D1..D128 */
+static uint32_t dx_gen;                     /* bumped after a bank is written: parts re-read their voice, the list its map */
+
+/* a packed voice is usable: 7-bit bytes and a printable name. An erased slot (0xFF) or a zeroed one is BLANK; an
+ * 8-bit byte or a control character in the name is damaged. Fields beyond their DX7 range are NOT refused: real
+ * dumps carry 127s (7 of the FM-1's own factory voices do) and fm6_unpack clamps them, as a DX7 does */
+enum { DXV_OK, DXV_BLANK, DXV_BAD };
+static uint32_t dx_voice_check(const uint8_t *p)
+{
+    uint32_t i, ff = 1, zz = 1;
+    for (i = 0; i < DX_VOICE; i++) {
+        ff &= p[i] == 0xFFu;
+        zz &= p[i] == 0u;
+    }
+    if (ff || zz)
+        return DXV_BLANK;
+    for (i = 0; i < DX_VOICE; i++)
+        if (p[i] > 127u || (i >= 118u && p[i] < 32u))
+            return DXV_BAD;
+    return DXV_OK;
+}
+static const uint8_t *dx_user_xip(void) { return DX_USER_XIP; }
+static const uint8_t *dx_user_slot(uint32_t k) { return dx_user_xip() + (k % DX_USER_SLOTS) * DX_VOICE; }
+static int dx_user_ok(uint32_t k) { return dx_voice_check(dx_user_slot(k)) == DXV_OK; }
+static uint32_t dx_bank_used(uint32_t b)             /* voices in bank b that are OK */
+{
+    uint32_t i, n = 0;
+    for (i = 0; i < DX_BANK_N; i++)
+        n += (uint32_t)dx_user_ok(b * DX_BANK_N + i);
+    return n;
+}
+/* the loaded voices as a bitmap, for the PRESETS list (ui.c): recomputed after a bank was written (dx_gen), in
+ * the main loop — a scan of the 128 slots, never from the audio ISR */
+static uint8_t dx_map[DX_USER_SLOTS / 8u];
+static uint32_t dx_map_gen = 0xFFFFFFFFu;
+static void dx_map_refresh(void)
+{
+    uint32_t k;
+    if (dx_map_gen == dx_gen)
+        return;
+    for (k = 0; k < DX_USER_SLOTS; k++) {
+        if (dx_user_ok(k))
+            dx_map[k >> 3] |= (uint8_t)(1u << (k & 7u));
+        else
+            dx_map[k >> 3] &= (uint8_t)~(1u << (k & 7u));
+    }
+    dx_map_gen = dx_gen;
+}
+static int dx_loaded(uint32_t k) { dx_map_refresh(); return k < DX_USER_SLOTS && ((dx_map[k >> 3] >> (k & 7u)) & 1u); }
+static uint32_t dx_count(void)                       /* loaded voices */
+{
+    uint32_t k, n = 0;
+    for (k = 0; k < DX_USER_SLOTS; k++)
+        n += (uint32_t)dx_loaded(k);
+    return n;
+}
+static uint32_t dx_rank(uint32_t slot)               /* loaded voices before slot */
+{
+    uint32_t k, n = 0;
+    for (k = 0; k < slot && k < DX_USER_SLOTS; k++)
+        n += (uint32_t)dx_loaded(k);
+    return n;
+}
+static uint32_t dx_nth(uint32_t n)                   /* slot of the n-th loaded voice (n < dx_count()) */
+{
+    uint32_t k;
+    for (k = 0; k < DX_USER_SLOTS; k++)
+        if (dx_loaded(k) && !n--)
+            return k;
+    return 0;
+}
+/* the name of slot k's voice (INIT VOICE when empty), trimmed; b holds 13 */
+static void dx_slot_name(uint32_t k, char *b)
+{
+    const uint8_t *p = dx_user_ok(k & 127u) ? dx_user_slot(k & 127u) : FM6_INIT;
+    uint32_t i, n = 10;
+    while (n && p[118 + n - 1u] == ' ')
+        n--;
+    for (i = 0; i < n; i++)
+        b[i] = p[118 + i] > 126u || p[118 + i] < 32u ? ' ' : (char)p[118 + i];
+    b[i] = 0;
+}
+static const char *const DX_KIND[DX_USER_BANKS] = {"DX1", "DX2", "DX3", "DX4"};
 
 static uint8_t fm6_patch[NPART][FP_SIZE + 1u];  /* the parts' patches (main loop writes, then fm6_pgen) */
 static volatile uint8_t fm6_pgen[NPART];         /* +1 after each write of fm6_patch[t] */
@@ -161,7 +258,9 @@ static void fm6_slot_get(uint32_t s, uint8_t *pk)
 {
     if (s < FM6_NFACTORY)
         memcpy(pk, FM6_FACTORY[s], FM6_PACKED);
-    else if (s >= FM6_NSLOT || !fm6_bank_read || fm6_bank_read(s - FM6_NFACTORY, pk))
+    else if (s >= FM6_DX0 && s < FM6_NSLOT && dx_user_ok(s - FM6_DX0))   /* a DX7 bank voice (the fork) */
+        memcpy(pk, dx_user_slot(s - FM6_DX0), FM6_PACKED);
+    else if (s >= FM6_DX0 || !fm6_bank_read || fm6_bank_read(s - FM6_NFACTORY, pk))
         memcpy(pk, FM6_INIT, FM6_PACKED);
 }
 
@@ -197,9 +296,16 @@ static void fm6_init(void)
 }
 
 /* main loop: PTCH turned (a knob, the editor, MIDI, a lock) -> that patch */
+static uint32_t fm6_dx_seen;                     /* dx_gen the parts' voices were read at */
 static void fm6_poll(void)
 {
     uint32_t tr;
+    if (fm6_dx_seen != dx_gen) {                    /* a DX7 bank was written: the parts on one re-read their voice */
+        fm6_dx_seen = dx_gen;
+        for (tr = 0; tr < NPART; tr++)
+            if (fm6_slot[tr] >= FM6_DX0 && fm6_slot[tr] != 0xFFu)
+                fm6_slot[tr] = 0xFFu;
+    }
     for (tr = 0; tr < NPART; tr++)
         if (trk[tr].eng_req == ENGI_FM6 && trk[tr].p[P_E7] != fm6_slot[tr])
             fm6_load_slot(tr, (uint32_t)clamp(trk[tr].p[P_E7], 0, FM6_NSLOT - 1));
@@ -334,7 +440,7 @@ static const char *const N_FM6_ALG[] = {"PAT", "1", "2", "3", "4", "5", "6", "7"
 static const char *const N_FM6_PATCH[] = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "B1", "B2", "B3", "B4",
                                           "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15",
                                           "B16", "B17", "B18", "B19", "B20", "B21", "B22", "B23", "B24", "B25",
-                                          "B26", "B27", 0};
+                                          "B26", "B27", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27", "D28", "D29", "D30", "D31", "D32", "D33", "D34", "D35", "D36", "D37", "D38", "D39", "D40", "D41", "D42", "D43", "D44", "D45", "D46", "D47", "D48", "D49", "D50", "D51", "D52", "D53", "D54", "D55", "D56", "D57", "D58", "D59", "D60", "D61", "D62", "D63", "D64", "D65", "D66", "D67", "D68", "D69", "D70", "D71", "D72", "D73", "D74", "D75", "D76", "D77", "D78", "D79", "D80", "D81", "D82", "D83", "D84", "D85", "D86", "D87", "D88", "D89", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98", "D99", "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D108", "D109", "D110", "D111", "D112", "D113", "D114", "D115", "D116", "D117", "D118", "D119", "D120", "D121", "D122", "D123", "D124", "D125", "D126", "D127", "D128", 0};
 _Static_assert(NELEM(N_FM6_PATCH) == FM6_NSLOT + 1u, "a PTCH name per slot");
 
 /* {ALG, FB, MLVL, MRAT, MEG, VMOD, DTUN, PTCH}: the factory patch F1..F8 as it is, DTUN on the pad. The ADSR
