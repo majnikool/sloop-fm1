@@ -704,7 +704,7 @@ const parse = {
     for (let i = 0; i < o.nengines; i++) o.engines.push(r.s());
     o.ntrk = r.i < a.length ? r.b() : 0;             /* v3: tracks (0 = older firmware, one instrument) */
     o.proto = r.i < a.length ? r.b() : 0;            /* v5: the protocol version (0 = older firmware) */
-    o.fork = r.i < a.length ? r.b() : 0;             /* the fork: 1 = the DX7 voice banks and FX > FILTER KEEP (0 = upstream SLOOP) */
+    o.fork = r.i < a.length ? r.b() : 0;             /* the fork: the DX7 voice banks and FX > FILTER KEEP: 1 = four banks (the first builds), n >= 2 = n banks (0 = upstream SLOOP) */
     return o;
   },
   [CMD.GET](a) { const r = new Reader(a); return { scope: r.b(), id: r.b(), value: r.v() }; },
@@ -1595,7 +1595,7 @@ function b64dec(s) {
    6..7 the user preset banks, 32..35 the sample slots USR1..4 (35, USR4: SLOOP 2.4) */
 /* RESTORE: the objects in the order they are written back (banks first; 8 = the FM6 patch bank, firmware v9: a
    file without it restores fine, a v8 device gets no object 8 sent) */
-const BK = { FORMAT: "sloop-backup", VERSION: 1, SAMPLES: [32, 33, 34, 35], RESTORE: [6, 7, 8, 9, 10, 11, 12, 2, 3, 4, 5, 0, 1] };   /* 9..12: the DX7 banks (the fork) */
+const BK = { FORMAT: "sloop-backup", VERSION: 1, SAMPLES: [32, 33, 34, 35], RESTORE: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 2, 3, 4, 5, 0, 1] };   /* 9..16: the DX7 banks (the fork) */
 class BackupError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
 
 /* ---- the fork: the DX7 voice banks. A voice is the 128 packed bytes of a 32-voice bulk dump (VMEM); the FM-1 keeps
@@ -1603,7 +1603,8 @@ class BackupError extends Error { constructor(code, msg) { super(msg); this.code
    0xFF). FM6's PTCH D1..D128 = bank x 32 + slot + 35; the voices are in the PRESETS list by name. The firmware says it
    has them with a byte after the protocol version in INFO (info.fork). */
 const DX7 = {
-  BANKS: 4, N: 32, VOICE: 128, OBJ: 9, PTCH0: 35,
+  BANKS: 8, N: 32, VOICE: 128, OBJ: 9, PTCH0: 35,   /* BANKS: the most a firmware can have; banksOf(info) says how many this one has */
+  banksOf(info) { return !info || !info.fork ? 0 : info.fork === 1 ? 4 : Math.min(info.fork, 8); },
   /* The FM-1's own 128 factory voices, as published by KingParamount/fm1-factory-presets (a CC0 capture of
      M-VAVE's updater; the voices are Yamaha / community material, so they are fetched from there and never
      shipped here). The editor fills an EMPTY bank from these by itself when it connects (dxAutoFill), and
@@ -5967,7 +5968,7 @@ function fm6Names(d = dev) {
   if (alg && alg.label === "ALG" && alg.fmt === F.INT) alg.names = ["PAT", ...Array.from({ length: 32 }, (_, k) => String(k + 1))];
   if (ptch && ptch.label === "PTCH" && ptch.fmt === F.INT) {
     ptch.names = Array.from({ length: d.fm6.factory + d.fm6.bank }, (_, i) => fm6SlotName(i));
-    if (d.info.fork >= 1) for (let i = 0; i < 128; i++) ptch.names.push("D" + (i + 1));   /* the fork's DX7 banks after the FM6 bank */
+    for (let i = 0; i < DX7.N * DX7.banksOf(d.info); i++) ptch.names.push("D" + (i + 1));   /* the fork's DX7 banks after the FM6 bank */
   }
 }
 function fm6Show() {
@@ -6168,8 +6169,9 @@ $("bk-file").addEventListener("change", async () => {
 
 /* ---- the fork: the DX7 voice banks in the Library tab (the work: DX7, bkGetObjects, bkPutObject). Shown with a
    firmware that says so in INFO (info.fork) and has FM6; the banks are read the first time the group shows. */
-let dxBanks = [null, null, null, null], dxBank = 0, dxSel = null, dxLoaded = false, dxLoading = false, dxTried = false;
-const dxOn = () => !!(dev && dev.info && dev.info.fork >= 1 && dev.info.engines.includes("FM6"));
+let dxBanks = new Array(DX7.BANKS).fill(null), dxBank = 0, dxSel = null, dxLoaded = false, dxLoading = false, dxTried = false;
+const dxOn = () => !!(dev && dev.info && DX7.banksOf(dev.info) > 0 && dev.info.engines.includes("FM6"));
+const dxN = () => dev ? DX7.banksOf(dev.info) : 0;              /* the banks this firmware has (4 on the first builds, 8 since test build 16) */
 const dxTrackIsSynth = () => !!(dev && dev.dump && !(dev.info.ntrk && dev.sel === 3));
 function renderDx() {
   const g = $("dxgroup");
@@ -6178,9 +6180,9 @@ function renderDx() {
   if (g.hidden) return;
   if (!dxLoaded && !dxLoading && !dxTried && !libBusy) { dxRefresh(); return; }   /* once; Reload retries */
   const sel = $("dxbank");
-  if (sel.children.length !== DX7.BANKS || sel.dataset.lang !== lang) {
+  if (sel.children.length !== dxN() || sel.dataset.lang !== lang) {
     sel.dataset.lang = lang;
-    sel.replaceChildren(...[0, 1, 2, 3].map((k) => el("option", { value: k, text: `${t("dxBank")} ${k + 1}` })));
+    sel.replaceChildren(...Array.from({ length: dxN() }, (_, k) => el("option", { value: k, text: `${t("dxBank")} ${k + 1}` })));
   }
   sel.value = String(dxBank);
   const voices = DX7.voicesOf(dxBanks[dxBank]), used = voices.filter(Boolean).length;
@@ -6207,8 +6209,8 @@ async function dxRefresh() {
   dxLoading = true;
   dxTried = true;
   await libOp(async () => {
-    const m = await bkGetObjects(rq, [0, 1, 2, 3].map((k) => DX7.OBJ + k));
-    for (let k = 0; k < DX7.BANKS; k++) dxBanks[k] = m.get(DX7.OBJ + k) || null;
+    const m = await bkGetObjects(rq, Array.from({ length: dxN() }, (_, k) => DX7.OBJ + k));
+    for (let k = 0; k < DX7.BANKS; k++) dxBanks[k] = k < dxN() ? m.get(DX7.OBJ + k) || null : null;
     dxLoaded = true;
   });
   dxLoading = false;
@@ -6301,7 +6303,7 @@ $("dxautofill").addEventListener("change", () => {
 });
 $("dxfactory").addEventListener("click", () => {
   if (!dev) return;
-  if (dxBanks.some((b) => DX7.voicesOf(b).some(Boolean)) && !confirm(t("dxConfirmFactory"))) return;
+  if (dxBanks.slice(0, DX7.FACTORY.sha256.length).some((b) => DX7.voicesOf(b).some(Boolean)) && !confirm(t("dxConfirmFactory"))) return;
   dxAutoFill(true);
 });
 $("dxbank").addEventListener("change", () => { dxBank = +$("dxbank").value; dxSel = null; renderDx(); });
