@@ -42,7 +42,7 @@ static uint32_t pow2_q16(int32_t d16)
 #define SMP_USER_BASE 0xA0000u                      /* USR1..USR3: 0xA0000..0xDBFFF */
 #define SMP_USER4_BASE 0xE7000u                     /* USR4 (2.4): the free flash after the FM6 bank, 0xE7000..0xFAFFF */
 #define SMP_USER_SIZE 0x14000u
-#define SMP_USER_SIZE_OF(k) ((k) < 3u ? SMP_USER_SIZE : SMP_USER_SIZE - 8u * 0x1000u)   /* USR4: 48 KiB here, the DX7 banks have its last 32 */
+#define SMP_USER_SIZE_OF(k) ((k) < 3u ? SMP_USER_SIZE : SMP_USER_SIZE - 12u * 0x1000u)   /* USR4: 32 KiB here, the DX7 banks have its last 48 */
 #define SMP_USER_OFF(k) ((k) < 3u ? SMP_USER_BASE + (k) * SMP_USER_SIZE : SMP_USER4_BASE)
 #define SMP_USER_DATA 512u
 #define SMP_USER_MAGIC 0x504D5346u                  /* "FSMP" */

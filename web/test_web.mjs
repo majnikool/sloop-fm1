@@ -524,8 +524,8 @@ async function editorBackup() {
   const info = E.parse[C.INFO](await rq(E.req.info()));
   ok(info.proto >= 6, "backup: INFO protocol v6 or later");
   const ec = readFileSync(join(HERE, "../firmware/src/editor.c"), "utf8");
-  ok(/ED_BK_IDS\[\] = \{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 32, 33, 34, 35\}/.test(ec), "backup: the object ids == editor.c ED_BK_IDS (9..16: the DX7 banks; 35: USR4)");
-  ok(E.DX7.banksOf({ fork: 0 }) === 0 && E.DX7.banksOf({ fork: 1 }) === 4 && E.DX7.banksOf({ fork: 8 }) === 8 && E.DX7.banksOf({ fork: 200 }) === 8 && E.DX7.BANKS === 8, "DX7: the fork byte says how many banks (1 = the first builds' four)");
+  ok(/ED_BK_IDS\[\] = \{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 32, 33, 34, 35\}/.test(ec), "backup: the object ids == editor.c ED_BK_IDS (9..20: the DX7 banks; 35: USR4)");
+  ok(E.DX7.banksOf({ fork: 0 }) === 0 && E.DX7.banksOf({ fork: 1 }) === 4 && E.DX7.banksOf({ fork: 8 }) === 8 && E.DX7.banksOf({ fork: 12 }) === 12 && E.DX7.banksOf({ fork: 200 }) === 12 && E.DX7.BANKS === 12, "DX7: the fork byte says how many banks (1 = the first builds' four)");
   await rq(E.req.upStore(3, "BACKUP ME"));
   await rq(E.req.project(1, 2), { timeout: 4000, retries: 0 });
   const s = Int16Array.from({ length: 3000 }, (_, i) => Math.round(8000 * Math.sin(i / 7)));

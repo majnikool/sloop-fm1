@@ -43,9 +43,9 @@ static inline void *fl_far(void *p) { void *volatile q = p; return q; }
 #define FL_OTA_HI       0x000E5000u
 #define FL_FM6_LO       0x000E5000u                /* the FM6 patch bank (fm6_bank.c), A / B sectors; SLOOP 2.4 */
 #define FL_FM6_HI       0x000E7000u
-#define FL_USR4_LO      0x000E7000u                /* the user sample slot USR4 (eng_sample.c), 48 KiB here (80 in SLOOP 2.4) */
-#define FL_USR4_HI      0x000F3000u
-#define FL_DX_LO        0x000F3000u                /* the DX7 voice banks (eng_fm6.c, the fork): eight sectors, 256 voices */
+#define FL_USR4_LO      0x000E7000u                /* the user sample slot USR4 (eng_sample.c), 32 KiB here (80 in SLOOP 2.4) */
+#define FL_USR4_HI      0x000EF000u
+#define FL_DX_LO        0x000EF000u                /* the DX7 voice banks (eng_fm6.c, the fork): twelve sectors, 384 voices */
 #define FL_DX_HI        0x000FB000u                /* (0xFB000..0xFBFFF stays free) */
 /* [off, off + n) inside [lo, hi), without wrapping: off + n can overflow, and
  * the 1 MiB part ignores the high address bits, so a wrapped range lands low. */

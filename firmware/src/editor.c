@@ -444,7 +444,7 @@ static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such obj
     }
     return 0;
 }
-static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 32, 33, 34, 35};   /* 9..16: the DX7 banks (the fork); 35: USR4 (2.4) */
+static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 32, 33, 34, 35};   /* 9..20: the DX7 banks (the fork); 35: USR4 (2.4) */
 static uint8_t ed_dx_stage[DX_BANK_N * DX_VOICE] __attribute__((aligned(4)));   /* a DX7 bank being restored */
 /* DX7 bank b <- 32 packed voices (data: the staging RAM, 4 KiB; 0 = erase the bank): 0 ok, 4 flash. A damaged
  * voice (an 8-bit byte, a bad name: a write cut by a power loss leaves one) is blanked, not refused, so a bank

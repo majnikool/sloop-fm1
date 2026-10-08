@@ -210,16 +210,17 @@ int main(int argc, char **argv)
         go_home(); frame();
         preset_go(0); fm6_poll();
         {   /* banks claimed from USR4 start empty: whatever an earlier firmware left there is erased once (panel.c) */
-            for (i = 4; i < 8; i++) memcpy(dx_host_store + i * 4096u, dx_host_store, 4096u);   /* banks 5-8 "full" of leftovers */
+            const uint32_t last = DX_USER_BANKS - 1u, extra = DX_USER_BANKS - 4u;
+            for (i = 4; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, dx_host_store, 4096u);   /* banks 5.. "full" of leftovers */
             dx_gen++;
-            check(dx_bank_used(7) == 32u && dx_count() == 33u + 128u, "leftovers: banks 5-8 read as 128 voices before the claim");
+            check(dx_bank_used(last) == 32u && dx_count() == 33u + 32u * extra, "leftovers: the banks above 4 read as voices before the claim");
             dx_layout = 0;
-            check(dx_claim_banks() == 4u && dx_layout == 8u && dx_bank_used(0) == 32u && dx_bank_used(2) == 1u && !dx_bank_used(4) && !dx_bank_used(7)
-                  && dx_count() == 33u, "dx_claim_banks: banks 5-8 erased once, 1-4 kept, the layout recorded");
-            memcpy(dx_host_store + 7u * 4096u, dx_host_store, 4096u); dx_gen++;
-            check(dx_claim_banks() == 0u && dx_bank_used(7) == 32u && dx_layout == 8u, "claimed already: a bank loaded since is left alone");
-            dx_layout = 6;
-            check(dx_claim_banks() == 2u && !dx_bank_used(7) && dx_layout == 8u, "a layout of six: only banks 7 and 8 are claimed");
+            check(dx_claim_banks() == extra && dx_layout == DX_USER_BANKS && dx_bank_used(0) == 32u && dx_bank_used(2) == 1u && !dx_bank_used(4) && !dx_bank_used(last)
+                  && dx_count() == 33u, "dx_claim_banks: the banks above 4 erased once, 1-4 kept, the layout recorded");
+            memcpy(dx_host_store + last * 4096u, dx_host_store, 4096u); dx_gen++;
+            check(dx_claim_banks() == 0u && dx_bank_used(last) == 32u && dx_layout == DX_USER_BANKS, "claimed already: a bank loaded since is left alone");
+            dx_layout = 8;
+            check(dx_claim_banks() == DX_USER_BANKS - 8u && !dx_bank_used(last) && dx_bank_used(4) == 0u && dx_layout == DX_USER_BANKS, "a layout of eight (build 17): only the banks above 8 are claimed");
         }
         memset(dx_host_store, 0xFF, sizeof dx_host_store); dx_gen++;
         check(dx_count() == 0u, "banks erased: the list is as before");

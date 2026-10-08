@@ -350,7 +350,7 @@ armed fill.
 
 ## The fork: the DX7 voice banks and KEEP
 
-`INFO` carries one more byte after the protocol version: the number of DX7 voice banks this build has (**8** since test build 16; **1** on the first builds meant four), and with it FX > FILTER KEEP (upstream SLOOP ends at the version, and an editor reads 0). The banks are **backup objects 9..9+n-1** (9..16), 4096 bytes each (32 packed 128-byte voices, an erased slot 0xFF; length 0 = empty), listed by `BK_LIST`, read by `BK_GET`, written whole by `BK_PUT` (begin with the length and CRC, data, commit; a damaged voice in the data is blanked, not refused; rc 3 while the song plays). FM6's `PTCH` runs to 162: D1..D128 after B27. `FM6_LIST` is unchanged (FM6's own bank only).
+`INFO` carries one more byte after the protocol version: the number of DX7 voice banks this build has (**12** since test build 18, 8 on builds 16–17; **1** on the first builds meant four), and with it FX > FILTER KEEP (upstream SLOOP ends at the version, and an editor reads 0). The banks are **backup objects 9..9+n-1** (9..20), 4096 bytes each (32 packed 128-byte voices, an erased slot 0xFF; length 0 = empty), listed by `BK_LIST`, read by `BK_GET`, written whole by `BK_PUT` (begin with the length and CRC, data, commit; a damaged voice in the data is blanked, not refused; rc 3 while the song plays). FM6's `PTCH` runs to 162: D1..D128 after B27. `FM6_LIST` is unchanged (FM6's own bank only).
 
 ## v9: FM6 patches (SLOOP 2.4)
 

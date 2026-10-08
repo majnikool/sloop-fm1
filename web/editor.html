@@ -561,6 +561,8 @@
           <p class="bar" style="margin-top:6px">
             <label><input type="checkbox" id="dxautofill"> <span data-t="dxAutoFill"></span></label>
             <button id="dxfactory" data-t="dxFactory" data-ic="symbol_download"></button>
+            <button id="dxloadall" data-t="dxLoadAll" data-ic="symbol_upload"></button>
+            <input type="file" id="dxfiles" accept=".syx,.SYX,application/octet-stream" multiple hidden>
           </p>
           <div id="dxauto" class="dim"></div>
         </div>
@@ -1595,7 +1597,7 @@ function b64dec(s) {
    6..7 the user preset banks, 32..35 the sample slots USR1..4 (35, USR4: SLOOP 2.4) */
 /* RESTORE: the objects in the order they are written back (banks first; 8 = the FM6 patch bank, firmware v9: a
    file without it restores fine, a v8 device gets no object 8 sent) */
-const BK = { FORMAT: "sloop-backup", VERSION: 1, SAMPLES: [32, 33, 34, 35], RESTORE: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 2, 3, 4, 5, 0, 1] };   /* 9..16: the DX7 banks (the fork) */
+const BK = { FORMAT: "sloop-backup", VERSION: 1, SAMPLES: [32, 33, 34, 35], RESTORE: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 2, 3, 4, 5, 0, 1] };   /* 9..20: the DX7 banks (the fork) */
 class BackupError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
 
 /* ---- the fork: the DX7 voice banks. A voice is the 128 packed bytes of a 32-voice bulk dump (VMEM); the FM-1 keeps
@@ -1603,8 +1605,8 @@ class BackupError extends Error { constructor(code, msg) { super(msg); this.code
    0xFF). FM6's PTCH D1..D128 = bank x 32 + slot + 35; the voices are in the PRESETS list by name. The firmware says it
    has them with a byte after the protocol version in INFO (info.fork). */
 const DX7 = {
-  BANKS: 8, N: 32, VOICE: 128, OBJ: 9, PTCH0: 35,   /* BANKS: the most a firmware can have; banksOf(info) says how many this one has */
-  banksOf(info) { return !info || !info.fork ? 0 : info.fork === 1 ? 4 : Math.min(info.fork, 8); },
+  BANKS: 12, N: 32, VOICE: 128, OBJ: 9, PTCH0: 35,   /* BANKS: the most a firmware can have; banksOf(info) says how many this one has */
+  banksOf(info) { return !info || !info.fork ? 0 : info.fork === 1 ? 4 : Math.min(info.fork, 12); },
   /* The FM-1's own 128 factory voices, as published by KingParamount/fm1-factory-presets (a CC0 capture of
      M-VAVE's updater; the voices are Yamaha / community material, so they are fetched from there and never
      shipped here). The editor fills an EMPTY bank from these by itself when it connects (dxAutoFill), and
@@ -3047,6 +3049,10 @@ const TEXT = {
     dxAutoFill: "空のバンクに FM-1 の工場出荷音色を自動で入れる", dxFactory: "工場出荷バンクを読み込む", dxAutoBusy: "工場出荷バンクを取得中…",
     dxAutoOk: "バンク {n}: 工場出荷音色 {v} 個を書き込みました", dxAutoFail: "バンク {n}: 失敗 — {why}", dxAutoRetry: "再試行", dxAutoFrom: "取得元:",
     dxConfirmFactory: "4 つのバンクの音色をすべて工場出荷音色に置き換えますか？",
+    dxLoadAll: "複数の .syx を空のバンクへ読み込む", dxBatchVoice: "1 音色のファイルです（32 音色のバンクではありません）: スロットへは「.syx を読み込む」を使ってください",
+    dxBatchNone: "工場出荷の 4 バンクより上に空のバンクがありません: 先に消去するか、「.syx を読み込む」で上書きしてください",
+    dxBatchMany: "ファイル {n} 個に対して空のバンクは {m} 個（5〜{b}）: 何も書き込みませんでした — バンクを消去するかファイルを減らしてください",
+    dxBatchOk: "{file} → バンク {n}: {v} 音色を書き込みました", dxBatchBad: "{file}: {why}",
     dxConfirmErase: "バンク {n} を消去しますか？", dxConfirmBank: "バンク {n} の全音色を置き換えますか？", dxConfirmVoice: "{name} を置き換えますか？",
 
     fm6Init: "初期音色", fm6Voice: "ボイス", fm6Ops: "オペレーター", fm6Carriers: "キャリア", fm6Feedback: "フィードバック",
@@ -3203,6 +3209,10 @@ const TEXT = {
     dxAutoFill: "Fill empty banks with the FM-1's factory voices by itself", dxFactory: "Load the factory banks", dxAutoBusy: "fetching the factory banks…",
     dxAutoOk: "Bank {n}: {v} factory voices written", dxAutoFail: "Bank {n}: FAILED — {why}", dxAutoRetry: "Retry", dxAutoFrom: "from",
     dxConfirmFactory: "Replace the voices in all four banks with the factory banks?",
+    dxLoadAll: "Load several .syx into the empty banks", dxBatchVoice: "a single voice, not a 32-voice bank — use Load .syx on a slot",
+    dxBatchNone: "No empty bank above the factory four: erase one first, or load over a bank with Load .syx",
+    dxBatchMany: "{n} files but only {m} empty banks (5–{b}): nothing written — erase a bank or choose fewer files",
+    dxBatchOk: "{file} → Bank {n}: {v} voices written", dxBatchBad: "{file}: {why}",
     dxConfirmErase: "Erase bank {n}?", dxConfirmBank: "Replace every voice in bank {n}?", dxConfirmVoice: "Replace {name}?",
 
     fm6Init: "Init voice", fm6Voice: "Voice", fm6Ops: "Operators", fm6Carriers: "carriers", fm6Feedback: "feedback",
@@ -6180,9 +6190,14 @@ function renderDx() {
   if (g.hidden) return;
   if (!dxLoaded && !dxLoading && !dxTried && !libBusy) { dxRefresh(); return; }   /* once; Reload retries */
   const sel = $("dxbank");
-  if (sel.children.length !== dxN() || sel.dataset.lang !== lang) {
-    sel.dataset.lang = lang;
-    sel.replaceChildren(...Array.from({ length: dxN() }, (_, k) => el("option", { value: k, text: `${t("dxBank")} ${k + 1}` })));
+  /* each bank's entry says what it holds: its voice count and its first voice, so twelve banks read as a list of folders */
+  const labels = Array.from({ length: dxN() }, (_, k) => {
+    const vs = dxLoaded ? DX7.voicesOf(dxBanks[k]) : [], n = vs.filter(Boolean).length, first = vs.find(Boolean);
+    return `${t("dxBank")} ${k + 1}${n ? ` · ${n} · ${DX7.name(first).trim()}` : dxLoaded ? ` · ${t("empty")}` : ""}`;
+  });
+  if (sel.dataset.labels !== labels.join("\n")) {
+    sel.dataset.labels = labels.join("\n");
+    sel.replaceChildren(...labels.map((text, k) => el("option", { value: k, text })));
   }
   sel.value = String(dxBank);
   const voices = DX7.voicesOf(dxBanks[dxBank]), used = voices.filter(Boolean).length;
@@ -6256,7 +6271,7 @@ async function dxWrite(k, voices, msg) {
    the button. A bank that has voices is never touched without the confirm. Each bank reports its own line,
    and a failure names the reason and offers a retry — the endpoint is someone else's repository. */
 const DX_AUTO_KEY = "dxAutoFill";
-let dxAutoState = [null, null, null, null], dxAutoBusy = false;
+let dxAutoState = [null, null, null, null], dxAutoBusy = false, dxBatch = [];   /* dxBatch: the last 'load several' run, one line per file */
 const dxAutoWanted = () => { try { return localStorage.getItem(DX_AUTO_KEY) !== "off"; } catch (e) { return true; } };
 function renderDxAuto() {
   const box = $("dxauto");
@@ -6273,8 +6288,44 @@ function renderDxAuto() {
     rows.push(d);
   });
   if (rows.length) rows.push(el("div", { text: `${t("dxAutoFrom")} ${DX7.FACTORY.repo}` }));
+  dxBatch.forEach((b) => rows.push(el("div", { class: b.ok ? null : "bad", text: b.text })));
   box.replaceChildren(...rows);
 }
+/* Several .syx at once: every file is parsed and checked first, then the banks go into the EMPTY banks above
+   the factory four in file-name order. Too many files for the empty banks writes nothing and says so; a file
+   that is not a 32-voice bank is reported and skipped, the rest still load. */
+$("dxloadall").addEventListener("click", () => { if (dev) { $("dxfiles").value = ""; $("dxfiles").click(); } });
+$("dxfiles").addEventListener("change", async () => {
+  const files = [...$("dxfiles").files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  $("dxfiles").value = "";
+  if (!files.length || !dev || !dxLoaded || libBusy) return;
+  const free = [];
+  for (let k = DX7.FACTORY.sha256.length; k < dxN(); k++) if (!DX7.voicesOf(dxBanks[k]).some(Boolean)) free.push(k);
+  dxBatch = [];
+  const parsed = [];
+  for (const f of files) {
+    try {
+      const syx = DX7.parse(new Uint8Array(await f.arrayBuffer()));
+      if (syx.kind !== "bank") throw new Error(t("dxBatchVoice"));
+      for (const v of syx.voices) { const why = DX7.check(v); if (why) throw new Error(`${DX7.name(v).trim()}: ${why}`); }
+      parsed.push({ f, voices: syx.voices });
+    } catch (e) { dxBatch.push({ ok: false, text: t("dxBatchBad").replace("{file}", f.name).replace("{why}", e.message) }); }
+  }
+  if (parsed.length && !free.length) dxBatch.push({ ok: false, text: t("dxBatchNone") });
+  else if (parsed.length > free.length) dxBatch.push({ ok: false, text: t("dxBatchMany").replace("{n}", parsed.length).replace("{m}", free.length).replace("{b}", dxN()) });
+  else {
+    for (let i = 0; i < parsed.length; i++) {
+      const k = free[i];
+      try {
+        await dxWrite(k, parsed[i].voices, null);
+        dxBatch.push({ ok: true, text: t("dxBatchOk").replace("{file}", parsed[i].f.name).replace("{n}", k + 1).replace("{v}", parsed[i].voices.filter(Boolean).length) });
+      } catch (e) { dxBatch.push({ ok: false, text: t("dxBatchBad").replace("{file}", parsed[i].f.name).replace("{why}", e.message) }); }
+      renderDxAuto();
+    }
+    if (parsed.length) { dxBank = free[0]; dxSel = null; }
+  }
+  renderDx();
+});
 async function dxAutoFill(force, only) {
   if (!dev || !dxLoaded || dxAutoBusy || libBusy) return;
   dxAutoBusy = true;
