@@ -71,13 +71,13 @@
 </div><button class="lang" id="lang"></button></div>
   <div class="strip"><i></i><i></i><i></i><i></i></div>
   
-    <p><b>TEST BUILD 13 — SLOOP 2.3 + the DX7 engine + the PUNCH latch option.</b> Built 2026-10-06 from <a href="https://github.com/majnikool/sloop-fm1/commits/test-build">test-build</a> commit <code>f14a4d7</code>; the FM-1 shows <b>2.3-DX7 BETA</b> and this date under HOME menu → ABOUT. New in 13: a latched punch-in shows in the headers (a disc and its name under the loop position on TRACKS, and in the top bar of the sound pages). Not a SLOOP release: the <a href="https://github.com/majnikool/sloop-fm1/tree/dx7">dx7</a> and <a href="https://github.com/majnikool/sloop-fm1/tree/punch-latch">punch-latch</a> branches merged (upstream PRs <a href="https://github.com/isod89/sloop-fm1/pull/27">#27</a> and <a href="https://github.com/isod89/sloop-fm1/pull/28">#28</a>). Back up with the editor first (Projects → Save a backup). To go back, install <a href="https://isod89.github.io/sloop-fm1/">SLOOP 2.3</a> from its own page.</p>
+    <p><b>TEST BUILD 14 — SLOOP 2.4.1 + PRESETS by kind.</b> Built 2026-10-08 from <a href="https://github.com/majnikool/sloop-fm1/commits/kind-jump">kind-jump</a> commit <code>48cb1bb</code>: upstream 2.4.1 (FM6 six-operator FM with DX7 import, parameter locks, fills, the new editor…) plus one addition — hold <b>HOME</b> and turn <b>PRESETS</b> to jump a kind at a time, and a <b>KIND</b> knob on the PRESETS page. The FM-1 shows <b>2.4-KIND1 BETA</b> under HOME menu → ABOUT. Not a SLOOP release. <b>Coming from the 2.3-DX7 test builds:</b> back up with the editor first; 2.4 stores its FM6 bank and the USR4 sample slot in the flash sectors the DX7 banks used, so those banks are gone after this install — the four factory <code>.syx</code> files go back in through the editor's Import SysEx (27 slots). To go back, install <a href="https://isod89.github.io/sloop-fm1/">SLOOP 2.4.1</a> from its own page.</p>
 
   <h1>Firmware for the M-VAVE FM-1</h1>
-  <p class="lead">A groovebox you play live: four tracks — three synths and a drum machine — 9 synth engines, 68 sounds, 37 drum kits from 808 to techno, amapiano and ambient, your own samples, 16 punch-in effects. House, techno, hip-hop, drum &amp; bass, synthwave, lo-fi, ambient: make what you want. No factory patterns, nothing to load: everything you hear, you play.</p>
+  <p class="lead">A groovebox you play live: four tracks — three synths and a drum machine — 10 synth engines (with six-operator FM and DX7 patches), 76 sounds, 37 drum kits from 808 to techno, amapiano and ambient, your own samples and drum kits, 16 punch-in effects. House, techno, hip-hop, drum &amp; bass, synthwave, lo-fi, ambient: make what you want. No factory patterns, nothing to load: everything you hear, you play.</p>
   <div class="tiles">
-    <div class="tile" style="--c: var(--blue)"><b>68</b><span>sounds, 9 engines, your samples</span></div>
-    <div class="tile" style="--c: var(--green)"><b>37</b><span>drum kits, 909 to afro</span></div>
+    <div class="tile" style="--c: var(--blue)"><b>76</b><span>sounds, 10 engines, your samples</span></div>
+    <div class="tile" style="--c: var(--green)"><b>37</b><span>drum kits, 909 to afro, + your own</span></div>
     <div class="tile" style="--c: var(--yellow)"><b>16</b><span>punch-in fx: hold fx + key</span></div>
     <div class="tile" style="--c: var(--orange)"><b>rec</b><span>no click: the loop follows you</span></div>
   </div>
@@ -480,7 +480,7 @@ const sayK = (k, arg = "") => { lastKey = k; lastArg = arg; $("status").textCont
 const say = (txt) => { lastKey = null; $("status").textContent = txt; };
 const log = (t) => { $("log").textContent += t + "\n"; };
 let image = null;
-const meta = {"version": "2.3-dx7", "product": "FM-1_923", "pkg": "../../firmware/sloop-2.3-dx7.fwsc", "sha256": "bd9f6b2ce7db2c3e88054c11e1705c532ea9e6be7acdb6e8a3a5507f58897481"};
+const meta = {"version": "2.4-kind1", "product": "FM-1_924", "pkg": "../../firmware/sloop-2.4-kind1.fwsc", "sha256": "848044ca0a3b5716439827e8b49fb8fc713b0c7348e6bd27437163d97b2e98d7"};
 
 let writing = false, stock = null;
 const lockAll = (on) => {
