@@ -117,6 +117,8 @@
   #status { margin-left: auto; color: var(--dim); text-align: right; min-height: 20px; overflow-wrap: anywhere; max-width: 70%;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   #status.err { color: var(--red); }
+  #dxauto .bad { color: var(--red); }
+  #dxauto button { margin-left: 6px; }
   .trackbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
   .trackbar > .dim { text-transform: lowercase; margin-right: 4px; }
   #trackbtns { gap: 8px; }
@@ -556,6 +558,11 @@
             <button id="dxrefresh" data-t="reload" data-ic="control_arrow_loop"></button>
             <input type="file" id="dxfile" accept=".syx,.SYX,application/octet-stream" hidden>
           </p>
+          <p class="bar" style="margin-top:6px">
+            <label><input type="checkbox" id="dxautofill"> <span data-t="dxAutoFill"></span></label>
+            <button id="dxfactory" data-t="dxFactory" data-ic="symbol_download"></button>
+          </p>
+          <div id="dxauto" class="dim"></div>
         </div>
         <div class="card">
           <h2 data-t="bank" data-ic="port_disk"></h2>
@@ -1597,6 +1604,39 @@ class BackupError extends Error { constructor(code, msg) { super(msg); this.code
    has them with a byte after the protocol version in INFO (info.fork). */
 const DX7 = {
   BANKS: 4, N: 32, VOICE: 128, OBJ: 9, PTCH0: 35,
+  /* The FM-1's own 128 factory voices, as published by KingParamount/fm1-factory-presets (a CC0 capture of
+     M-VAVE's updater; the voices are Yamaha / community material, so they are fetched from there and never
+     shipped here). The editor fills an EMPTY bank from these by itself when it connects (dxAutoFill), and
+     each file is pinned by size and SHA-256: a file that changed upstream is refused with the reason, never
+     written. The homelab's sloop-release-watch.py reads THIS block from the published editor page and probes
+     the same four files daily, so a broken link or a changed file is reported without anyone opening the editor. */
+  FACTORY: {
+    repo: "KingParamount/fm1-factory-presets",
+    url: "https://raw.githubusercontent.com/KingParamount/fm1-factory-presets/main/banks/FM-1_factory_bank{n}.syx",
+    size: 4104,
+    sha256: [
+      "6a46c1eed389a775a1747f4488261c848e9ad43fdec6250ce2c8e004020428f9",
+      "0f076624f75451ff5f1bbe92e44a8643c74ea9c56ccaaf190bf730d8ab730264",
+      "5eab4699b4c50c82986d17726ea9997230efc1c5a7745ed7d251d31313e8b99d",
+      "8142fb69249ad1d78a4665ebb2eb33f4e1b9689d2dfabce97077cc9da5d30308",
+    ],
+  },
+  /* Fetch factory bank k (0..3), verify it, return its 32 voices. Throws with a reason a person can act on. */
+  async fetchFactory(k, { fetch, subtle, factory = DX7.FACTORY } = {}) {
+    const url = factory.url.replace("{n}", k + 1);
+    let r;
+    try { r = await fetch(url); } catch (e) { throw new Error(`network error fetching ${url} (offline, or raw.githubusercontent.com unreachable): ${e.message}`); }
+    if (!r.ok) throw new Error(`HTTP ${r.status} from ${url}`);
+    const bytes = new Uint8Array(await r.arrayBuffer());
+    if (bytes.length !== factory.size) throw new Error(`size ${bytes.length} bytes, expected ${factory.size}: the file at ${url} changed`);
+    if (!subtle) throw new Error("no WebCrypto on this page (not https): the file cannot be verified");
+    const hex = [...new Uint8Array(await subtle.digest("SHA-256", bytes))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    if (hex !== factory.sha256[k]) throw new Error(`checksum mismatch (${hex.slice(0, 12)}…) for ${url}: the file changed upstream; the pinned checksum needs a look`);
+    const syx = DX7.parse(bytes);
+    if (syx.kind !== "bank") throw new Error(`${url} is not a 32-voice bank`);
+    for (const v of syx.voices) { const why = DX7.check(v); if (why) throw new Error(`${DX7.name(v)}: ${why}`); }
+    return syx.voices;
+  },
   INIT: Uint8Array.from([99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 56, 0, 0, 2, 0, 99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 56, 0, 0, 2, 0,
     99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 56, 0, 0, 2, 0, 99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 56, 0, 0, 2, 0,
     99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 56, 0, 0, 2, 0, 99, 99, 99, 99, 99, 99, 99, 0, 39, 0, 0, 0, 56, 0, 99, 2, 0,
@@ -3002,6 +3042,9 @@ const TEXT = {
     dxTitle: "DX7 音色バンク", dxHelp: "FM6 のバンクの後に、本体に 32 音色 × 4 バンクの DX7 音色を置けます（PTCH の D1〜D128。PRESETS のリストにも名前で並び、DX1〜DX4 のタグが付きます）。32 音色の .syx をバンクへ、または 1 音色をスロットへ読み込みます（本体を停止してから）。書き出しは Dexed で開ける .syx です。バックアップに含まれます。",
     dxBank: "バンク", dxPlay: "このトラックで鳴らす", dxLoad: ".syx を読み込む", dxExport: ".syx に書き出し", dxErase: "バンクを消去", dxLoading: "読み込み中…",
     dxNoTrack: "先にシンセトラックを選んでください", dxWritten: "バンクを書き込みました", dxErased: "バンクを消去しました", dxBad: "DX7 のファイルではありません: ", dxFull: "バンクが一杯です: 置き換えるスロットを選んでください",
+    dxAutoFill: "空のバンクに FM-1 の工場出荷音色を自動で入れる", dxFactory: "工場出荷バンクを読み込む", dxAutoBusy: "工場出荷バンクを取得中…",
+    dxAutoOk: "バンク {n}: 工場出荷音色 {v} 個を書き込みました", dxAutoFail: "バンク {n}: 失敗 — {why}", dxAutoRetry: "再試行", dxAutoFrom: "取得元:",
+    dxConfirmFactory: "4 つのバンクの音色をすべて工場出荷音色に置き換えますか？",
     dxConfirmErase: "バンク {n} を消去しますか？", dxConfirmBank: "バンク {n} の全音色を置き換えますか？", dxConfirmVoice: "{name} を置き換えますか？",
 
     fm6Init: "初期音色", fm6Voice: "ボイス", fm6Ops: "オペレーター", fm6Carriers: "キャリア", fm6Feedback: "フィードバック",
@@ -3154,6 +3197,9 @@ const TEXT = {
     dxTitle: "DX7 voice banks", dxHelp: "Four banks of 32 DX7 voices on the FM-1, after FM6's own bank: PTCH D1–D128, and in the PRESETS list by name, tagged DX1–DX4. Load a 32-voice .syx into a bank, or one voice into a slot (stop the device first). Export writes a bank back as a .syx Dexed opens. A backup carries the banks.",
     dxBank: "Bank", dxPlay: "Play on this track", dxLoad: "Load .syx", dxExport: "Export .syx", dxErase: "Erase bank", dxLoading: "reading…",
     dxNoTrack: "Select a synth track first", dxWritten: "Bank written", dxErased: "Bank erased", dxBad: "Not a DX7 file: ", dxFull: "The bank is full: pick a slot to replace",
+    dxAutoFill: "Fill empty banks with the FM-1's factory voices by itself", dxFactory: "Load the factory banks", dxAutoBusy: "fetching the factory banks…",
+    dxAutoOk: "Bank {n}: {v} factory voices written", dxAutoFail: "Bank {n}: FAILED — {why}", dxAutoRetry: "Retry", dxAutoFrom: "from",
+    dxConfirmFactory: "Replace the voices in all four banks with the factory banks?",
     dxConfirmErase: "Erase bank {n}?", dxConfirmBank: "Replace every voice in bank {n}?", dxConfirmVoice: "Replace {name}?",
 
     fm6Init: "Init voice", fm6Voice: "Voice", fm6Ops: "Operators", fm6Carriers: "carriers", fm6Feedback: "feedback",
@@ -6153,6 +6199,7 @@ function renderDx() {
   $("dxexport").disabled = !used || !idle;
   $("dxerase").disabled = !used || !idle;
   $("dxrefresh").disabled = !idle;
+  renderDxAuto();
 }
 async function dxRefresh() {
   dxLoading = true;
@@ -6164,6 +6211,7 @@ async function dxRefresh() {
   });
   dxLoading = false;
   renderDx();
+  if (dxLoaded && dxAutoWanted()) dxAutoFill(false);          /* empty banks fill themselves (DX7.FACTORY) */
 }
 async function dxPlay() {                               /* the FM6 engine on this track, PTCH = the slot */
   if (!dxTrackIsSynth() || dxSel == null) { sayK("dxNoTrack"); return; }
@@ -6183,9 +6231,64 @@ async function dxWrite(k, voices, msg) {
     const o = DX7.objectOf(voices);
     await bkPutObject(rq, DX7.OBJ + k, o);
     dxBanks[k] = o;
-    sayK(msg);
+    if (msg) sayK(msg);
   });
 }
+
+/* The factory voices, fetched by the editor itself (DX7.FACTORY): every empty bank on connect, or all four on
+   the button. A bank that has voices is never touched without the confirm. Each bank reports its own line,
+   and a failure names the reason and offers a retry — the endpoint is someone else's repository. */
+const DX_AUTO_KEY = "dxAutoFill";
+let dxAutoState = [null, null, null, null], dxAutoBusy = false;
+const dxAutoWanted = () => { try { return localStorage.getItem(DX_AUTO_KEY) !== "off"; } catch (e) { return true; } };
+function renderDxAuto() {
+  const box = $("dxauto");
+  if (!box) return;
+  $("dxautofill").checked = dxAutoWanted();
+  $("dxfactory").disabled = dxAutoBusy || libBusy || !dxLoaded;
+  const rows = [];
+  if (dxAutoBusy) rows.push(el("div", { text: t("dxAutoBusy") }));
+  dxAutoState.forEach((st, k) => {
+    if (!st) return;
+    const d = el("div", { class: st.ok ? null : "bad",
+      text: st.ok ? t("dxAutoOk").replace("{n}", k + 1).replace("{v}", st.n) : t("dxAutoFail").replace("{n}", k + 1).replace("{why}", st.why) });
+    if (!st.ok) { const b = el("button", { text: t("dxAutoRetry") }); b.addEventListener("click", () => dxAutoFill(false, [k])); d.append(b); }
+    rows.push(d);
+  });
+  if (rows.length) rows.push(el("div", { text: `${t("dxAutoFrom")} ${DX7.FACTORY.repo}` }));
+  box.replaceChildren(...rows);
+}
+async function dxAutoFill(force, only) {
+  if (!dev || !dxLoaded || dxAutoBusy || libBusy) return;
+  dxAutoBusy = true;
+  renderDxAuto();
+  try {
+    for (const k of only || [0, 1, 2, 3]) {
+      if (!force && DX7.voicesOf(dxBanks[k]).some(Boolean)) continue;
+      try {
+        const voices = await DX7.fetchFactory(k, { fetch: (u) => fetch(u, { cache: "no-store" }), subtle: globalThis.crypto && crypto.subtle });
+        await dxWrite(k, voices, null);
+        dxAutoState[k] = { ok: true, n: voices.filter(Boolean).length };
+      } catch (e) {
+        dxAutoState[k] = { ok: false, why: e.message };
+        console.warn(`DX7 factory bank ${k + 1}:`, e);
+      }
+      renderDxAuto();
+    }
+  } finally {
+    dxAutoBusy = false;
+    renderDx();
+  }
+}
+$("dxautofill").addEventListener("change", () => {
+  try { localStorage.setItem(DX_AUTO_KEY, $("dxautofill").checked ? "on" : "off"); } catch (e) { console.warn(e); }
+  if ($("dxautofill").checked) dxAutoFill(false);
+});
+$("dxfactory").addEventListener("click", () => {
+  if (!dev) return;
+  if (dxBanks.some((b) => DX7.voicesOf(b).some(Boolean)) && !confirm(t("dxConfirmFactory"))) return;
+  dxAutoFill(true);
+});
 $("dxbank").addEventListener("change", () => { dxBank = +$("dxbank").value; dxSel = null; renderDx(); });
 $("dxrefresh").addEventListener("click", () => { if (dev) dxRefresh(); });
 $("dxplay").addEventListener("click", dxPlay);

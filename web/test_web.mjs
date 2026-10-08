@@ -1122,6 +1122,23 @@ console.log(failed ? `WEB TESTS FAILED (${failed})` : "web tests passed");
   }
   const one = D.parse(single);
   ok(one.kind === "voice" && eq(one.voices[0], D.INIT), "DX7: a single-voice dump packs back to the same 128 bytes");
+
+  /* the factory banks fetched by the editor itself: pinned, verified, refused with a reason */
+  const F = D.FACTORY;
+  ok(F.sha256.length === 4 && F.sha256.every((h) => /^[0-9a-f]{64}$/.test(h)) && F.size === 4104 && F.url.includes("{n}") && F.url.startsWith("https://raw.githubusercontent.com/" + F.repo + "/"),
+    "DX7: the factory banks are pinned by four SHA-256 and a size, on the named repository");
+  const { webcrypto } = await import("node:crypto");
+  const hexOf = async (b) => [...new Uint8Array(await webcrypto.subtle.digest("SHA-256", b))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const fac = { ...F, url: "mock://bank{n}.syx", sha256: [await hexOf(syx), F.sha256[1], F.sha256[2], F.sha256[3]] };
+  const resp = (status, bytes) => async () => ({ ok: status === 200, status, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) });
+  const got = await D.fetchFactory(0, { fetch: resp(200, syx), subtle: webcrypto.subtle, factory: fac });
+  ok(got.length === 32 && D.name(got[31]) === "VOICE 32", "DX7: a factory bank that matches its pinned checksum is accepted");
+  const fails = async (opts) => { try { await D.fetchFactory(0, { subtle: webcrypto.subtle, factory: fac, ...opts }); return ""; } catch (e) { return e.message; } };
+  ok(/^HTTP 404 from mock:\/\/bank1\.syx/.test(await fails({ fetch: resp(404, syx) })), "DX7: an HTTP error names the status and the URL");
+  ok(/^network error/.test(await fails({ fetch: async () => { throw new Error("Failed to fetch"); } })), "DX7: a network failure says so");
+  ok(/^size 4103 bytes, expected 4104/.test(await fails({ fetch: resp(200, syx.subarray(0, 4103)) })), "DX7: a file of the wrong size is refused with both sizes");
+  ok(/^checksum mismatch/.test(await fails({ fetch: resp(200, syx), factory: { ...fac, sha256: [F.sha256[0], ...fac.sha256.slice(1)] } })), "DX7: a changed file is refused by its checksum, never written");
+  ok(/no WebCrypto/.test(await fails({ fetch: resp(200, syx), subtle: null })), "DX7: a page without WebCrypto refuses rather than skipping the check");
 }
 
 process.exit(failed ? 1 : 0);

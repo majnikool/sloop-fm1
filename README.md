@@ -130,7 +130,7 @@ Keys 1, 5, 9 and 13 glow dimly while a layer is held: the first key of each row 
 
 ### Synths and sounds
 
-- **The DX7 voice banks (this fork):** four banks of 32 DX7 voices on the FM-1 after FM6's own bank (PTCH D1–D128), loaded as `.syx` from the editor's Library page, **in the PRESETS list by name** (tagged DX1–DX4), carried by a backup. The FM-1's 128 factory sounds fit exactly. See GUIDE.md.
+- **The DX7 voice banks (this fork):** four banks of 32 DX7 voices on the FM-1 after FM6's own bank (PTCH D1–D128), filled by the editor itself from the recovered factory files (pinned by checksum) or loaded as `.syx`, **in the PRESETS list by name** (tagged DX1–DX4), carried by a backup. The FM-1's 128 factory sounds fit exactly. See GUIDE.md.
 
 - **Ten engines:** analog, 4-op FM, **6-op FM with DX7 patches (FM6, 2.4)**, phase distortion, three-oscillator, tonewheel organ, formant voice, granular, lo-fi chip, sampler.
 - **76 sounds, browsed by kind** — basses (sliding 808s, acid 303, reese, FM), keys (Rhodes, a real Steinway grand, house and afro keys), organs, pads, leads (supersaw, talkbox), plucks and bells, stabs and dub chords — every one level-matched. **32 slots** for your own presets.
