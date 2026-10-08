@@ -83,12 +83,12 @@ int main(void)
           !strcmp(DRUM_KIT_NAMES[DRUM_PAIR], "USR3+4") && DRUM_PAIR == DRUM_KITS - 1u && !strcmp(DRUM_KIT_NAMES[DRUM_SAMPLED], "808"),
           "KIT: USR1..USR4, USR3+4 after the synthesised kits (the old kit numbers kept)");
     check(SMP_USER_OFF(0u) == 0xA0000u && SMP_USER_OFF(2u) == 0xC8000u && SMP_USER_OFF(3u) == 0xE7000u &&
-          SMP_USER_SIZE_OF(2u) == 0x14000u && SMP_USER_SIZE_OF(3u) == 0x10000u &&
-          FL_STORE_OK(0xE7000u, 0x10000u) && !FL_STORE_OK(0xE7000u, 0x10001u) && FL_STORE_OK(0xF7000u, 0x4000u) &&
-          !FL_STORE_OK(0xF7000u, 0x4001u) && !FL_STORE_OK(0xFB000u, 0x1000u) &&
+          SMP_USER_SIZE_OF(2u) == 0x14000u && SMP_USER_SIZE_OF(3u) == 0xC000u &&
+          FL_STORE_OK(0xE7000u, 0xC000u) && !FL_STORE_OK(0xE7000u, 0xC001u) && FL_STORE_OK(0xF3000u, 0x8000u) &&
+          !FL_STORE_OK(0xF3000u, 0x8001u) && !FL_STORE_OK(0xFB000u, 0x1000u) &&
           SMP_USER_OFF(3u) >= FL_FM6_HI && SMP_USER_OFF(3u) + SMP_USER_SIZE_OF(3u) == FL_DX_LO && FL_DX_HI <= FL_GLOB_LO &&
           !strcmp(SMP_ALL_NAMES[SMP_NSETS + 3u], "USR4"),
-          "USR4: 0xE7000..0xF6FFF (64 KiB, the fork), the DX7 banks to 0xFAFFF after it, before the settings; the store may write both, not past them");
+          "USR4: 0xE7000..0xF2FFF (48 KiB, the fork), the eight DX7 banks to 0xFAFFF after it, before the settings; the store may write both, not past them");
 
     TDRUM->p[P_E0] = (int16_t)DRUM_USR;                  /* USR1 */
     quiet();

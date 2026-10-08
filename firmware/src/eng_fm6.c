@@ -42,14 +42,14 @@
  * init voice. */
 #define DX_VOICE 128u
 #define DX_BANK_N 32u
-#define DX_USER_BANKS 4u
+#define DX_USER_BANKS 8u                           /* 1-4 the factory voices (the editor fills them), 5-8 yours */
 #define DX_USER_SLOTS (DX_USER_BANKS * DX_BANK_N)
-#define DX_USER_BASE 0xF7000u
+#define DX_USER_BASE 0xF3000u
 #ifndef DX_USER_XIP                         /* host tests: a RAM image of the store */
 #define DX_USER_XIP fm1_xip_ptr(DX_USER_BASE)
 #endif
 #define FM6_DX0 (FM6_NFACTORY + FM6_BANK_N)       /* the PTCH value of D1 */
-#define FM6_NSLOT (FM6_DX0 + DX_USER_SLOTS)      /* PTCH: F1..F8, B1..B27, D1..D128 */
+#define FM6_NSLOT (FM6_DX0 + DX_USER_SLOTS)      /* PTCH: F1..F8, B1..B27, D1..D256 */
 static uint32_t dx_gen;                     /* bumped after a bank is written: parts re-read their voice, the list its map */
 
 /* a packed voice is usable: 7-bit bytes and a printable name. An erased slot (0xFF) or a zeroed one is BLANK; an
@@ -131,7 +131,7 @@ static void dx_slot_name(uint32_t k, char *b)
         b[i] = p[118 + i] > 126u || p[118 + i] < 32u ? ' ' : (char)p[118 + i];
     b[i] = 0;
 }
-static const char *const DX_KIND[DX_USER_BANKS] = {"DX1", "DX2", "DX3", "DX4"};
+static const char *const DX_KIND[DX_USER_BANKS] = {"DX1", "DX2", "DX3", "DX4", "DX5", "DX6", "DX7", "DX8"};
 
 static uint8_t fm6_patch[NPART][FP_SIZE + 1u];  /* the parts' patches (main loop writes, then fm6_pgen) */
 static volatile uint8_t fm6_pgen[NPART];         /* +1 after each write of fm6_patch[t] */
@@ -440,7 +440,7 @@ static const char *const N_FM6_ALG[] = {"PAT", "1", "2", "3", "4", "5", "6", "7"
 static const char *const N_FM6_PATCH[] = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "B1", "B2", "B3", "B4",
                                           "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15",
                                           "B16", "B17", "B18", "B19", "B20", "B21", "B22", "B23", "B24", "B25",
-                                          "B26", "B27", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27", "D28", "D29", "D30", "D31", "D32", "D33", "D34", "D35", "D36", "D37", "D38", "D39", "D40", "D41", "D42", "D43", "D44", "D45", "D46", "D47", "D48", "D49", "D50", "D51", "D52", "D53", "D54", "D55", "D56", "D57", "D58", "D59", "D60", "D61", "D62", "D63", "D64", "D65", "D66", "D67", "D68", "D69", "D70", "D71", "D72", "D73", "D74", "D75", "D76", "D77", "D78", "D79", "D80", "D81", "D82", "D83", "D84", "D85", "D86", "D87", "D88", "D89", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98", "D99", "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D108", "D109", "D110", "D111", "D112", "D113", "D114", "D115", "D116", "D117", "D118", "D119", "D120", "D121", "D122", "D123", "D124", "D125", "D126", "D127", "D128", 0};
+                                          "B26", "B27", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "D26", "D27", "D28", "D29", "D30", "D31", "D32", "D33", "D34", "D35", "D36", "D37", "D38", "D39", "D40", "D41", "D42", "D43", "D44", "D45", "D46", "D47", "D48", "D49", "D50", "D51", "D52", "D53", "D54", "D55", "D56", "D57", "D58", "D59", "D60", "D61", "D62", "D63", "D64", "D65", "D66", "D67", "D68", "D69", "D70", "D71", "D72", "D73", "D74", "D75", "D76", "D77", "D78", "D79", "D80", "D81", "D82", "D83", "D84", "D85", "D86", "D87", "D88", "D89", "D90", "D91", "D92", "D93", "D94", "D95", "D96", "D97", "D98", "D99", "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107", "D108", "D109", "D110", "D111", "D112", "D113", "D114", "D115", "D116", "D117", "D118", "D119", "D120", "D121", "D122", "D123", "D124", "D125", "D126", "D127", "D128", "D129", "D130", "D131", "D132", "D133", "D134", "D135", "D136", "D137", "D138", "D139", "D140", "D141", "D142", "D143", "D144", "D145", "D146", "D147", "D148", "D149", "D150", "D151", "D152", "D153", "D154", "D155", "D156", "D157", "D158", "D159", "D160", "D161", "D162", "D163", "D164", "D165", "D166", "D167", "D168", "D169", "D170", "D171", "D172", "D173", "D174", "D175", "D176", "D177", "D178", "D179", "D180", "D181", "D182", "D183", "D184", "D185", "D186", "D187", "D188", "D189", "D190", "D191", "D192", "D193", "D194", "D195", "D196", "D197", "D198", "D199", "D200", "D201", "D202", "D203", "D204", "D205", "D206", "D207", "D208", "D209", "D210", "D211", "D212", "D213", "D214", "D215", "D216", "D217", "D218", "D219", "D220", "D221", "D222", "D223", "D224", "D225", "D226", "D227", "D228", "D229", "D230", "D231", "D232", "D233", "D234", "D235", "D236", "D237", "D238", "D239", "D240", "D241", "D242", "D243", "D244", "D245", "D246", "D247", "D248", "D249", "D250", "D251", "D252", "D253", "D254", "D255", "D256", 0};
 _Static_assert(NELEM(N_FM6_PATCH) == FM6_NSLOT + 1u, "a PTCH name per slot");
 
 /* {ALG, FB, MLVL, MRAT, MEG, VMOD, DTUN, PTCH}: the factory patch F1..F8 as it is, DTUN on the pad. The ADSR

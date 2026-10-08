@@ -430,7 +430,7 @@ static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such obj
             *len = sizeof(fm6_bank_t);
         return (const uint8_t *)fm6_bank_flash(fm6_bank_cur < 0 ? 0u : (uint32_t)fm6_bank_cur);
     }
-    if (id >= 9u && id <= 12u) {                         /* a DX7 voice bank, in flash (XIP): 4096 bytes, 0 = empty */
+    if (id >= 9u && id < 9u + DX_USER_BANKS) {           /* a DX7 voice bank, in flash (XIP): 4096 bytes, 0 = empty */
         if (dx_bank_used(id - 9u))
             *len = DX_BANK_N * DX_VOICE;
         return dx_user_xip() + (id - 9u) * 0x1000u;
@@ -444,7 +444,7 @@ static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such obj
     }
     return 0;
 }
-static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 32, 33, 34, 35};   /* 9..12: the DX7 banks (the fork); 35: USR4 (2.4) */
+static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 32, 33, 34, 35};   /* 9..16: the DX7 banks (the fork); 35: USR4 (2.4) */
 static uint8_t ed_dx_stage[DX_BANK_N * DX_VOICE] __attribute__((aligned(4)));   /* a DX7 bank being restored */
 /* DX7 bank b <- 32 packed voices (data: the staging RAM, 4 KiB; 0 = erase the bank): 0 ok, 4 flash. A damaged
  * voice (an 8-bit byte, a bad name: a write cut by a power loss leaves one) is blanked, not refused, so a bank
@@ -467,7 +467,7 @@ static uint32_t dx_bank_write(uint32_t b, uint8_t *data)
     return data && memcmp(dx_user_xip() + b * 0x1000u, data, DX_BANK_N * DX_VOICE) ? 4u : 0u;
 }
 /* the staging RAM of object id: the project buffer, or the DX7 bank's own */
-static uint8_t *ed_bk_raw(uint32_t id) { return id >= 9u && id <= 12u ? ed_dx_stage : ED_BK_RAW; }
+static uint8_t *ed_bk_raw(uint32_t id) { return id >= 9u && id < 9u + DX_USER_BANKS ? ed_dx_stage : ED_BK_RAW; }
 
 /* a flash erase silences the audio for ~50 ms and stalls USB: only while stopped (as the panel) */
 static uint32_t ed_flash_busy(void) { return song.playing || transport_req; }
@@ -478,7 +478,7 @@ static uint32_t ed_bk_commit(void)
     uint32_t id = ed_bk_id, n = ed_bk_len;
     if (ed_bk_pos != n || st_crc32(raw, n) != ed_bk_crc)
         return 2;
-    if (id >= 9u && id <= 12u) {                          /* a DX7 bank (n 0: erase it) */
+    if (id >= 9u && id < 9u + DX_USER_BANKS) {            /* a DX7 bank (n 0: erase it) */
         if (n && n != sizeof ed_dx_stage)
             return 2;
         if (ed_flash_busy())
@@ -562,7 +562,7 @@ static int ed_backup(uint32_t cmd, const uint8_t *a, uint32_t na)   /* 1: a back
         rc = 1;
         if (!flash_ok) {
             rc = 4;
-        } else if (op == 0u && na == 12u && (id <= 12u)) {  /* begin: id, length (5), CRC-32 (5) */
+        } else if (op == 0u && na == 12u && (id < 9u + DX_USER_BANKS)) {  /* begin: id, length (5), CRC-32 (5) */
             len = ed_bk_r32(a + 2);
             if (id >= 2u || len) {                        /* (the working project and the settings are never empty) */
                 if (len <= (id >= 9u ? sizeof ed_dx_stage : sizeof proj_tmp)) {
@@ -646,7 +646,7 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
             ed_str(ENGINES[i]->name, 8);
         ed_b(NTRK);                                       /* v3 */
         ed_b(ED_PROTO);                                   /* v5..: the protocol version (9: FM6 patches) */
-        ed_b(1);                                          /* the fork: 1 = the DX7 voice banks (backup objects 9..12,
+        ed_b(DX_USER_BANKS);                              /* the fork: the number of DX7 voice banks (1 meant four on the first builds; backup objects 9..,
                                                            * PTCH D1..D128) and FX > FILTER KEEP; upstream ends after 9 */
         break;
     case ED_GET:
