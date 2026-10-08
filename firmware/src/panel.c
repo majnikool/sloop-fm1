@@ -86,6 +86,7 @@ static const uint16_t LIGHTS_NS[LIGHTS_N] = {0u, 500u, 1000u, 2000u};   /* the b
 static uint8_t usb_serial;                      /* menu USB SERIAL: 1 = the serial console presented (usb.c) */
 static uint8_t vis_style;                       /* the visualiser's style, 0..11 (ui_vis.c) */
 static uint8_t dx_layout;                       /* the fork: DX7 bank sectors claimed from USR4, counted DOWN from FL_DX_HI (dx_claim_banks) */
+static uint8_t dx_layout_old;                   /* builds 17-18 recorded a bank COUNT here (bits 23..26); read once, never written */
 static uint32_t lights_word(void)
 {
     return (uint32_t)lights_lvl | (uint32_t)lights_keys << 4 | (uint32_t)(lights_notes != 0u) << 8 |
@@ -108,7 +109,8 @@ static void lights_from_word(uint32_t w)
     usb_serial = (uint8_t)((w >> 16) & 1u);
     vis_style = (uint8_t)(((w >> 17) & 15u) % 12u);
     punch_keep = (uint8_t)((w >> 21) & 3u);      /* FX > KEEP (punch.c): a punch-in kept on */
-    dx_layout = (uint8_t)((w >> 27) & 31u);      /* the fork: sectors claimed from the top (0 = the first builds' four) */   /* the visualiser (ui_vis.c); 0 in 2.3 = OSCILLOSCOPE */     /* menu USB SERIAL (usb.c usb_cdc_on, at the next start); 0 in 2.3 = OFF */
+    dx_layout = (uint8_t)((w >> 27) & 31u);      /* the fork: sectors claimed from the top (0 = the first builds' four) */
+    dx_layout_old = (uint8_t)((w >> 23) & 15u);  /* builds 17-18: the count they had claimed (8 or 12), honoured once */   /* the visualiser (ui_vis.c); 0 in 2.3 = OSCILLOSCOPE */     /* menu USB SERIAL (usb.c usb_cdc_on, at the next start); 0 in 2.3 = OFF */
 }
 
 static void settings_save(void);              /* project.c: flash copy (FELUCCA_FLASH) */
@@ -129,7 +131,9 @@ static uint32_t dx_bank_write(uint32_t b, uint8_t *data);   /* editor.c: data 0 
 #endif
 static uint32_t dx_claim_banks(void)                          /* -> banks erased */
 {
-    uint32_t claimed = dx_layout ? dx_layout : 4u, below, b, n = 0;
+    /* builds 17-18 counted banks instead: 8 on 17 (its eight = the top eight sectors) and 12 on 18 (all twelve, by
+     * its own reckoning) — honoured as a count from the top, so a device that loaded its banks on 18 keeps them */
+    uint32_t claimed = dx_layout ? dx_layout : dx_layout_old ? dx_layout_old : 4u, below, b, n = 0;
     if (claimed >= DX_USER_BANKS)
         return 0;
     below = DX_USER_BANKS - claimed;                          /* the banks under the claimed top: new to this device */

@@ -564,6 +564,12 @@
             <button id="dxloadall" data-t="dxLoadAll" data-ic="symbol_upload"></button>
             <input type="file" id="dxfiles" accept=".syx,.SYX,application/octet-stream" multiple hidden>
           </p>
+          <p class="bar" style="margin-top:6px">
+            <button id="dxdelete" class="warn" data-t="dxDelete" data-ic="symbol_trash"></button>
+            <button id="dxmove" data-t="dxMove" data-ic="control_arrow_right"></button> <select id="dxmoveto"></select>
+            <button id="dxtidy" data-t="dxTidy" data-ic="control_arrow_loop"></button>
+            <button id="dxrename" data-t="dxRename" data-ic="symbol_edit"></button>
+          </p>
           <div id="dxauto" class="dim"></div>
         </div>
         <div class="card">
@@ -3053,6 +3059,10 @@ const TEXT = {
     dxBatchNone: "工場出荷の 4 バンクより上に空のバンクがありません: 先に消去するか、「.syx を読み込む」で上書きしてください",
     dxBatchMany: "ファイル {n} 個に対して空のバンクは {m} 個（5〜{b}）: 何も書き込みませんでした — バンクを消去するかファイルを減らしてください",
     dxBatchOk: "{file} → バンク {n}: {v} 音色を書き込みました", dxBatchBad: "{file}: {why}",
+    dxDelete: "音色を削除", dxMove: "音色を移動:", dxTidy: "バンクを詰める", dxRename: "バンクに名前",
+    dxDeleted: "音色を削除しました: ", dxMoved: "{name} をバンク {n} のスロット {s} へ移動しました", dxMoveSame: "同じバンクです", dxTargetFull: "バンク {n} は一杯です",
+    dxTidied: "バンクを詰めました: {v} 音色が先頭から並びます", dxTidyNone: "空きはありません", dxNoVoice: "先に音色を選んでください",
+    dxRenamePrompt: "バンク {n} の名前（このエディタでの表示。FM-1 では DX{n}）。空にすると消えます:",
     dxConfirmErase: "バンク {n} を消去しますか？", dxConfirmBank: "バンク {n} の全音色を置き換えますか？", dxConfirmVoice: "{name} を置き換えますか？",
 
     fm6Init: "初期音色", fm6Voice: "ボイス", fm6Ops: "オペレーター", fm6Carriers: "キャリア", fm6Feedback: "フィードバック",
@@ -3213,6 +3223,10 @@ const TEXT = {
     dxBatchNone: "No empty bank above the factory four: erase one first, or load over a bank with Load .syx",
     dxBatchMany: "{n} files but only {m} empty banks (5–{b}): nothing written — erase a bank or choose fewer files",
     dxBatchOk: "{file} → Bank {n}: {v} voices written", dxBatchBad: "{file}: {why}",
+    dxDelete: "Delete voice", dxMove: "Move voice to", dxTidy: "Tidy bank", dxRename: "Name bank",
+    dxDeleted: "Voice deleted: ", dxMoved: "Moved {name} to Bank {n}, slot {s}", dxMoveSame: "That is the bank it is in", dxTargetFull: "Bank {n} is full",
+    dxTidied: "Bank tidied: the voices moved up, {v} in a row", dxTidyNone: "No gaps to close", dxNoVoice: "Select a voice first",
+    dxRenamePrompt: "A name for Bank {n} (shown in this editor; the FM-1 shows DX{n}). Empty removes it:",
     dxConfirmErase: "Erase bank {n}?", dxConfirmBank: "Replace every voice in bank {n}?", dxConfirmVoice: "Replace {name}?",
 
     fm6Init: "Init voice", fm6Voice: "Voice", fm6Ops: "Operators", fm6Carriers: "carriers", fm6Feedback: "feedback",
@@ -6151,6 +6165,7 @@ function bkReport(e) {
 $("bk-save").addEventListener("click", () => op(async () => {
   try {
     const arc = await backupCapture(rq, dev.info, bkProgress("bkSaving"));
+    if (dxOn() && dxNamesAll().some(Boolean)) arc.dxNames = dxNamesAll();   /* the fork: the editor's bank names ride along */
     download(`SLOOP-backup-${today()}.json`, arc);
     sayK("bkSaved");
   } catch (e) { bkReport(e); } finally { $("bk-prog").hidden = true; }
@@ -6168,6 +6183,7 @@ $("bk-file").addEventListener("change", async () => {
     try {
       selfLoad();
       await backupRestore(rq, file, bkProgress("bkRestoring"));
+      if (Array.isArray(file.dxNames)) dxSetNames(file.dxNames);          /* the fork: bank names from the file */
       dev.slotUsed = [null, null, null, null];
       renderSlots();
       try { await smpInfo(); renderSamples(); } catch (e) { /* shown by the next action */ }
@@ -6190,18 +6206,23 @@ function renderDx() {
   if (g.hidden) return;
   if (!dxLoaded && !dxLoading && !dxTried && !libBusy) { dxRefresh(); return; }   /* once; Reload retries */
   const sel = $("dxbank");
-  /* each bank's entry says what it holds: its voice count and its first voice, so twelve banks read as a list of folders */
+  /* each bank's entry says what it holds — its name if you gave it one, its voice count, its first voice — so
+     twelve banks read as folders. The same list feeds the "move voice to" picker. */
   const labels = Array.from({ length: dxN() }, (_, k) => {
-    const vs = dxLoaded ? DX7.voicesOf(dxBanks[k]) : [], n = vs.filter(Boolean).length, first = vs.find(Boolean);
-    return `${t("dxBank")} ${k + 1}${n ? ` · ${n} · ${DX7.name(first).trim()}` : dxLoaded ? ` · ${t("empty")}` : ""}`;
+    const vs = dxLoaded ? DX7.voicesOf(dxBanks[k]) : [], n = vs.filter(Boolean).length, first = vs.find(Boolean), nm = dxName(k);
+    return `${t("dxBank")} ${k + 1}${nm ? ` · ${nm}` : ""}${n ? ` · ${n} · ${DX7.name(first).trim()}` : dxLoaded ? ` · ${t("empty")}` : ""}`;
   });
-  if (sel.dataset.labels !== labels.join("\n")) {
-    sel.dataset.labels = labels.join("\n");
-    sel.replaceChildren(...labels.map((text, k) => el("option", { value: k, text })));
+  for (const s of [sel, $("dxmoveto")]) {
+    if (s.dataset.labels !== labels.join("\n")) {
+      const was = s.value;
+      s.dataset.labels = labels.join("\n");
+      s.replaceChildren(...labels.map((text, k) => el("option", { value: k, text })));
+      if (s !== sel && was !== "") s.value = was;
+    }
   }
   sel.value = String(dxBank);
   const voices = DX7.voicesOf(dxBanks[dxBank]), used = voices.filter(Boolean).length;
-  $("dxhead").textContent = dxLoaded ? `${used} / ${DX7.N} ${t("used")}` : t("dxLoading");
+  $("dxhead").textContent = dxLoaded ? `${dxName(dxBank) ? dxName(dxBank) + " · " : ""}${used} / ${DX7.N} ${t("used")}` : t("dxLoading");
   const tb = el("table", {}, el("colgroup", {}, el("col", { class: "n" }), el("col")),
     el("tr", {}, el("th", { text: "#" }), el("th", { text: t("name") })));
   voices.forEach((v, i) => {
@@ -6218,8 +6239,65 @@ function renderDx() {
   $("dxexport").disabled = !used || !idle;
   $("dxerase").disabled = !used || !idle;
   $("dxrefresh").disabled = !idle;
+  $("dxdelete").disabled = !v || !idle;
+  $("dxmove").disabled = !v || !idle;
+  $("dxmoveto").disabled = !v || !idle;
+  $("dxtidy").disabled = !used || !idle;
+  $("dxrename").disabled = !idle || !dev;
   renderDxAuto();
 }
+/* Bank names live in this browser (and in a backup file), not on the FM-1: its tag column is four characters
+   and has no spare storage. They are for organising from the editor; the device shows DX1..DX12. */
+const DX_NAMES_KEY = "dxBankNames";
+function dxNamesAll() { try { const a = JSON.parse(localStorage.getItem(DX_NAMES_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function dxName(k) { return String(dxNamesAll()[k] || "").trim(); }
+function dxSetNames(a) { try { localStorage.setItem(DX_NAMES_KEY, JSON.stringify(a.map((x) => String(x || "").trim().slice(0, 24)))); } catch (e) { console.warn(e); } }
+$("dxrename").addEventListener("click", () => {
+  const v = prompt(t("dxRenamePrompt").replace(/\{n\}/g, dxBank + 1), dxName(dxBank));
+  if (v == null) return;
+  const a = dxNamesAll();
+  while (a.length < DX7.BANKS) a.push("");
+  a[dxBank] = v;
+  dxSetNames(a);
+  renderDx();
+});
+/* delete one voice; move one to another bank's first empty slot (the copy is written first, so a failure
+   leaves the source intact); close the gaps in a bank */
+$("dxdelete").addEventListener("click", async () => {
+  if (!dev || dxSel == null) { sayK("dxNoVoice"); return; }
+  const voices = DX7.voicesOf(dxBanks[dxBank]), v = voices[dxSel];
+  if (!v) return;
+  const name = DX7.name(v).trim();
+  voices[dxSel] = null;
+  await dxWrite(dxBank, voices, null);
+  sayK("dxDeleted", name);
+  renderDx();
+});
+$("dxmove").addEventListener("click", async () => {
+  if (!dev || dxSel == null) { sayK("dxNoVoice"); return; }
+  const to = +$("dxmoveto").value;
+  if (!(to >= 0 && to < dxN())) return;
+  if (to === dxBank) { sayK("dxMoveSame"); return; }
+  const src = DX7.voicesOf(dxBanks[dxBank]), v = src[dxSel];
+  if (!v) return;
+  const dst = DX7.voicesOf(dxBanks[to]), slot = dst.findIndex((x) => !x);
+  if (slot < 0) { say(t("dxTargetFull").replace("{n}", to + 1)); return; }
+  dst[slot] = v;
+  await dxWrite(to, dst, null);
+  src[dxSel] = null;
+  await dxWrite(dxBank, src, null);
+  say(t("dxMoved").replace("{name}", DX7.name(v).trim()).replace("{n}", to + 1).replace("{s}", slot + 1));
+  renderDx();
+});
+$("dxtidy").addEventListener("click", async () => {
+  if (!dev) return;
+  const voices = DX7.voicesOf(dxBanks[dxBank]), kept = voices.filter(Boolean);
+  if (kept.every((x, i) => voices[i] === x)) { sayK("dxTidyNone"); return; }
+  await dxWrite(dxBank, kept.concat(new Array(DX7.N - kept.length).fill(null)), null);
+  dxSel = null;
+  say(t("dxTidied").replace("{v}", kept.length));
+  renderDx();
+});
 async function dxRefresh() {
   dxLoading = true;
   dxTried = true;

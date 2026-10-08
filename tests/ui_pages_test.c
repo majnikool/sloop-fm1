@@ -225,7 +225,14 @@ int main(int argc, char **argv)
             dx_gen++;
             dx_layout = 8;
             check(dx_claim_banks() == DX_USER_BANKS - 8u && dx_count() == 8u && !dx_bank_used(0) && dx_bank_used(DX_USER_BANKS - 8u) == 1u && dx_layout == DX_USER_BANKS,
-                  "a record of eight sectors (builds 17-18): only the banks below the top eight are erased, by place not by number");
+                  "a record of eight sectors: only the banks below the top eight are erased, by place not by number");
+            for (i = 0; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, FM6_INIT, 128);
+            dx_gen++;
+            dx_layout = 0; dx_layout_old = 12;
+            check(dx_claim_banks() == 0u && dx_count() == DX_USER_BANKS && dx_layout == 0u, "build 18's own count of twelve: every bank it loaded stays, nothing is erased");
+            dx_layout_old = 8;
+            check(dx_claim_banks() == DX_USER_BANKS - 8u && dx_count() == 8u && dx_layout == DX_USER_BANKS, "build 17's count of eight: the top eight stay, the four below are erased once");
+            dx_layout_old = 0;
         }
         memset(dx_host_store, 0xFF, sizeof dx_host_store); dx_gen++;
         check(dx_count() == 0u, "banks erased: the list is as before");
