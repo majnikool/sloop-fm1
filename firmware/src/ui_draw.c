@@ -385,8 +385,6 @@ static uint32_t graph_signature(void)
     h ^= (uint32_t)TSEL->preset * 7u + (uint32_t)song.g[G_SLOT] * 13u + TSEL->user * 257u + up_gen * 7919u + ui.uslot * 104729u;
     if (pg->id[1] == ID_KEEP)                        /* FX > FILTER: KEEP on KNOB 2 */
         h ^= (uint32_t)punch_keep * 2654435761u;
-    if (pg->id[2] == ID_DRY && ui.arm == ID_DRY)     /* FX > FILTER: DRY armed on KNOB 3 */
-        h ^= 40503u;
     if (pg->graph == GR_SLCR && t->p[P_SLCR])        /* the SLICER's step playing */
         h ^= (sl[song.sel].idx + 1u) * 2654435761u;
     if (pg->graph == GR_SLOTS)                       /* (a checksum over each slot) */
@@ -948,7 +946,7 @@ static void draw_columns(void)
             continue;
         }
         if (cur_page()->id[c] == ID_DRY) {               /* FX > FILTER, KNOB 3: every effect off, on the second detent */
-            draw_column(c, "DRY", ui.arm == ID_DRY ? "GO?" : "--", "", VAL(c), ui.arm == ID_DRY ? 1000 : 0, ICON_AUTO);
+            draw_column(c, "RESET", "TURN", "", VAL(c), 0, ICON_AUTO);
             continue;
         }
         d = page_desc(cur_page(), c, &vp);

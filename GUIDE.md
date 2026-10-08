@@ -640,7 +640,7 @@ Tap a button to open its first page (or the last one you used); **tap it again**
 | **LFO** | **LFO** | RATE (Hz) | WAVE: SIN, TRI, SAW, SQR, S&H | PHS phase | FADE (fade-in time) |
 | | **LFO DEST** | PIT: vibrato | FLT: filter wobble | SHP: shape | AMP: tremolo |
 | **FX** | **FX** (sends) | DST drive | CHO chorus send | DLY delay send | REV reverb send |
-| | **FILTER** | FILT: one-knob filter of the track — left LP, right HP, centre OFF | **KEEP**: a punch-in kept on with no key held — OFF, PHONE, WOBBLE, HALF (a setting of the FM-1, not of a project) | **DRY**: turn up twice and every effect is off, on every track (sends, slicer, filters, the drums' reverb, master DUST / DUCK / FILT, KEEP) | — |
+| | **FILTER** | FILT: one-knob filter of the track — left LP, right HP, centre OFF | **KEEP**: a punch-in kept on with no key held — OFF, PHONE, WOBBLE, HALF (a setting of the FM-1, not of a project) | **RESET**: one click puts this track's effects back to what its sound came with — the sends its preset says, slicer off, filter centred (the drum track: its reverb too) | — |
 | | **SLICER** | SLCR: OFF, GATE, STUT (stutter) | PAT: pattern 1–16 | RATE: 1/8, 1/16, 1/32, 8T, 16T, 32T | DEPTH |
 | | **DLY** (global) | TIME: 1/4, 1/8, 1/16, 1/32, 8T, 16T, 1/8D, 1/16D | FDBK feedback | COLR colour (tone of the repeats) | MIX |
 | | **REV/CHO** (global) | SIZE reverb size | DAMP reverb damping | CRT chorus rate | CDP chorus depth |
@@ -764,7 +764,7 @@ On FX + KNOB 1–3, or GLO → MASTER:
 ### Per track
 
 - **FILTER** (FX → FILTER, or **FX + KNOB 4** for the selected track): one knob, left a low-pass, right a high-pass, centre off. It stays when you change the sound, can be locked on a step, and is saved with the project. **KNOB 2 on that page is KEEP**: OFF, or one of the three punch-ins worth leaving on for a section — PHONE (the telephone), WOBBLE (tape wobble), HALF (a half-speed loop of the last beat) — kept until you turn it off, across a power cycle too (a setting of the FM-1). The other punch-ins are a beat long by nature, and the filters, crush, gate and echo have staying forms on the FX pages and the master.
-- **DRY** (FX → FILTER, KNOB 3): one detent arms it (*AGAIN: DRY*), a second within a second and a half takes **every effect off at once** — the sends, slicers and filters of all four tracks, the drums' reverb, the master DUST / DUCK / FILT, and KEEP — and leaves the sounds, the patterns and the mix alone. The plain sound back in two clicks when effects have piled up; a preset's own sends come back when you pick the preset again.
+- **RESET** (FX → FILTER, KNOB 3): one click puts **the selected track's effects back to what its sound came with** — the sends its preset says (a bell keeps the reverb it was designed with, a bass stays near dry, a user preset the sends saved with it), the slicer off, the track filter centred; on the drum track its sends and the drums' reverb. It only restores, so it needs no confirmation, and it leaves the sound, the pattern and the mix alone. Every track has a sound loaded, so do it on each track you have been piling effects on. The master section (GLO → MASTER) and KEEP are global and are not touched — KEEP sits right beside it on KNOB 2.
 - **Sends** (FX page): DST drive, CHO chorus, DLY delay, REV reverb. The delay and the reverb / chorus settings are global (DLY and REV/CHO pages). The delay's TIME includes dotted 1/8 and 1/16.
 - **SLICER** (FX → SLICER): a tempo gate (GATE) or stutter (STUT), 16 patterns, 1/8 to 32T, with a depth.
 

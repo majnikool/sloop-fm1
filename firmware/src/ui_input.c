@@ -354,27 +354,25 @@ static void project_new(void)
     ui.force = 1;
 }
 
-/* FX > FILTER, KNOB 3 = DRY (params.c ID_DRY): every effect back to nothing, on every track at once — the sends
- * (DST, CHO, DLY, REV), the SLICER, the track's own filter, the drums' reverb, the master DUST / DUCK / FILT, and
- * KEEP. The sounds, the patterns and the mix are left alone: this is "let me hear the plain sound again", not INIT.
- * Two detents, like the TOOLS buttons, so a brush of the knob cannot strip a mix. The owner asked for it on
- * 2026-10-08: effects piled up over a session and nothing on the device took them all off at once. */
-static void fx_reset_all(void)
+/* FX > FILTER, KNOB 3 = RESET (params.c ID_DRY): the SELECTED track's effects back to what its sound came with —
+ * the sends to what its preset says (ui.c fx_defaults_of: a bell keeps the reverb it was designed with, a bass
+ * its near-dry setting, a user preset the sends saved with it), the SLICER off, the track's filter centred; on the
+ * drum track its sends and the drums' reverb. One click, no arming: it only restores, so a brush of the knob
+ * costs nothing, and the page it sits on is per track like every FX page. The master section (GLO > MASTER) and
+ * KEEP (KNOB 2 beside it) are global and stay. The owner asked for it on 2026-10-08: effects pile up over a
+ * session, each sound should go back to ITS OWN defaults, on the track he is on, without ceremony. */
+static void fx_reset_track(track_t *t)
 {
-    uint32_t i;
-    for (i = 0; i < NTRK; i++) {                           /* the three synth tracks and the drum track */
-        track_t *t = &trk[i];
-        t->p[P_DIST] = 0; t->p[P_CHOR] = 0; t->p[P_DLY] = 0; t->p[P_REV] = 0;
-        t->p[P_SLCR] = 0;
-        t->p[P_TFLT] = 0;
-    }
-    song.g[G_DUST] = 0; song.g[G_DUCK] = 0; song.g[G_FILT] = 0;
-    song.g[G_DRREV] = 0;
-    if (punch_keep) {
-        punch_keep = 0;
-        settings_save();
-        punch_keep_poll();
-    }
+    uint32_t k;
+    int16_t fx[4];
+    if (is_drum(t)) {
+        for (k = 0; k < 4u; k++) fx[k] = TP[P_DIST + k].def;
+        song.g[G_DRREV] = GP[G_DRREV].def;
+    } else
+        fx_defaults_of(t, fx);
+    for (k = 0; k < 4u; k++) t->p[P_DIST + k] = fx[k];
+    t->p[P_SLCR] = TP[P_SLCR].def;
+    t->p[P_TFLT] = TP[P_TFLT].def;
 }
 static void edit_param(uint32_t slot, int32_t steps)
 {
@@ -393,18 +391,11 @@ static void edit_param(uint32_t slot, int32_t steps)
         tracks_edit(slot, steps);
         return;
     }
-    if (id == ID_DRY) {                                   /* FX > FILTER, KNOB 3: every effect back to nothing — one detent arms, a second acts */
-        if (steps <= 0) { ui.arm = 0; ui.force = 1; return; }
-        if (ui.arm != ID_DRY) {
-            ui.arm = ID_DRY;
-            ui.arm_t = 90;
-            ui_say("AGAIN: ", "DRY");
-            ui.force = 1;
+    if (id == ID_DRY) {                                   /* FX > FILTER, KNOB 3: this track's effects back to its sound's own, one click */
+        if (steps <= 0)
             return;
-        }
-        ui.arm = 0;
-        fx_reset_all();
-        ui_say("DRY: ", "ALL FX OFF");
+        fx_reset_track(TSEL);
+        ui_say("RESET: ", is_drum(TSEL) ? "DRUM FX" : "FX AS LOADED");
         ui.force = 1;
         return;
     }

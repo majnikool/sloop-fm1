@@ -53,6 +53,21 @@ static void up_bank_check(uint32_t b, int len)  /* after loading bank b (len byt
 }
 
 /* the record's values in today's P_* order (mapped by count, see above); def = the defaults */
+/* the sends a user preset stored (DST, CHO, DLY, REV): what FX > RESET (ui_input.c fx_reset_all) puts back on a
+ * track that came from slot k; 0 when the slot holds no record */
+static int up_sends(uint32_t k, int16_t *out)
+{
+    const up_rec_t *r;
+    uint32_t i;
+    if (k >= UP_SLOTS)
+        return 0;
+    r = up_rec(k);
+    if (!up_valid(r) || r->np <= P_REV)
+        return 0;
+    for (i = 0; i < 4u; i++)
+        out[i] = r->p[P_DIST + i];
+    return 1;
+}
 static void up_params(const up_rec_t *r, int16_t *out, const int16_t *def)
 {
     uint32_t i, nc = r->np - 8u;

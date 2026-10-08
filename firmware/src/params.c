@@ -283,7 +283,7 @@ enum { SC_TRACK, SC_GLOBAL, SC_ENGINE, SC_STEP, SC_TRK, SC_SONG, SC_DRUM };
 enum { GR_NONE, GR_ADSR, GR_LFO, GR_STEPS, GR_ARP, GR_SCALE, GR_FX, GR_ROLL, GR_BROWSE, GR_SLOTS, GR_USER, GR_TRK,
        GR_SLCR };
 #define ID_KEEP 0xFEu                 /* a page slot that is not a parameter: FX > KEEP (punch.c punch_keep), on the FILTER page */
-#define ID_DRY 0xFDu                  /* likewise: FX > DRY, every effect back to nothing (ui_input.c fx_reset_all), KNOB 3 there */
+#define ID_DRY 0xFDu                  /* likewise: FX > RESET, this track's effects to its sound's own (ui_input.c fx_reset_track), KNOB 3 there */
 
 typedef struct {
     const char *title;
@@ -297,7 +297,7 @@ static const page_t PAGES[] = {
     {"LFO", FAM_LFO, SC_TRACK, GR_LFO, {P_LRATE, P_LWAVE, P_LPHASE, P_LFADE}},
     {"LFO DEST", FAM_LFO, SC_TRACK, GR_NONE, {P_LD_PIT, P_LD_FLT, P_LD_SHP, P_LD_AMP}},
     {"FX", FAM_FX, SC_TRACK, GR_FX, {P_DIST, P_CHOR, P_DLY, P_REV}},
-    {"FILTER", FAM_FX, SC_TRACK, GR_NONE, {P_TFLT, ID_KEEP, ID_DRY, 0xFF}},   /* the track's filter (drum track too); KNOB 2: a punch-in kept on; KNOB 3: DRY, every effect off */
+    {"FILTER", FAM_FX, SC_TRACK, GR_NONE, {P_TFLT, ID_KEEP, ID_DRY, 0xFF}},   /* the track's filter (drum track too); KNOB 2: a punch-in kept on; KNOB 3: RESET, this track's effects to its sound's own */
     {"SLICER", FAM_FX, SC_TRACK, GR_SLCR, {P_SLCR, P_SLPAT, P_SLRATE, P_SLDEPTH}},   /* drum track too */
     {"DLY", FAM_FX, SC_GLOBAL, GR_NONE, {G_DTIME, G_DFDBK, G_DCOLOR, G_DMIX}},
     {"REV/CHO", FAM_FX, SC_GLOBAL, GR_NONE, {G_RSIZE, G_RDAMP, G_CRATE, G_CDEPTH}},

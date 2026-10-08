@@ -12,6 +12,7 @@ static void project_load(uint32_t slot);
 static int project_used(uint32_t slot);
 static int up_used(uint32_t k);              /* user presets: upreset.c */
 static int up_load(uint32_t k);
+static int up_sends(uint32_t k, int16_t *out);   /* upreset.c: a user preset's sends, for FX > RESET */
 static uint32_t up_count(void);
 static uint32_t up_nth(uint32_t n);
 static uint32_t up_rank(uint32_t slot);
@@ -266,6 +267,21 @@ static int param_kept(uint32_t i)
 }
 
 /* preset pi of the engine the track asked for: the whole sound (not the pattern parameters) */
+static const uint8_t FX_DEF[4] = {0, 24, 28, 36};   /* the sends a preset leaves unsaid: DST, CHO, DLY, REV */
+/* the sends a track's sound came with — its user preset's, else its factory preset's (FX_DEF where the preset is
+ * silent): what FX > RESET puts back (ui_input.c fx_reset_all), so each sound returns to ITS OWN effects, not to none */
+static void fx_defaults_of(const track_t *t, int16_t out[4])
+{
+    const engine_t *e = ENGINES[t->eng_req % NENGINES];
+    uint32_t i, pi;
+    if (t->user && up_sends(t->user - 1u, out))
+        return;
+    for (i = 0; i < 4u; i++) {
+        if (!e->npresets) { out[i] = TP[P_DIST + i].def; continue; }
+        pi = t->preset % e->npresets;
+        out[i] = (int16_t)(e->presets[pi].fx[i] ? e->presets[pi].fx[i] - 1 : FX_DEF[i]);
+    }
+}
 static void apply_preset_to(track_t *t, uint32_t pi)
 {
     const engine_t *e = ENGINES[t->eng_req % NENGINES];
@@ -293,7 +309,6 @@ static void apply_preset_to(track_t *t, uint32_t pi)
     t->p[P_ED_FX] = preset_trim(t->eng_req % NENGINES, pi);  /* level-matched (tools/level_presets.py) */
     t->p[P_VOICE] = e->presets[pi].mono ? V_LEGATO : V_POLY;   /* mono presets keep the legato feel */
     {   /* the rest of the patch: sends, arpeggiator (never a pattern: LIVE) */
-        static const uint8_t FX_DEF[4] = {0, 24, 28, 36};
         const preset_t *pr = &e->presets[pi];
         for (i = 0; i < 4u; i++) {
             t->p[P_DIST + i] = (int16_t)(pr->fx[i] ? pr->fx[i] - 1 : FX_DEF[i]);

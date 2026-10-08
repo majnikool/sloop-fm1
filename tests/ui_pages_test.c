@@ -76,6 +76,7 @@ static void up_name(uint32_t k, char *b) { str_cpy(b, k ? "MY PAD" : "MY LEAD", 
 static void up_slot_label(char *b, uint32_t k) { fmt_int(b, (int32_t)k + 1); }
 static void up_ui(uint32_t op, uint32_t k) { (void)op; (void)k; }
 static void settings_save(void) {}
+static int up_sends(uint32_t k, int16_t *out) { (void)k; (void)out; return 0; }   /* upreset.c is not in this build */
 #include "../firmware/src/ui_song.c"
 #include "../firmware/src/ui_studio.c"
 #include "../firmware/src/icons.c"
@@ -324,22 +325,30 @@ int main(int argc, char **argv)
         check(punch_keep == 1u && punch.req == PX_TEL && !punch.keybit && !strcmp(ui.big_v[1], "PHONE"),
               "KEEP: KNOB 2 -> PHONE, the effect runs with no key held");
         check(((lights_word() >> 21) & 3u) == 1u, "KEEP: kept in the settings word (bits 21..22)");
-        {   /* KNOB 3 = DRY: two detents take every effect off, on every track, the master too, and KEEP */
+        {   /* KNOB 3 = RESET: one click puts the SELECTED track's effects back to what its sound came with — its
+             * preset's sends, slicer off, filter centred; the other tracks, the master and KEEP are not touched */
             static int16_t keep_p[NTRK][P_COUNT], keep_g[sizeof song.g / sizeof song.g[0]];
+            int16_t own0[4];
             uint32_t k;
             for (k = 0; k < NTRK; k++) memcpy(keep_p[k], trk[k].p, sizeof keep_p[k]);
             memcpy(keep_g, song.g, sizeof keep_g);
-            trk[0].p[P_DLY] = 40; trk[2].p[P_REV] = 60; trk[1].p[P_SLCR] = 1; trk[3].p[P_TFLT] = -20;
-            song.g[G_DUST] = 30; song.g[G_DUCK] = 50; song.g[G_FILT] = 22; song.g[G_DRREV] = 25;
-            check(!strcmp(ui.big_l[2], "DRY") && !strcmp(ui.big_v[2], "--"), "FILTER page: KNOB 3 reads DRY --");
+            fx_defaults_of(&trk[0], own0);
+            check(own0[2] == trk[0].p[P_DLY] && own0[3] == trk[0].p[P_REV], "a freshly loaded sound sits on its preset's own sends");
+            trk[0].p[P_DLY] = 99; trk[0].p[P_REV] = 99; trk[0].p[P_SLCR] = 1; trk[0].p[P_TFLT] = -20;
+            trk[2].p[P_REV] = 99; song.g[G_DUST] = 30;
+            check(!strcmp(ui.big_l[2], "RESET"), "FILTER page: KNOB 3 reads RESET");
+            ui.force = 1; frame(); ppm("page-filter-reset");
             encs[panel.enc[EN_K3]] = 1; frame();
-            check(ui.arm == ID_DRY && trk[0].p[P_DLY] == 40 && punch_keep == 1u && !strcmp(ui.big_v[2], "GO?"), "DRY: one detent only arms (AGAIN), nothing changes");
-            ui.force = 1; frame(); ppm("page-filter-dry");
+            check(trk[0].p[P_DLY] == own0[2] && trk[0].p[P_REV] == own0[3] && !trk[0].p[P_SLCR] && !trk[0].p[P_TFLT] && !ui.arm,
+                  "RESET, one click: track 1's sends back to its preset's, its slicer off, its filter centred");
+            check(trk[2].p[P_REV] == 99 && song.g[G_DUST] == 30 && punch_keep == 1u && punch.req == PX_TEL,
+                  "RESET touches nothing else: track 3, the master and KEEP as they were");
+            encs[panel.enc[EN_K3]] = -1; frame();
+            check(trk[0].p[P_DLY] == own0[2], "RESET: turning it down does nothing");
+            song.sel = 3; trk[3].p[P_TFLT] = -20; song.g[G_DRREV] = (int16_t)(GP[G_DRREV].def + 9);
             encs[panel.enc[EN_K3]] = 1; frame();
-            check(!ui.arm && !trk[0].p[P_DLY] && !trk[2].p[P_REV] && !trk[1].p[P_SLCR] && !trk[3].p[P_TFLT] && !song.g[G_DUST] && !song.g[G_DUCK] && !song.g[G_FILT]
-                  && !song.g[G_DRREV] && punch_keep == 0u && punch.req == -1, "DRY: the second detent clears the sends, slicer, track filters, master and KEEP on every track");
-            encs[panel.enc[EN_K3]] = 1; frame(); encs[panel.enc[EN_K3]] = -1; frame();
-            check(!ui.arm, "DRY: turning back down disarms");
+            check(!trk[3].p[P_TFLT] && song.g[G_DRREV] == GP[G_DRREV].def, "RESET on the drum track: its filter centred and the drums' reverb back to default");
+            song.sel = 0;
             for (k = 0; k < NTRK; k++) memcpy(trk[k].p, keep_p[k], sizeof keep_p[k]);   /* the sounds as they were, for the checks below */
             memcpy(song.g, keep_g, sizeof keep_g);
             punch_keep = 1; punch_keep_poll();                /* the KEEP checks below continue from PHONE */
