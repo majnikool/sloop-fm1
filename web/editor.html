@@ -566,9 +566,9 @@
           </p>
           <p class="bar" style="margin-top:6px">
             <button id="dxdelete" class="warn" data-t="dxDelete" data-ic="symbol_trash"></button>
-            <button id="dxmove" data-t="dxMove" data-ic="control_arrow_right"></button> <select id="dxmoveto"></select>
+            <button id="dxmove" data-t="dxMove" data-ic="symbol_folder_open"></button> <select id="dxmoveto"></select>
             <button id="dxtidy" data-t="dxTidy" data-ic="control_arrow_loop"></button>
-            <button id="dxrename" data-t="dxRename" data-ic="symbol_edit"></button>
+            <button id="dxrename" data-t="dxRename" data-ic="symbol_folder"></button>
           </p>
           <div id="dxauto" class="dim"></div>
         </div>
@@ -1613,6 +1613,13 @@ class BackupError extends Error { constructor(code, msg) { super(msg); this.code
 const DX7 = {
   BANKS: 12, N: 32, VOICE: 128, OBJ: 9, PTCH0: 35,   /* BANKS: the most a firmware can have; banksOf(info) says how many this one has */
   banksOf(info) { return !info || !info.fork ? 0 : info.fork === 1 ? 4 : Math.min(info.fork, 12); },
+  /* which TEST BUILD a fork version string is: KIND1 = 14, FORK1..6 = 15..20, and from then on the suffix says it (2.4-B21) */
+  testBuild(version) {
+    const m = /-(KIND|FORK|B)(\d+)\b/i.exec(String(version || ""));
+    if (!m) return 0;
+    const k = m[1].toUpperCase(), n = +m[2];
+    return k === "B" ? n : k === "KIND" ? 13 + n : 14 + n;
+  },
   /* The FM-1's own 128 factory voices, as published by KingParamount/fm1-factory-presets (a CC0 capture of
      M-VAVE's updater; the voices are Yamaha / community material, so they are fetched from there and never
      shipped here). The editor fills an EMPTY bank from these by itself when it connects (dxAutoFill), and
@@ -3513,7 +3520,8 @@ async function load(d) {
   try {
     /* the first frame after opening the port can be lost: a few tries */
     d.info = parse[CMD.INFO](await d.link.request(req.info(), { timeout: 500, retries: 3 }));
-    $("version").textContent = d.info.version;
+    /* the fork's test builds: the version names the build (2.4-FORK6 = test build 20; from the next one, 2.4-B21) */
+    $("version").textContent = d.info.version + (DX7.testBuild(d.info.version) ? ` · test build ${DX7.testBuild(d.info.version)}` : "");
     const total = d.info.pcount + d.info.gcount;
     for (let i = 0; i < d.info.pcount; i++) { sayK("reading", `${i + 1}/${total}`); d.pdesc[i] = await getDescOrNull(0, i); }
     for (let i = 0; i < d.info.gcount; i++) { sayK("reading", `${d.info.pcount + i + 1}/${total}`); d.gdesc[i] = await getDescOrNull(1, i); }
