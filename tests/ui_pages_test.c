@@ -210,17 +210,22 @@ int main(int argc, char **argv)
         go_home(); frame();
         preset_go(0); fm6_poll();
         {   /* banks claimed from USR4 start empty: whatever an earlier firmware left there is erased once (panel.c) */
-            const uint32_t last = DX_USER_BANKS - 1u, extra = DX_USER_BANKS - 4u;
-            for (i = 4; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, dx_host_store, 4096u);   /* banks 5.. "full" of leftovers */
+            /* the banks end at FL_DX_HI and grow DOWN: the claimed ones are the top dx_layout sectors whatever their
+             * numbers now, and a layout that adds banks below them erases those once */
+            const uint32_t last = DX_USER_BANKS - 1u;
+            memset(dx_host_store, 0xFF, sizeof dx_host_store);
+            for (i = 0; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, FM6_INIT, 128);   /* one voice in every bank */
             dx_gen++;
-            check(dx_bank_used(last) == 32u && dx_count() == 33u + 32u * extra, "leftovers: the banks above 4 read as voices before the claim");
+            check(dx_count() == DX_USER_BANKS, "every bank holds a voice before the claim");
             dx_layout = 0;
-            check(dx_claim_banks() == extra && dx_layout == DX_USER_BANKS && dx_bank_used(0) == 32u && dx_bank_used(2) == 1u && !dx_bank_used(4) && !dx_bank_used(last)
-                  && dx_count() == 33u, "dx_claim_banks: the banks above 4 erased once, 1-4 kept, the layout recorded");
-            memcpy(dx_host_store + last * 4096u, dx_host_store, 4096u); dx_gen++;
-            check(dx_claim_banks() == 0u && dx_bank_used(last) == 32u && dx_layout == DX_USER_BANKS, "claimed already: a bank loaded since is left alone");
+            check(dx_claim_banks() == DX_USER_BANKS - 4u && dx_layout == DX_USER_BANKS && dx_count() == 4u && dx_bank_used(last) == 1u && dx_bank_used(DX_USER_BANKS - 4u) == 1u
+                  && !dx_bank_used(0) && !dx_bank_used(DX_USER_BANKS - 5u), "dx_claim_banks, no record: the first builds' four at the top stay, every bank below is erased once");
+            check(dx_claim_banks() == 0u && dx_count() == 4u && dx_layout == DX_USER_BANKS, "claimed already: nothing happens");
+            for (i = 0; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, FM6_INIT, 128);
+            dx_gen++;
             dx_layout = 8;
-            check(dx_claim_banks() == DX_USER_BANKS - 8u && !dx_bank_used(last) && dx_bank_used(4) == 0u && dx_layout == DX_USER_BANKS, "a layout of eight (build 17): only the banks above 8 are claimed");
+            check(dx_claim_banks() == DX_USER_BANKS - 8u && dx_count() == 8u && !dx_bank_used(0) && dx_bank_used(DX_USER_BANKS - 8u) == 1u && dx_layout == DX_USER_BANKS,
+                  "a record of eight sectors (builds 17-18): only the banks below the top eight are erased, by place not by number");
         }
         memset(dx_host_store, 0xFF, sizeof dx_host_store); dx_gen++;
         check(dx_count() == 0u, "banks erased: the list is as before");
