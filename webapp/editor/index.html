@@ -3039,7 +3039,8 @@ const TEXT = {
     fm6Title: "FM6 の音色（6 オペレーター）", fm6Help: "FM6 エンジンの音色をまるごと編集します。本体のノブ（EDIT の 8 つ）はこの音色の上にかかるマクロです。トラックへ送るとすぐ鳴り、PTCH を回すか別の音を読み込むまでそのトラックの音色になります（プロジェクトは PTCH だけを保存します）。バンク（B1〜B27）に保存すると PTCH で呼び出せます（本体を停止してから）。",
     fm6ReadBtn: "トラックから読む", fm6SendBtn: "トラックへ送る", fm6Live: "編集しながら送る", fm6Slot: "スロット",
     fm6StoreBtn: "バンクに保存", fm6Import: "SysEx を読み込む", fm6Export: "SysEx に書き出し", fm6BankExport: "バンクを SysEx に書き出し",
-    dxTitle: "DX7 音色バンク", dxHelp: "FM6 のバンクの後に、本体に 32 音色 × 4 バンクの DX7 音色を置けます（PTCH の D1〜D128。PRESETS のリストにも名前で並び、DX1〜DX4 のタグが付きます）。32 音色の .syx をバンクへ、または 1 音色をスロットへ読み込みます（本体を停止してから）。書き出しは Dexed で開ける .syx です。バックアップに含まれます。",
+    dxTitle: "DX7 音色バンク", dxHelp: "FM6 のバンクの後に、本体に 32 音色 × 4 バンクの DX7 音色を置けます（PTCH の D1〜D128。PRESETS のリストにも名前で並び、DX1〜DX4 のタグが付きます）。空のバンクにはエディタが FM-1 の工場出荷音色を自動で入れます。「このトラックで鳴らす」は選択中のトラックにその音色を設定し、FM-1 で和音を鳴らします（このコンピュータからは音は出ません。出力端子にケーブルがあると FM-1 のスピーカーは鳴りません）。32 音色の .syx をバンクへ、または 1 音色をスロットへ読み込みます（本体を停止してから）。書き出しは Dexed で開ける .syx です。バックアップに含まれます。",
+    dxPlayed: "FM-1 で: ",
     dxBank: "バンク", dxPlay: "このトラックで鳴らす", dxLoad: ".syx を読み込む", dxExport: ".syx に書き出し", dxErase: "バンクを消去", dxLoading: "読み込み中…",
     dxNoTrack: "先にシンセトラックを選んでください", dxWritten: "バンクを書き込みました", dxErased: "バンクを消去しました", dxBad: "DX7 のファイルではありません: ", dxFull: "バンクが一杯です: 置き換えるスロットを選んでください",
     dxAutoFill: "空のバンクに FM-1 の工場出荷音色を自動で入れる", dxFactory: "工場出荷バンクを読み込む", dxAutoBusy: "工場出荷バンクを取得中…",
@@ -3194,7 +3195,8 @@ const TEXT = {
     fm6Title: "FM6 patch (six operators)", fm6Help: "Edit the whole patch of the FM6 engine. The device's knobs (the eight EDIT values) are macros on top of it. Sent to a track it plays at once and stays that track's patch until PTCH turns or another sound loads (a project keeps PTCH only); stored in the bank (B1..B27) it is a PTCH value (stop the device first).",
     fm6ReadBtn: "Read from track", fm6SendBtn: "Send to track", fm6Live: "Send while editing", fm6Slot: "Slot",
     fm6StoreBtn: "Store in bank", fm6Import: "Import SysEx", fm6Export: "Export SysEx", fm6BankExport: "Export bank as SysEx",
-    dxTitle: "DX7 voice banks", dxHelp: "Four banks of 32 DX7 voices on the FM-1, after FM6's own bank: PTCH D1–D128, and in the PRESETS list by name, tagged DX1–DX4. Load a 32-voice .syx into a bank, or one voice into a slot (stop the device first). Export writes a bank back as a .syx Dexed opens. A backup carries the banks.",
+    dxTitle: "DX7 voice banks", dxHelp: "Four banks of 32 DX7 voices on the FM-1, after FM6's own bank: PTCH D1–D128, and in the PRESETS list by name, tagged DX1–DX4. An empty bank is filled by the editor itself with the FM-1's factory voices. Play on this track puts the voice on the selected track and sounds a chord on the FM-1 (this computer makes no sound; the FM-1's speaker is off while a cable is in its output). Load .syx puts your own 32-voice bank into a bank, or one voice into a slot (stop the device first). Export writes a bank back as a .syx Dexed opens. A backup carries the banks.",
+    dxPlayed: "On the FM-1: ",
     dxBank: "Bank", dxPlay: "Play on this track", dxLoad: "Load .syx", dxExport: "Export .syx", dxErase: "Erase bank", dxLoading: "reading…",
     dxNoTrack: "Select a synth track first", dxWritten: "Bank written", dxErased: "Bank erased", dxBad: "Not a DX7 file: ", dxFull: "The bank is full: pick a slot to replace",
     dxAutoFill: "Fill empty banks with the FM-1's factory voices by itself", dxFactory: "Load the factory banks", dxAutoBusy: "fetching the factory banks…",
@@ -6224,7 +6226,20 @@ async function dxPlay() {                               /* the FM6 engine on thi
     }
     await rq(req.set(0, dev.info.pe0 + 7, DX7.PTCH0 + slot));
     await afterSoundChange();
+    dxSound();
+    sayK("dxPlayed", `${DX7.name(DX7.voicesOf(dxBanks[dxBank])[dxSel])} → ${t("track")} ${dev.sel + 1}`);
   });
+}
+/* A short chord on the selected track, as plain MIDI on the port the editor already talks through
+   (channels 4-16 play the selected track on the FM-1). The FM-1 is the only thing that makes a sound;
+   this computer never does — so "play on this track" is heard, not merely applied. */
+function dxSound(ms = 700) {
+  if (!dev || !dev.output) return;
+  const ch = 3, notes = [60, 64, 67];
+  try {
+    for (const n of notes) dev.output.send([0x90 | ch, n, 100]);
+    setTimeout(() => { try { for (const n of notes) dev.output.send([0x80 | ch, n, 0]); } catch (e) { console.warn(e); } }, ms);
+  } catch (e) { console.warn(e); }
 }
 async function dxWrite(k, voices, msg) {
   await libOp(async () => {
