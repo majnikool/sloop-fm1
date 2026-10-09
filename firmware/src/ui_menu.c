@@ -1,14 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
 /* SLOOP menu (HOME held), in sections as the pages are (2.4): SCREEN (COLOR, ZOOM), LIGHTS (LIGHTS, KEYS, NOTES),
- * AUDIO (LOWCUT, USB AUDIO, USB SERIAL), SYSTEM (HARDWARE CALIBRATION, ABOUT). SELECT goes to the section
+ * AUDIO (LOWCUT, USB AUDIO, USB SERIAL), SYSTEM (HARDWARE CALIBRATION, ABOUT, and the fork's KEY VELOCITY). SELECT goes to the section
  * before / after (stopping at the ends), KNOB 1..3 set the section's settings in order (the knob's colour marks
  * its row), PRESETS moves the cursor; OCT+ steps the cursor's setting round or opens it (CALIBRATION, ABOUT),
  * OCT- closes (from ABOUT: back to the section). */
 /* ------------------------------------------------------------ menu --- */
-enum { MI_COLOR, MI_ZOOM, MI_LIGHTS, MI_KEYS, MI_NOTES, MI_LOWCUT, MI_USB, MI_SERIAL, MI_PANEL, MI_ABOUT, MI_COUNT };
+enum { MI_COLOR, MI_ZOOM, MI_LIGHTS, MI_KEYS, MI_NOTES, MI_LOWCUT, MI_USB, MI_SERIAL, MI_PANEL, MI_ABOUT, MI_KVEL, MI_COUNT };
+/* (the fork: KEY VELOCITY, SYSTEM's third row, KNOB 3 — a section holds three rows above the help lines) */
 static const char *const MI_NAME[MI_COUNT] = {"COLOR", "ZOOM", "LIGHTS", "KEYS", "NOTES", "SPEAKER LOWCUT", "USB AUDIO",
-                                              "USB SERIAL", "HARDWARE CALIBRATION", "ABOUT"};
+                                              "USB SERIAL", "HARDWARE CALIBRATION", "ABOUT", "KEY VELOCITY"};
 enum { MS_SCREEN, MS_LIGHTS, MS_AUDIO, MS_SYSTEM, MS_COUNT };
 static const char *const MS_NAME[MS_COUNT] = {"SCREEN", "LIGHTS", "AUDIO", "SYSTEM"};   /* (AUDIO: and USB) */
 static const uint8_t MS_FIRST[MS_COUNT + 1] = {MI_COLOR, MI_LIGHTS, MI_LOWCUT, MI_PANEL, MI_COUNT};   /* rows of each */
@@ -41,6 +42,11 @@ static const char *mi_value(uint32_t i, uint16_t *c)
     case MI_LOWCUT: return settings.lowcut ? "ON" : "OFF";
     case MI_USB: return usb_full ? "FULL" : "MASTER";
     case MI_SERIAL: return usb_serial ? "ON" : "OFF";
+    case MI_KVEL: {                                   /* the fork: the keys' velocity (seq.c KEY_VEL) */
+        static char kv[4];
+        fmt_int(kv, (int32_t)key_vel());
+        return kv;
+    }
     default:
         *c = C_DIM;
         return "";                                    /* (an action: OCT+ opens it) */
@@ -52,7 +58,7 @@ static void draw_menu(void)
     uint32_t i, pass, sec = mi_sec(ui.menu_sel % MI_COUNT);
     uint32_t sig = ui.menu * 7u + ui.menu_sel * 131u + settings.palette * 1009u + settings.lowcut * 7919u +
                    settings.zoom * 104729u + lights_lvl * 1299709u + lights_keys * 15485863u +
-                   lights_notes * 32452843u + usb_full * 49979687u + usb_serial * 86028121u;
+                   lights_notes * 32452843u + usb_full * 49979687u + usb_serial * 86028121u + key_vel_ix * 122949829u;
     if (!ui.force && sig == ui.menu_sig)
         return;
     ui.menu_sig = sig;
@@ -171,6 +177,14 @@ static void mi_set(uint32_t i, int32_t s)
         break;
     case MI_SERIAL:
         usb_serial = (uint8_t)(s > 0 ? 1u : s < 0 ? 0u : !usb_serial);
+        break;
+    case MI_KVEL:                                      /* up / down (stops at the ends); OCT+ steps round */
+        if (s > 0 && key_vel_ix + 1u < NELEM(KEY_VEL))
+            key_vel_ix++;
+        else if (s < 0 && key_vel_ix > 0u)
+            key_vel_ix--;
+        else if (!s)
+            key_vel_ix = (uint8_t)((key_vel_ix + 1u) % NELEM(KEY_VEL));
         break;
     case MI_NOTES:
         lights_notes = (uint8_t)(s > 0 ? 1u : s < 0 ? 0u : !lights_notes);

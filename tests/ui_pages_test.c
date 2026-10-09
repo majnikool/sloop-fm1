@@ -226,6 +226,11 @@ int main(int argc, char **argv)
                 track_select(0); preset_go(NBANK + 40u); fm6_poll();
                 check(TSEL->p[P_E7] == (int16_t)(FM6_DX0 + 40u) && TSEL->p[P_ED_FX] == (int16_t)dx_trim_of(dx_host_store + 40u * 128u),
                       "a DX7 voice picked from the list: the track's trim is the voice's own");
+                check(!TSEL->p[P_DIST] && !TSEL->p[P_CHOR] && !TSEL->p[P_DLY] && !TSEL->p[P_REV],
+                      "and it plays dry: no chorus, delay or reverb from FM6's first sound");
+                apply_preset(0);
+                check(TSEL->p[P_CHOR] == 45 && TSEL->p[P_DLY] == 25 && TSEL->p[P_REV] == 35, "FM6's own TINE EP keeps its effects");
+                preset_go(NBANK + 40u); fm6_poll();
                 TSEL->p[P_ED_FX] = 5; fm6_slot[0] = 0xFFu; fm6_track_loaded(TSEL);
                 check(TSEL->p[P_ED_FX] == (int16_t)dx_trim_of(dx_host_store + 40u * 128u), "a project or user preset on it: the trim is the voice's again");
                 TSEL->p[P_E7] = 2; fm6_poll();
@@ -287,8 +292,9 @@ int main(int argc, char **argv)
             for (i = 0; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, FM6_INIT, 128);
             dx_gen++;
             dx_layout = 0; dx_layout_old = 12;
-            check(dx_claim_banks() == 0u && dx_count() == DX_USER_BANKS && dx_layout == 0u, "build 18's own count of twelve: every bank it loaded stays, nothing is erased");
-            dx_layout_old = 8;
+            check(dx_claim_banks() == 0u && dx_count() == DX_USER_BANKS && dx_layout == DX_USER_BANKS && !dx_layout_old,
+                  "build 18's own count of twelve: every bank it loaded stays, nothing is erased, and the record by place is written");
+            dx_layout = 0; dx_layout_old = 8;
             check(dx_claim_banks() == DX_USER_BANKS - 8u && dx_count() == 8u && dx_layout == DX_USER_BANKS, "build 17's count of eight: the top eight stay, the four below are erased once");
             dx_layout_old = 0;
             {   /* the FM-1 as the owner has it (builds 19-23: twelve banks loaded, the record says twelve sectors, a punch-in
@@ -897,6 +903,34 @@ int main(int argc, char **argv)
         check(usb_serial == 1u, "menu USB SERIAL: read back");
         tap(B_OCTUP);
         check(usb_serial == 0u && ui.menu == 1, "menu USB SERIAL: OCT+ toggles back to OFF");
+        {   /* the fork: KEY VELOCITY (AUDIO, KNOB 4): what the keys play at, 100 by default as upstream's fixed value */
+            const uint8_t lay0 = dx_layout;
+            uint32_t i, w, hit = 0;
+            dx_layout = DX_USER_BANKS;                   /* (a device with its bank record, as every boot leaves it) */
+            check(key_vel() == 100u && ((lights_word() >> 23) & 7u) == 0u,
+                  "KEY VELOCITY: 100 by default, stored as 0 (so the settings word of builds 19-26 reads as 100)");
+            ui.menu_sel = MI_KVEL; ui.force = 1; frame(); ppm("menu-kvel");
+            check(mi_sec(MI_KVEL) == mi_sec(MI_ABOUT) && mi_row(MI_KVEL) == 2u, "KEY VELOCITY: in SYSTEM, on KNOB 3, after CALIBRATION and ABOUT");
+            for (i = 0; i < 4u; i++) {                   /* four detents up: 110, 120, 127, and it stops there */
+                encs[panel.enc[EN_K1 + mi_row(ui.menu_sel)]] = 1; frame();
+            }
+            check(key_vel() == 127u, "its knob up: 110, 120, 127, and it stops there");
+            w = lights_word();
+            key_vel_ix = KEY_VEL_DEF; lights_from_word(w);
+            check(key_vel() == 127u && dx_layout == DX_USER_BANKS, "kept in the settings word and read back (power cycle)");
+            dx_layout = 0; lights_from_word(w & ~(31u << 27));
+            check(key_vel() == 100u && dx_layout_old == ((w >> 23) & 15u),
+                  "a word with no bank record: bits 23..26 are builds 17-18's count, the velocity its default");
+            dx_layout_old = 0; dx_layout = DX_USER_BANKS; lights_from_word(w);
+            ui.menu = 0; ui.force = 1; go_home(); frame();
+            track_select(0);
+            fm1_in.notes |= 1u << 9; frame();
+            for (i = 0; i < sizeof trk[0].v / sizeof trk[0].v[0]; i++)
+                hit |= trk[0].v[i].active && trk[0].v[i].vel == 127u;
+            fm1_in.notes &= ~(1u << 9); frame();
+            check(hit != 0u, "a key on a synth track plays at the KEY VELOCITY (127)");
+            key_vel_ix = KEY_VEL_DEF; dx_layout = lay0;
+        }
         ui.menu = 0; ui.force = 1; go_home(); frame();
         ui.menu = 1; ui.menu_sel = MI_NOTES; ui.force = 1; frame();
         tap(B_OCTUP);

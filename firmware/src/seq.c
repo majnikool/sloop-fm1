@@ -1022,6 +1022,15 @@ static uint32_t arp_next(track_t *t)
     return list[j];
 }
 
+/* the fork: the velocity the FM-1's keys play (they sense none), a setting of the FM-1 as on M-VAVE's own firmware:
+ * HOME menu -> AUDIO -> KEY VELOCITY (ui_menu.c), kept in the settings word (panel.c). 100 by default, upstream's
+ * fixed value, so nothing changes until it is set; 127 plays a DX7 voice as hard as it was voiced for. The keys, the
+ * arpeggiator they feed and what both send on MIDI; the sequencer's steps keep their own */
+static const uint8_t KEY_VEL[8] = {60, 70, 80, 90, 100, 110, 120, 127};
+#define KEY_VEL_DEF 4u
+static uint8_t key_vel_ix = KEY_VEL_DEF;
+static uint32_t key_vel(void) { return KEY_VEL[key_vel_ix & 7u]; }
+
 /* the arp, once per block: on the transport's grid of RATE (with its SWING) while playing, from the
  * first key while stopped. A new chord starts at once unless the grid is just ahead. While recording,
  * each note it plays is recorded (what you hear) */
@@ -1082,8 +1091,8 @@ static void arp_tick(track_t *t, uint32_t adv)
         uint32_t n = arp_next(t);
         t->arp_note = (uint8_t)n;
         t->arp_off = slen * (uint32_t)t->p[P_AGATE] / 128u;
-        trk_note_on(t, n, 100);
-        seq_out_on(t, n, 100);
+        trk_note_on(t, n, key_vel());                 /* (the fork: the keys' velocity; upstream 100) */
+        seq_out_on(t, n, key_vel());
         if (((song.rec >> trk_index(t)) & 1u) && song.playing)
             rec_note(t, n, 100, 0, 0);
     }
@@ -1332,8 +1341,8 @@ static void chord_revoice(uint32_t sel)
             for (i = 0; i < kb_n[k] && kb_nt[k][i] != nw[j]; i++)
                 ;
             if (i == kb_n[k]) {
-                input_on(t, nw[j], 100);
-                midi_out_event(0x09u | (0x90u | mc) << 8 | (uint32_t)nw[j] << 16 | 100u << 24);
+                input_on(t, nw[j], key_vel());
+                midi_out_event(0x09u | (0x90u | mc) << 8 | (uint32_t)nw[j] << 16 | key_vel() << 24);
             }
         }
         memcpy(kb_nt[k], nw, nn);
@@ -1444,9 +1453,9 @@ static void key_down(uint32_t k)
             in_chord = kb_n[k] > 1u ? kb_nt[k] : 0;
             in_chord_n = kb_n[k];
             in_chord_i = i;
-            input_on(t, kb_nt[k][i], 100);
+            input_on(t, kb_nt[k][i], key_vel());
             in_chord = 0;
-            midi_out_event(0x09u | (0x90u | mc) << 8 | (uint32_t)kb_nt[k][i] << 16 | 100u << 24);
+            midi_out_event(0x09u | (0x90u | mc) << 8 | (uint32_t)kb_nt[k][i] << 16 | key_vel() << 24);
         }
         /* the pen of the SEQ layer: the keys down now (a chord), else this note */
         if (!(kb_prev & ~(1u << k)) || pen_n >= 4u)

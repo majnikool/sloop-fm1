@@ -94,7 +94,9 @@ static uint32_t lights_word(void)
            (uint32_t)(rec_tempo != 0u) << 9 | (uint32_t)(rec_count != 0u) << 10 | (uint32_t)(usb_full != 0u) << 11 |
            (uint32_t)(lights_sync % 3u) << 12 | (uint32_t)(lights_mout != 0u) << 14 | (uint32_t)(lights_min != 0u) << 15 |
            (uint32_t)(usb_serial != 0u) << 16 | (uint32_t)(vis_style % 12u) << 17 | (uint32_t)(punch_keep & 3u) << 21 |
-           (uint32_t)(dx_layout & 31u) << 27;   /* bits 23..26 held a bank COUNT on builds 17-18, now left 0 */
+           (uint32_t)((key_vel_ix + 8u - KEY_VEL_DEF) & 7u) << 23 | (uint32_t)(dx_layout & 31u) << 27;
+    /* bits 23..26 held a bank COUNT on builds 17-18; from build 27 bits 23..25 are the key velocity (seq.c KEY_VEL, 0 =
+     * the default), read as such only once the bank record (27..31) exists, which every boot writes first (dx_claim_banks) */
 }
 static void lights_from_word(uint32_t w)
 {
@@ -111,7 +113,13 @@ static void lights_from_word(uint32_t w)
     vis_style = (uint8_t)(((w >> 17) & 15u) % 12u);
     punch_keep = (uint8_t)((w >> 21) & 3u);      /* FX > KEEP (punch.c): a punch-in kept on */
     dx_layout = (uint8_t)((w >> 27) & 31u);      /* the fork: sectors claimed from the top (0 = the first builds' four) */
-    dx_layout_old = (uint8_t)((w >> 23) & 15u);  /* builds 17-18: the count they had claimed (8 or 12), honoured once */   /* the visualiser (ui_vis.c); 0 in 2.3 = OSCILLOSCOPE */     /* menu USB SERIAL (usb.c usb_cdc_on, at the next start); 0 in 2.3 = OFF */
+    if (dx_layout) {                             /* the record exists: bits 23..25 are the key velocity */
+        dx_layout_old = 0;
+        key_vel_ix = (uint8_t)((((w >> 23) & 7u) + KEY_VEL_DEF) & 7u);
+    } else {                                     /* no record yet: builds 17-18's count (8 or 12), honoured once */
+        dx_layout_old = (uint8_t)((w >> 23) & 15u);
+        key_vel_ix = KEY_VEL_DEF;
+    }   /* the visualiser (ui_vis.c); 0 in 2.3 = OSCILLOSCOPE */     /* menu USB SERIAL (usb.c usb_cdc_on, at the next start); 0 in 2.3 = OFF */
 }
 
 static void settings_save(void);              /* project.c: flash copy (FELUCCA_FLASH) */
@@ -135,8 +143,14 @@ static uint32_t dx_claim_banks(void)                          /* -> banks erased
     /* builds 17-18 counted banks instead: 8 on 17 (its eight = the top eight sectors) and 12 on 18 (all twelve, by
      * its own reckoning) — honoured as a count from the top, so a device that loaded its banks on 18 keeps them */
     uint32_t claimed = dx_layout ? dx_layout : dx_layout_old ? dx_layout_old : 4u, below, b, n = 0;
-    if (claimed >= DX_USER_BANKS)
+    if (claimed >= DX_USER_BANKS) {
+        if (!dx_layout) {                                     /* builds 17-18's twelve: write the record by place now, */
+            dx_layout = (uint8_t)DX_USER_BANKS;               /* so bits 23..26 are never read as a count again */
+            dx_layout_old = 0;
+            settings_save();
+        }
         return 0;
+    }
     below = DX_USER_BANKS - claimed;                          /* the banks under the claimed top: new to this device */
     for (b = 0; b < below; b++)
         n += DX_CLAIM_ERASE(b) ? 0u : 1u;

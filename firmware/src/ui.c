@@ -519,7 +519,7 @@ static uint32_t preset_group_jump(uint32_t cur, int dir)
 
 static void preset_go(uint32_t n)                    /* load list index n into the selected track */
 {
-    uint32_t k, e = preset_at(n, &k);
+    uint32_t k, k2, e = preset_at(n, &k);
     if (is_drum(TSEL))
         return;                                      /* one GM kit: nothing to browse */
     if (e == NENGINES) {
@@ -530,6 +530,8 @@ static void preset_go(uint32_t n)                    /* load list index n into t
         if (TSEL->eng_req != ENGI_FM6)
             select_engine(ENGI_FM6);
         apply_preset(0);
+        for (k2 = 0; k2 < 4u; k2++)                  /* a DX7 voice has no effects of its own: dry, as M-VAVE's firmware */
+            TSEL->p[P_DIST + k2] = 0;                /* plays it (FM6's first sound brought chorus, delay and reverb) */
         TSEL->p[P_E7] = (int16_t)(FM6_DX0 + k);
         ui.force = 1;
         return;

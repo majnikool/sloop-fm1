@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* The fork: DX7 voices measured as tools/level_presets.py measures the factory presets (tests/preset_level.c's
  * phrases and roles, through the whole mix), as a voice plays after a PRESETS pick: FM6 preset 0's settings, the
- * voice as the patch, P_ED_FX 0. Also prints the firmware's own estimate (eng_fm6.c dx_est) and hash (dx_hash).
+ * voice as the patch, dry (the sends 0), P_ED_FX 0. Also prints the firmware's own estimate (eng_fm6.c dx_est) and hash (dx_hash).
  *   cc -O2 -Itests -Ibuild/gen -Ifirmware/src -Ifirmware/hal tests/dx_level.c -lm -o build/host/dx_level
  *   TRIMMED=1 build/host/dx_level OUT.raw OUT.txt BANK.syx...   (then tools/level_dx.py OUT.raw OUT.txt)
  * TRIMMED: each voice plays with the trim the firmware gives it (dx_trim_of), so the tool adds what is left */
@@ -63,6 +63,8 @@ int main(int argc, char **argv)
             host_tracks_init();
             song.g[G_BPM] = 100;
             host_preset(&trk[0], ENGI_FM6, 0);
+            for (i = 0; i < 4u; i++)
+                trk[0].p[P_DIST + i] = 0;                 /* dry, as a PRESETS pick leaves a DX7 voice (ui.c preset_go) */
             trk[0].p[P_ED_FX] = getenv("TRIMMED") ? (int16_t)dx_trim_of(pk) : 0;   /* TRIMMED: as the firmware sets it */
             fm6_unpack(pk, v);
             fm6_set_patch(0, v);
