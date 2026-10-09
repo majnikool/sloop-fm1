@@ -177,6 +177,36 @@ int main(int argc, char **argv)
          * sounds, tagged by bank; a pick puts the FM6 engine on that slot; the jump by kind walks the banks that hold voices */
         uint32_t i, total, n, k, e;
         char nm[13];
+        {   /* every slot of all twelve banks its OWN name: the name the list shows, the one TRACKS shows and the voice
+             * that plays must be that slot's. Builds 16-24 named slot k after slot k & 127 (a four-bank leftover), and the
+             * test above could not see it: every voice in it is named after the init voice or VOICE 1..32 */
+            uint32_t bad_name = 0, bad_play = 0;
+            char want[13];
+            for (k = 0; k < DX_USER_SLOTS; k++) {
+                uint8_t *v = dx_host_store + k * 128u;
+                memcpy(v, FM6_INIT, 128);
+                snprintf(want, sizeof want, "B%02u V%02u   ", (unsigned)(k / 32u + 1u), (unsigned)(k % 32u + 1u));
+                memcpy(v + 118, want, 10);
+            }
+            dx_gen++;
+            for (k = 0; k < DX_USER_SLOTS; k++) {
+                snprintf(want, sizeof want, "B%02u V%02u", (unsigned)(k / 32u + 1u), (unsigned)(k % 32u + 1u));
+                dx_slot_name(k, nm);
+                bad_name += strcmp(nm, want) != 0;
+            }
+            check(dx_count() == DX_USER_SLOTS && !bad_name, "DX7 banks: every one of the 384 slots shows its own name (banks 5-12 too)");
+            for (n = 0; n < DX_USER_BANKS; n++) {             /* the last voice of every bank, picked from the PRESETS list */
+                const uint32_t slot = n * 32u + 31u;
+                e = preset_at(NBANK + slot, &k);
+                track_select(0); preset_go(NBANK + slot); fm6_poll();
+                trk_short_name(0, nm);
+                snprintf(want, sizeof want, "B%02u V32", (unsigned)(n + 1u));
+                bad_play += e != PRESET_DX || k != slot || strcmp(nm, want) || memcmp(&fm6_patch[0][FP_NAME], want, 7);
+            }
+            check(!bad_play, "and picked from the list, every bank's voice is the one named: TRACKS and the patch played agree");
+            memset(dx_host_store, 0xFF, sizeof dx_host_store);
+            dx_gen++;
+        }
         for (i = 0; i < 32u; i++) {                       /* bank 1 full: the init voice named VOICE 1..32 */
             uint8_t *v = dx_host_store + i * 128u;
             memcpy(v, FM6_INIT, 128);

@@ -35,11 +35,11 @@
 #define FM6_BANK_N 27u           /* patch bank slots (fm6_bank.c) */
 #define FM6_PACKED 128u
 
-/* ---- the DX7 voice banks (the fork): 128 packed voices in four flash sectors at FL_DX_LO (fm1_flash.h), the
- * PTCH slots D1..D128 after F1..F8 and B1..B27. Read in place (XIP); written a bank at a time by the editor
- * (editor.c dx_bank_write: backup objects 9..12, 4096 bytes each — a 32-voice .syx as it is). The loaded
- * voices are in the PRESETS list by name, tagged DX1..DX4 (ui.c preset_*). An empty or damaged slot plays the
- * init voice. */
+/* ---- the DX7 voice banks (the fork): DX_USER_BANKS x 32 packed voices in flash sectors ending at FL_DX_HI
+ * (fm1_flash.h), the PTCH slots D1..D384 after F1..F8 and B1..B27. Read in place (XIP); written a bank at a time by
+ * the editor (editor.c dx_bank_write: backup objects ED_BK_DX.., 4096 bytes each — a 32-voice .syx as it is). The
+ * loaded voices are in the PRESETS list by name, tagged DX1..DX12 (ui.c preset_*). An empty or damaged slot plays
+ * the init voice. */
 #define DX_VOICE 128u
 #define DX_BANK_N 32u
 #define DX_USER_BANKS 12u                          /* 1-4 the factory voices (the editor fills them), 5-12 yours */
@@ -120,10 +120,12 @@ static uint32_t dx_nth(uint32_t n)                   /* slot of the n-th loaded 
             return k;
     return 0;
 }
-/* the name of slot k's voice (INIT VOICE when empty), trimmed; b holds 13 */
+/* the name of slot k's voice (INIT VOICE when empty), trimmed; b holds 13. (Builds 16-24 masked k with 127, a
+ * leftover of four banks: every voice in banks 5-12 showed the name of the voice 128 or 256 slots below it, in
+ * banks 1-4, while it played its own sound — the owner saw a GUITAR that was a choir) */
 static void dx_slot_name(uint32_t k, char *b)
 {
-    const uint8_t *p = dx_user_ok(k & 127u) ? dx_user_slot(k & 127u) : FM6_INIT;
+    const uint8_t *p = k < DX_USER_SLOTS && dx_user_ok(k) ? dx_user_slot(k) : FM6_INIT;
     uint32_t i, n = 10;
     while (n && p[118 + n - 1u] == ' ')
         n--;
