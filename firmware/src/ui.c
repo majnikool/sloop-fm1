@@ -530,8 +530,9 @@ static void preset_go(uint32_t n)                    /* load list index n into t
         if (TSEL->eng_req != ENGI_FM6)
             select_engine(ENGI_FM6);
         apply_preset(0);
-        for (k2 = 0; k2 < 4u; k2++)                  /* a DX7 voice has no effects of its own: dry, as M-VAVE's firmware */
-            TSEL->p[P_DIST + k2] = 0;                /* plays it (FM6's first sound brought chorus, delay and reverb) */
+        for (k2 = 0; k2 < 4u; k2++)                  /* a DX7 voice as upstream's cartridge presets play it (editor */
+            TSEL->p[P_DIST + k2] = 0;                /* fm6CartPreset: "every value at its default ... the patch plays as */
+        TSEL->p[P_ED_FX] = TP[P_ED_FX].def;          /* it is"): dry, no level trim (FM6's first sound brought its own) */
         TSEL->p[P_E7] = (int16_t)(FM6_DX0 + k);
         ui.force = 1;
         return;

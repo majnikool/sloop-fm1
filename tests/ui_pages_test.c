@@ -204,39 +204,17 @@ int main(int argc, char **argv)
                 bad_play += e != PRESET_DX || k != slot || strcmp(nm, want) || memcmp(&fm6_patch[0][FP_NAME], want, 7);
             }
             check(!bad_play, "and picked from the list, every bank's voice is the one named: TRACKS and the patch played agree");
-            {   /* the level (tools/level_dx.py -> dx_trim.h): a voice the table knows gets its measured trim, any other one
-                 * the estimate, both within PRESET_TRIM's range; it lands on P_ED_FX with the voice, and leaves with it */
-                uint32_t i, sorted = 1, found = 1;
-                int32_t t0, t1;
-                uint8_t quiet[128];
-                for (i = 0; i < DX_TRIM_N; i++) {
-                    sorted &= i == 0u || DX_TRIM_HASH[i - 1u] < DX_TRIM_HASH[i];
-                    found &= dx_trim_find(DX_TRIM_HASH[i]) == (int32_t)i && DX_TRIM[i] >= -40 && DX_TRIM[i] <= 23;
-                }
-                check(DX_TRIM_N > 100u && sorted && found && dx_trim_find(DX_TRIM_HASH[0] - 1u) < 0,
-                      "DX7 levels: the table is sorted and every voice in it is found (and a missing one is not)");
-                t0 = dx_trim_of(dx_host_store);               /* B01 V01: the init voice renamed, not in the table */
-                memcpy(quiet, dx_host_store, 128); quiet[5u * 17u + 14u] = 70;   /* OP1, the init voice's carrier: 99 -> 70 */
-                t1 = dx_trim_of(quiet);
-                check(dx_trim_find(dx_hash(dx_host_store)) < 0 && t0 >= -40 && t0 <= 23 && dx_trim_of(FM6_INIT) == t0,
-                      "a voice the table does not know: the estimate, in range, and its name plays no part");
-                check(dx_est(dx_host_store) > dx_est(FM6_INIT) - 256 && dx_est(dx_host_store) < dx_est(FM6_INIT) + 256,
-                      "the estimate is the same sound's whatever it is called");
-                check(t1 > t0 || t0 == 23, "a quieter voice gets a higher trim (until the ceiling)");
-                track_select(0); preset_go(NBANK + 40u); fm6_poll();
-                check(TSEL->p[P_E7] == (int16_t)(FM6_DX0 + 40u) && TSEL->p[P_ED_FX] == (int16_t)dx_trim_of(dx_host_store + 40u * 128u),
-                      "a DX7 voice picked from the list: the track's trim is the voice's own");
-                check(!TSEL->p[P_DIST] && !TSEL->p[P_CHOR] && !TSEL->p[P_DLY] && !TSEL->p[P_REV],
-                      "and it plays dry: no chorus, delay or reverb from FM6's first sound");
-                apply_preset(0);
-                check(TSEL->p[P_CHOR] == 45 && TSEL->p[P_DLY] == 25 && TSEL->p[P_REV] == 35, "FM6's own TINE EP keeps its effects");
+            {   /* a DX7 voice picked from the list plays as upstream's cartridge presets do (editor fm6CartPreset: "every
+                 * value at its default ... the patch plays as it is"): dry, no level trim; FM6's own sounds keep theirs */
+                track_select(0); apply_preset(0);
+                check(TSEL->p[P_CHOR] == 45 && TSEL->p[P_DLY] == 25 && TSEL->p[P_REV] == 35 && TSEL->p[P_ED_FX] == preset_trim(ENGI_FM6, 0),
+                      "FM6's own TINE EP: its effects and its level trim");
                 preset_go(NBANK + 40u); fm6_poll();
-                TSEL->p[P_ED_FX] = 5; fm6_slot[0] = 0xFFu; fm6_track_loaded(TSEL);
-                check(TSEL->p[P_ED_FX] == 5, "loaded from a project (the audio ISR, for a song section): no level work there");
-                fm6_poll();
-                check(TSEL->p[P_ED_FX] == (int16_t)dx_trim_of(dx_host_store + 40u * 128u), "a project or user preset on it: the trim is the voice's again");
-                TSEL->p[P_E7] = 2; fm6_poll();
-                check(TSEL->p[P_ED_FX] == preset_trim(ENGI_FM6, TSEL->preset), "PTCH back to F3: the FM6 sound's own trim");
+                check(TSEL->p[P_E7] == (int16_t)(FM6_DX0 + 40u) && !TSEL->p[P_DIST] && !TSEL->p[P_CHOR] && !TSEL->p[P_DLY] && !TSEL->p[P_REV]
+                      && TSEL->p[P_ED_FX] == TP[P_ED_FX].def,
+                      "a DX7 voice picked from the list: dry and no trim, as upstream plays a cartridge voice");
+                TSEL->p[P_ED_FX] = 5; fm6_slot[0] = 0xFFu; fm6_track_loaded(TSEL); fm6_poll();
+                check(TSEL->p[P_ED_FX] == 5, "a project or user preset on it keeps its own trim (as upstream)");
             }
             memset(dx_host_store, 0xFF, sizeof dx_host_store);
             dx_gen++;
