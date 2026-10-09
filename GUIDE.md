@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/logo/sloop-logo.png" alt="SLOOP" width="420"></p>
 
-# SLOOP 2.4.1 — The Complete Guide
+# SLOOP 2.5 — The Complete Guide
 
 Everything SLOOP does, every button, every combination, every page, in one place. This guide is written to be read from the top the first time, then used as a reference: the [cheat sheet](#26-cheat-sheet) at the end has every combination on one page.
 
@@ -48,7 +48,7 @@ The 11 black keys are F#3, G#3, A#3, C#4, D#4, F#4, G#4, A#4, C#5, D#5, F#5. The
 14. [Song mode: sections, chains, songs](#14-song-mode-sections-chains-songs)
 15. [The screens](#15-the-screens)
 16. [Every page, knob by knob](#16-every-page-knob-by-knob)
-17. [The sounds and the ten engines](#17-the-sounds-and-the-ten-engines)
+17. [The sounds and the twelve engines](#17-the-sounds-and-the-twelve-engines)
 18. [Effects: master, punch-in, per track](#18-effects-master-punch-in-per-track)
 19. [The visualiser](#19-the-visualiser)
 20. [The HOME menu and the lights](#20-the-home-menu-and-the-lights)
@@ -84,7 +84,7 @@ The 11 black keys are F#3, G#3, A#3, C#4, D#4, F#4, G#4, A#4, C#5, D#5, F#5. The
 | **ENV** | button | envelope pages |
 | **LFO** | button | LFO pages |
 | **FX** | button | punch-in layer (hold), effect pages (tap) |
-| **SCL** | button | key / chord layer (hold), scale pages (tap) |
+| **SEL** | button | key / chord layer (hold), scale pages (tap). The second button of the top row, between FX and ENV (not the SELECT knob) |
 | **EDIT** | button | erase layer (hold), engine pages (tap) |
 | **ARP** | button | note-repeat layer (hold), arpeggiator pages (tap) |
 | **SEQ** | button | step layer (hold), sequencer pages (tap) |
@@ -119,7 +119,7 @@ Every function button has two lives:
 - **Tap** it: its **pages** open (sound design, settings), as on any FM-1 firmware. Tap it again: the next page of that button. **SELECT** also walks the pages of that button, both ways. Each button remembers the last page you used.
 - **Hold** it: a **layer**. While it is held, the 16 white keys and KNOB 1–4 do something else, and after 0.14 s the screen shows the 16 keys as 16 tiles (four rows of four: keys 1–4, 5–8, 9–12, 13–16) and the knobs as dials. Let go: back to playing.
 
-The layers are **FX** (punch-in effects), **EDIT** (erase), **ARP** (note repeat), **SEQ** (steps), **SCL** (key and chords), **GLO** (mix) and **SAVE** (song). ENV and LFO have no layer: they only open pages.
+The layers are **FX** (punch-in effects), **EDIT** (erase), **ARP** (note repeat), **SEQ** (steps), **SEL** (key and chords), **GLO** (mix) and **SAVE** (song). ENV and LFO have no layer: they only open pages.
 
 **Landmarks:** while a layer is held (and always on the drum track) keys 1, 5, 9 and 13 glow dimly — the first key of each row of tiles — so you can find a tile without looking. Keys at full light are what is on.
 
@@ -136,7 +136,7 @@ The layers are **FX** (punch-in effects), **EDIT** (erase), **ARP** (note repeat
 3. **Press REC on the "1" after your last bar.** The loop closes: its length sets the tempo, the hits snap to the grid, and it plays at once.
 4. Press **REC** again while it plays: you record on top (overdub). Hold **ARP** and hold the hat key (C4): a 1/16 hat roll, recorded as ratchets.
 5. Turn **ALGORITHM** to track **1** (blue, *808 BOOM*), press **REC**, play a bass line.
-6. Hold **SCL** and press the key of your song (for example D). Select track 2, hold **SCL** and turn **KNOB 1** to *7TH*: every white key is now a chord of the key, one finger each.
+6. Hold **SEL** and press the key of your song (for example D). Select track 2, hold **SEL** and turn **KNOB 1** to *7TH*: every white key is now a chord of the key, one finger each.
 7. Hold **FX** and hold a white key for a punch-in effect; still holding FX, turn **KNOB 2** for DUST, **KNOB 3** for DUCK.
 8. A mistake? **EDIT + OCT−**: undo.
 
@@ -153,7 +153,7 @@ The layers are **FX** (punch-in effects), **EDIT** (erase), **ARP** (note repeat
 | **ENV** | ENV pages (ENV, ENV DEST) | — |
 | **LFO** | LFO pages (LFO, LFO DEST) | — |
 | **FX** | FX pages (FX, FILTER, SLICER, DLY, REV/CHO) | punch-in layer |
-| **SCL** | SCL pages (SCL, SCL 2) | key / chord layer |
+| **SEL** | SEL pages (SEL, SEL 2) | key / chord layer |
 | **EDIT** | EDIT pages (EDIT 1, EDIT 2, VOICE, VOICE 2) · on TRACKS with the drum track: the **DRUMS** screen · on DRUMS: grid ↔ kit · on the STEP page: clear the step | erase layer |
 | **ARP** | ARP pages (ARP, ARP 2) | note-repeat layer |
 | **SEQ** | SEQ pages (STEP, PATTERN, SONG) · on TRACKS with the drum track: the **DRUMS** screen · on DRUMS: grid ↔ kit | step layer |
@@ -181,7 +181,7 @@ The layers are **FX** (punch-in effects), **EDIT** (erase), **ARP** (note repeat
 
 - The keys play the selected track. The notes you play always go out on USB MIDI (the track's channel).
 - **OCT− / OCT+**: octave −3 … +3; both together: back to 0. The OCT lights show when you are off 0.
-- What the keys play depends on the track's **KEYS** setting and **CHORD** mode (SCL layer or SCL page):
+- What the keys play depends on the track's **KEYS** setting and **CHORD** mode (SEL layer or SEL page):
 
 | KEYS | CHORD | The keys play |
 | --- | --- | --- |
@@ -228,6 +228,7 @@ The FM-1's keys have no velocity: on the drum track every hit has one of four **
 | 6–37 | 32 synthesised kits, 16 sounds each: 808, 909, 606, 80S, VINTAGE, TRAP, DRILL, BOOMBAP, LO-FI, PHONK, HOUSE, D.HOUSE, TECHNO, MINIMAL, ELECTRO, DISCO, GARAGE, JUNGLE, DUBSTEP, DEMBOW, AMAPIANO, AFRO, LATIN, TRIBAL, SYNTHWV, CHIP, ARCADE, GLITCH, INDUSTR, HYPER, AMBIENT, JAZZ |
 | 38–41 | **USR1, USR2, USR3, USR4**: your own kit in one sample slot (about 7.4 s) |
 | 42 | **USR3+4**: your own big kit over two slots (about 15 s) |
+| 43–46 | **SYN1, SYN2, SYN3, SYN4** (2.5): your own synthesised kits, made in the editor's [Drum synth](#your-own-synthesised-kits-syn1syn4) page. The FM-1 shows the name you gave them |
 
 Every kit is level-matched. The kit is saved with projects and song sections. Changing the kit never touches the pattern. [Your own kits](#23-your-own-samples-and-drum-kits) work like any other: steps, levels, ratchets, fills, choke, MIDI.
 
@@ -294,8 +295,8 @@ LENGTH and START apply when you record at a tempo (MODE *tempo*, or a project th
 ### Metronome and swing
 
 - The **PLAY light flashes on every beat**: a silent metronome.
-- An audible click: **GLO → GLOBAL → CLICK** = **OFF**, **REC** (only while a track records) or **ON** (whenever it plays). Its level follows GLO → DRUMS → LVL. The click is never recorded, and the count-in always clicks.
-- **Swing** is MPC swing, 50 % (straight) to 75 %: **GLO → GLOBAL → SWING** for all tracks, **SEQ + KNOB 3** (or SEQ → PATTERN → SWG) per track; a track's swing adds to the global one. Triplet divisions are never swung.
+- An audible click: **GLO → GLOBAL → CLICK** = **OFF**, **REC** (only while a track records) or **ON** (whenever it plays). It is a short tick of its own (higher on the first beat of a bar), heard with every kit, even with the drum track muted or another track soloed; its level follows GLO → DRUMS → LVL. The click is never recorded, and the count-in always clicks.
+- **Swing** goes from **0** (straight) to **100** (the strongest: a step pair played 75 / 25, as MPC swing at 75 %): **HOME, KNOB 1** or **GLO → GLOBAL → SWING** for all tracks, **SEQ + KNOB 3** (or SEQ → PATTERN → SWG) per track; a track's swing adds to the global one. Triplet divisions are never swung.
 
 ### What gets recorded
 
@@ -315,7 +316,7 @@ All seven layers at a glance:
 | **EDIT** | erase | erase that sound / note from the pattern | SHIFT | LENGTH ×2 / ½ | TRANSPOSE | — | EDIT pages |
 | **ARP** | roll | note repeat on the grid | RATE | — | — | — | ARP pages |
 | **SEQ** | steps | steps 1–16 of the page | SOUND / NOTE | DIV | SWING | LENGTH | SEQ pages |
-| **SCL** | key | the key of the song | CHORD | SCALE | KEYS | TRANSPOSE | SCL pages |
+| **SEL** | key | the key of the song | CHORD | SCALE | KEYS | TRANSPOSE | SEL pages |
 | **GLO** | mix | 1–4 mute · 5–8 solo · 9 fill · 10 fill bar · 16 tap tempo | level 1 | level 2 | level 3 | level 4 | GLO pages |
 | **SAVE** | song | 1–4 play A–D · 5–8 save A–D · 13 loop / song · 14 SONG REC · 16 song screen | — | — | — | — | song screen / SAVE pages |
 
@@ -381,15 +382,15 @@ The 16 white keys are the 16 steps of the current page; the lit ones play.
 
 A held step that you edited with a knob is **kept** when you let go (only a plain tap clears). Details in [The step sequencer](#10-the-step-sequencer-steps-nudge-locks-fills).
 
-### SCL — key and chords
+### SEL — key and chords
 
 | Control | Does |
 | --- | --- |
-| **SCL + any key** | sets the **key of the song**: the root of all three synth tracks (*KEY D*) |
-| **SCL + KNOB 1** | **CHORD** of the selected synth track: OFF, TRIAD, 7TH, 9TH, SUS4, POWER |
-| **SCL + KNOB 2** | **SCALE** of all three synth tracks: 16 scales |
-| **SCL + KNOB 3** | **KEYS**: OFF, SNAP, WHITE |
-| **SCL + KNOB 4** | **TRANSPOSE** the selected track, ±24 semitones |
+| **SEL + any key** | sets the **key of the song**: the root of all three synth tracks (*KEY D*) |
+| **SEL + KNOB 1** | **CHORD** of the selected synth track: OFF, TRIAD, 7TH, 9TH, SUS4, POWER |
+| **SEL + KNOB 2** | **SCALE** of all three synth tracks: 16 scales |
+| **SEL + KNOB 3** | **KEYS**: OFF, SNAP, WHITE |
+| **SEL + KNOB 4** | **TRANSPOSE** the selected track, ±24 semitones |
 
 Details in [Key, scales, chords and CHORD+](#11-key-scales-chords-and-chord).
 
@@ -434,7 +435,7 @@ There are three ways to enter steps:
 
 | STEP page | Does |
 | --- | --- |
-| **keys** | the keys pressed together become the cursor's step (POLY: up to 4 notes; MONO, LEG and UNI: the last one); let go of all keys and the cursor moves on |
+| **keys** | the keys pressed together become the cursor's step (POLY: up to 4 notes; MONO, LEG and UNI: the last one); in chord mode a key writes its whole chord, CHORD+ changes included; let go of all keys and the cursor moves on |
 | KNOB 1 **STEP** | moves the cursor |
 | KNOB 2 **NOTE** | transposes the step (an empty step gets your last note) |
 | KNOB 3 **TIME** | **NOTE**, **TIE** (holds the previous note on) or **REST** |
@@ -482,8 +483,8 @@ Call a fill while you play: **GLO + key 9** (as long as you hold it) or **GLO + 
 
 ### Key and scale
 
-- **SCL + any key** sets the **key of the song** for the three synth tracks. (Also SCL page → ROOT, per track.)
-- **SCALE** (SCL + KNOB 2 sets all three synth tracks; the SCL page sets the selected track alone): CHR (chromatic), MAJ, MIN, DOR (dorian), MIX (mixolydian), PEN (major pentatonic), MPEN (minor pentatonic), HARM (harmonic minor), PHRY (phrygian), LYD (lydian), LOC (locrian), MEL (melodic minor), BLUES, WHOLE (whole tone), DIMHW and DIMWH (diminished, half-whole and whole-half).
+- **SEL + any key** sets the **key of the song** for the three synth tracks. (Also SEL page → ROOT, per track.)
+- **SCALE** (SEL + KNOB 2 sets all three synth tracks; the SEL page sets the selected track alone): CHR (chromatic), MAJ, MIN, DOR (dorian), MIX (mixolydian), PEN (major pentatonic), MPEN (minor pentatonic), HARM (harmonic minor), PHRY (phrygian), LYD (lydian), LOC (locrian), MEL (melodic minor), BLUES, WHOLE (whole tone), DIMHW and DIMWH (diminished, half-whole and whole-half).
 - **KEYS**: **OFF** (chromatic), **SNAP** (every key rounded down to the scale), **WHITE** (the white keys walk the scale from C4, the black keys are silent).
 - **TRANSPOSE** (per track): ±24 semitones.
 
@@ -491,7 +492,7 @@ Changing a sound (PRESETS, a user preset) never changes the key, the chord mode,
 
 ### Chord mode: one finger, one chord
 
-Hold **SCL** and turn **KNOB 1 CHORD** on the selected synth track:
+Hold **SEL** and turn **KNOB 1 CHORD** on the selected synth track:
 
 | CHORD | Notes |
 | --- | --- |
@@ -518,9 +519,9 @@ With a chord mode on, **hold a black key while you play a white one** — or pre
 
 Both octaves of black keys work, and you can hold several. The 7th and 9th come from the scale: in C major, G4 plays **G** (the V chord), **G#** makes it **G7**, **F# + G#** make it **Gm7**; on C4, F# + G# give C-E♭-G-B. What you play is recorded as it sounds.
 
-### SCL 2: STRUM and VLEAD
+### SEL 2: STRUM and VLEAD
 
-Tap **SCL** twice (or SCL, then SELECT) for **SCL 2**:
+Tap **SEL** twice (or SEL, then SELECT) for **SEL 2**:
 
 | Knob | Does |
 | --- | --- |
@@ -539,7 +540,7 @@ Tap **SCL** twice (or SCL, then SELECT) for **SCL 2**:
 | **GLO + keys 1–4 / 5–8** | mute / solo |
 | **VOICE 2 page** | PAN and MUTE of a synth track |
 | **TRACKS screen, KNOB 4** | the selected track's pan |
-| **GLO → DRUMS** | the drum track's LVL and reverb, and its MIDI channel |
+| **GLO → DRUMS** | the drum track's LVL, its reverb and (2.5) delay sends, and its MIDI channel |
 | **MASTER knob** | the output volume |
 
 A muted track fades out in a few milliseconds and plays no new notes; its pattern runs on in time. Several solos add up.
@@ -622,7 +623,7 @@ The song's settings can only be edited while it is stopped (*STOP FIRST*). An em
 | **REC READY / FREE TAKE / COUNT-IN** | **REC** while stopped | the tracks, then **mode · length · start** on KNOB 1–3 (4-3-2-1 during a count-in); in a free take: the seconds and the loop it would make |
 | **Hold ring** | hold **REC** | the ring of *clear track* filling |
 | **SONG** | tap **SAVE** on TRACKS, or **SAVE + key 16** | the section chain; see [The SONG screen](#the-song-screen) |
-| **Pages** | tap ENV, LFO, FX, SCL, EDIT, ARP, SEQ, GLO, SAVE | four colour-coded values with a graph (ENV, LFO, ARP, SCL, FX, SLICER…), or the four values in large type placed as the knobs are (1 2 / 3 4) |
+| **Pages** | tap ENV, LFO, FX, SEL, EDIT, ARP, SEQ, GLO, SAVE | four colour-coded values with a graph (ENV, LFO, ARP, SEL, FX, SLICER…), or the four values in large type placed as the knobs are (1 2 / 3 4) |
 | **Menu** | hold **HOME** | the settings of the FM-1 in four sections; see [The HOME menu](#20-the-home-menu-and-the-lights) |
 
 The **title line** of every screen also carries short messages: *KEY D*, *ERASED*, *AGAIN: SAVE*, *NEXT: B*, *chain A B B C*, *lock flt 12*…
@@ -645,9 +646,9 @@ Tap a button to open its first page (or the last one you used); **tap it again**
 | | **SLICER** | SLCR: OFF, GATE, STUT (stutter) | PAT: pattern 1–16 | RATE: 1/8, 1/16, 1/32, 8T, 16T, 32T | DEPTH |
 | | **DLY** (global) | TIME: 1/4, 1/8, 1/16, 1/32, 8T, 16T, 1/8D, 1/16D | FDBK feedback | COLR colour (tone of the repeats) | MIX |
 | | **REV/CHO** (global) | SIZE reverb size | DAMP reverb damping | CRT chorus rate | CDP chorus depth |
-| **SCL** | **SCL** | ROOT (the track's key) | SCL: the track's scale (SCL + KNOB 2 sets all three) | QNT keys: OFF, SNAP, WHITE | CHORD: OFF, TRIAD, 7TH, 9TH, SUS4, POWER |
-| | **SCL 2** | TRN transpose ±24 | STRUM ±60 ms | VLEAD: OFF / ON | — |
-| **EDIT** | **EDIT 1** | engine parameter 1 | 2 | 3 | 4 (see [the engines](#the-ten-engines)) |
+| **SEL** | **SEL** | ROOT (the track's key) | SCL: the track's scale (SEL + KNOB 2 sets all three) | QNT keys: OFF, SNAP, WHITE | CHORD: OFF, TRIAD, 7TH, 9TH, SUS4, POWER |
+| | **SEL 2** | TRN transpose ±24 | STRUM ±60 ms | VLEAD: OFF / ON | — |
+| **EDIT** | **EDIT 1** | engine parameter 1 | 2 | 3 | 4 (see [the engines](#the-twelve-engines)) |
 | | **EDIT 2** | engine parameter 5 | 6 | 7 | 8 |
 | | **VOICE** | VCE: POLY, MONO, LEG (legato), UNI (unison) | GLD glide | GLMOD: RATE / TIME | PRIO: LAST, LOW, HIGH (mono note priority) |
 | | **VOICE 2** | ALLOC: ROT (rotate) / REUSE | DTUNE (unison detune) | PAN | MUTE |
@@ -659,7 +660,7 @@ Tap a button to open its first page (or the last one you used); **tap it again**
 | **GLO** | **GLOBAL** | BPM 40–240 | SWING (all tracks) | CLICK: OFF, REC, ON | TUNE ±50 cents |
 | | **MASTER** | DUST | DUCK | FILT (DJ filter) | ROLL (note-repeat rate) |
 | | **SYSTEM** | MIDI out: KEYS / SEQ | SYNC: INT, USB, TRS | IN: NOTES / CLOCK | CPU load (USB link state when no computer is connected) |
-| | **DRUMS** | CH: the drum track's MIDI input channel (0 = off, default 10) | LVL drum level | REV drum reverb | — |
+| | **DRUMS** | CH: the drum track's MIDI input channel (0 = off, default 10) | LVL drum level | REV drum reverb | DLY drum delay (2.5): the drums into the tempo delay (FX → DLY sets its time, feedback and tone), saved with the project |
 | **SAVE** | **PRESETS** | the sound | the engine | — | — |
 | | **USER** | SLOT 1–32 | LOAD (GO) | ERASE (GO) | SAVE (GO) |
 | | **PROJECT** | SLOT 1–4 | — | LOAD (GO) | SAVE (GO) |
@@ -671,31 +672,31 @@ Notes:
 - **SYNC**, **MIDI** and **IN** are settings of the FM-1, kept when you load a project.
 - On the **drum track**, the pages that work are SLICER, PATTERN (SEQ), the SONG screen and the global pages; its kit, level, reverb and pan are on the DRUMS kit page, and its filter is **FX + KNOB 4**.
 - FM6 tracks ignore the ENV page and ENV DEST (each operator has its own envelope).
-- On the screen, EDIT 1 and EDIT 2 carry the engine's own page names: ANALOG *OSC / FLT*, DIGITAL *OPS / MOD*, PHASE *PHS / LINE*, LOFI *CHIP / MOTN*, SAMPLE *SET / TONE*, VOICE *VOWL / TONE*, TRIO *OSC / TONE*, WHEEL *BARS / TONE*, GRAIN *GRAN / SPRY*, FM6 *OPS / PATCH*.
+- On the screen, EDIT 1 and EDIT 2 carry the engine's own page names: ANALOG *OSC / FLT*, DIGITAL *OPS / MOD*, PHASE *PHS / LINE*, LOFI *CHIP / MOTN*, SAMPLE *SET / TONE*, VOICE *VOWL / TONE*, TRIO *OSC / TONE*, WHEEL *BARS / TONE*, GRAIN *GRAN / SPRY*, FM6 *OPS / PATCH*, PHYS *BODY / EXCT*, NOISE *SRC / MOVE*.
 - Any sound parameter on these pages can be **locked** on a step (see [Parameter locks](#parameter-locks)), except the pattern, arp, key and voice-mode ones.
 
 ---
 
-## 17. The sounds and the ten engines
+## 17. The sounds and the twelve engines
 
 ### The sound bank
 
-**76 factory sounds**, every one a full patch on one of the ten engines, all level-matched (the same LEVEL gives the same loudness). **PRESETS** browses them **by kind** — basses, keys, organs, pads, leads, plucks and bells, stabs, FX — with the kind shown next to the name; your **32 user presets** come after. **To move a kind at a time, hold HOME and turn PRESETS**: each click lands on the first sound of the next kind (basses → keys → organs …, then your presets, then round), and the kind flashes in the top bar. The PRESETS page has the same jump on KNOB 3, KIND. A new project starts at **90 BPM** with *808 BOOM* on track 1, *RHODES* on track 2, *LOFI FLUTE* on track 3 and the 808 kit on track 4.
+**153 factory sounds**, every one a full patch on one of the twelve engines, all level-matched (the same LEVEL gives the same loudness). **PRESETS** browses them **by kind** — basses, keys, organs, pads, leads, plucks and bells, stabs, FX — with the kind shown next to the name; your **32 user presets** come after. **To move a kind at a time, hold HOME and turn PRESETS**: each click lands on the first sound of the next kind (basses → keys → organs …, then your presets, then round), and the kind flashes in the top bar. The PRESETS page has the same jump on KNOB 3, KIND. A new project starts at **90 BPM** with *808 BOOM* on track 1, *RHODES* on track 2, *LOFI FLUTE* on track 3 and the 808 kit on track 4.
 
 | Kind | Sounds (engine) |
 | --- | --- |
-| **Bass** | 808 BOOM, 808 DIRTY, 808 SLIDE, SUB BASS, PLUGG BASS (they slide between held notes, two octaves under the keys) · REESE, WOBBLE, ACID 303, FUNK BASS (ANALOG) · FM BASS (DIGITAL) · CZ BASS (PHASE) · ROUND BASS (FM6) · FAT BASS (TRIO) · WOW BASS (VOICE) · GB BASS (LOFI) · UP BASS, DEEP BASS (SAMPLE) |
-| **Keys** | RHODES, DX RHODES, WURLI, M1 PIANO, AFRO KEYS, CLAV (DIGITAL) · GRAND PNO, DUSTY PNO, LOFI KEYS (SAMPLE) · SOFT KEYS (PHASE) · TINE EP (FM6) |
-| **Organ** | SOUL ORGAN, GOSPEL, JAZZ ORGAN, DIRTY B3, HOUSE ORGN (WHEEL) · DRAWBARS (FM6) |
-| **Pad** | WARM PAD, DARK STR, ATMOS PAD (ANALOG) · SAW PAD (TRIO) · GLASS PAD (DIGITAL) · SOFT PAD (FM6) · CZ STRING (PHASE) · LOFI CLOUD, VIBE HAZE (GRAIN) · CHOIR AAH, SOUL OOH (VOICE) |
-| **Lead** | SUPERSAW, G-FUNK LD (ANALOG) · SYNC LEAD, HOOVER (TRIO) · TALKBOX (VOICE) · GAME LEAD (LOFI) · LOFI FLUTE (SAMPLE) · FLUTE DUST (GRAIN) |
-| **Pluck & bell** | TRAP PLUCK (ANALOG) · RESO PLUCK (PHASE) · PLUGG BELL, TRAP BELL, MUSIC BOX, KALIMBA, MARIMBA (DIGITAL) · VIBES (SAMPLE) · 8BIT ARP (LOFI) · GLASS BELL, WOOD BARS, NYLON PICK (FM6) |
-| **Stab** | MIN STAB, MIN7 STAB, RAVE STAB, DUB CHORD (TRIO: one key plays the chord) · SYN BRASS (ANALOG) · CZ BRASS (PHASE) · BRASS SECT (FM6) · HORN STAB, STRING STB (SAMPLE) |
-| **FX** | SCRATCH (scratch, backspin, rewind across the keys) · GM KIT (SAMPLE) |
+| **Bass** | 808 BOOM, 808 DIRTY, 808 SLIDE, SUB BASS, PLUGG BASS (they slide between held notes, two octaves under the keys) · REESE, WOBBLE, ACID 303, FUNK BASS, MONO BASS (ANALOG) · FM BASS, BASS GTR (DIGITAL) · CZ BASS (PHASE) · ROUND BASS (FM6) · FAT BASS (TRIO) · WOW BASS (VOICE) · GB BASS (LOFI) · UP BASS, DEEP BASS (SAMPLE) · PLUCK BASS (PHYS) · NES BASS (LOFI) · SAW BASS (ANALOG) |
+| **Keys** | RHODES, DX RHODES, WURLI, M1 PIANO, AFRO KEYS, CLAV (DIGITAL) · GRAND PNO, DUSTY PNO, LOFI KEYS (SAMPLE) · SOFT KEYS (PHASE) · TINE EP (FM6) · FM GRAND (DIGITAL) |
+| **Organ** | SOUL ORGAN, GOSPEL, JAZZ ORGAN, DIRTY B3, HOUSE ORGN (WHEEL) · DRAWBARS (FM6) · ACCORDION (TRIO) · ROCK ORGAN, CHAPEL, REGGAE ORG (WHEEL) |
+| **Pad** | WARM PAD, DARK STR, ATMOS PAD (ANALOG) · SAW PAD, ENSEMBLE (TRIO) · GLASS PAD (DIGITAL) · SOFT PAD (FM6) · CZ STRING (PHASE) · LOFI CLOUD, VIBE HAZE, STR CLOUD, SHIMMER, DRONE (GRAIN) · CHOIR AAH, SOUL OOH (VOICE) · BOWED MTL, CELLO BOW, GLASS BOWL (PHYS) · WIND, OCEAN (NOISE) · CZ PAD (PHASE) · VOX PAD (VOICE) · PNO FREEZE, HORN CLOUD (GRAIN) · SINE PAD (ANALOG) · PULSE PAD (TRIO) |
+| **Lead** | SUPERSAW, G-FUNK LD, FAT LEAD, PAN FLUTE (ANALOG) · SYNC LEAD, HOOVER (TRIO) · TALKBOX, HARMONICA (VOICE) · GAME LEAD (LOFI) · LOFI FLUTE (SAMPLE) · FLUTE DUST (GRAIN) · NZ ARCADE (NOISE) · WAVE LEAD (LOFI) · CZ LEAD (PHASE) · ROBOT (VOICE) · PWM LEAD (ANALOG) · SQR LEAD (TRIO) |
+| **Pluck & bell** | TRAP PLUCK (ANALOG) · RESO PLUCK (PHASE) · PLUGG BELL, TRAP BELL, MUSIC BOX, KALIMBA, MARIMBA, XYLOPHONE, GLOCKEN, CELESTA, STEEL DRUM, HARP (DIGITAL) · VIBES (SAMPLE) · 8BIT ARP (LOFI) · GLASS BELL, WOOD BARS, NYLON PICK (FM6) · STR PLUCK, SITAR, PHYS HARP, BELL TREE, MODAL BAR, THUMB PNO, NYLON GTR, STEEL GTR, MUTED GTR, KOTO, BANJO, TANPURA, CHIMES, BIG BELL, VIBRA BAR, STEEL PAN, WOOD BLOCK (PHYS) · 1BIT BEEP (LOFI) · CZ RESO (PHASE) · TUBE BELL, FM PLUCK (DIGITAL) |
+| **Stab** | MIN STAB, MIN7 STAB, RAVE STAB, DUB CHORD (TRIO: one key plays the chord) · SYN BRASS (ANALOG) · CZ BRASS (PHASE) · BRASS SECT (FM6) · 80S POLY (TRIO) · HORN STAB, STRING STB (SAMPLE) · CHIP CHORD (LOFI) · POWER STAB (TRIO) |
+| **FX** | SCRATCH (scratch, backspin, rewind across the keys) · GM KIT (SAMPLE) · HAND DRUM, MEMB TOMS, TABLA, CONGA, TIMPANI (PHYS) · RAIN, NZ METAL, VINYL, HISS, RISER, NZ SNARE, BITCRUSH, RADIO (NOISE) · CHIP NOISE (LOFI) |
 
 To pick an engine directly: SAVE → PRESETS → **KNOB 2**. To start from the engine's defaults: SAVE → TOOLS → **INIT**.
 
-### The ten engines
+### The twelve engines
 
 Each engine's eight parameters are on **EDIT 1** (KNOB 1–4) and **EDIT 2** (KNOB 1–4), tap EDIT once and twice; the screen shows them under the engine's own page names (for example DIGITAL: *OPS*, *MOD*). A dash is an unused knob.
 
@@ -711,6 +712,8 @@ Each engine's eight parameters are on **EDIT 1** (KNOB 1–4) and **EDIT 2** (KN
 | **WHEEL** | tonewheel organ | REG (16 drawbar registrations: FLUTE, MELLO, HOLLW, SMOOT, 3BAR, BLUES, GOSPL, ROCK…) · SUB · BODY · TOP (drawbar groups ±8) | PERC: OFF, 2ND, 3RD, 2SOFT, 3SOFT, 2SLOW, 3SLOW · CLICK · DRV · ROTR: OFF, SLOW, FAST (rotary speaker) |
 | **GRAIN** | granular | SRC (any sample set, USR1–USR4 too) · POS position · SIZE grain size · DENS density | PTCH ±24 · SPRD spread · RAND randomness · TONE |
 | **FM6** | six-operator FM, DX7 patches | ALG: PAT (the patch's) or 1–32 · FB feedback · MLVL modulator level (brightness) · MRAT modulator ratio | MEG modulator envelopes slower / faster · VMOD velocity → brightness · DTUN carrier spread · PTCH: F1–F8 factory, B1–B27 your bank |
+| **PHYS** | physical models: strings, bars and bells, drum heads, sympathetic strings (DaisySP and Rings, as Felucca 1.0 ported them; 3 voices a track, SYMP 2) | MODEL: MODAL, STRNG, MEMB, SYMP · STRC structure (MEMB: HARM, SYMP: CHRD the sympathetic strings' chord) · BRIT brightness · DAMP | POS strike / pluck position (SYMP: SYMP, how much they ring) · ACC accent · BOW bowing (MEMB: BEND, SYMP: BUZZ) · EXC the exciter in the mix |
+| **NOISE** | noise, from analogue to digital: colours, crackle, shift registers, metallic tones | MODE: ANLG, DUST, LFSR, META · COLR white → pink → brown · FREQ · RES | TRK key tracking · DENS impulses (LFSR, META: LEN, the register) · DRFT drift · CRSH crush (LFSR, META: CLK, the clock above the key) |
 
 The **SAMPLE** sets are free recordings (CC0: Versilian Studios VSCO-2 CE and VCSL, Sonic Pi), coloured like a record through an old sampler. **GRAND PNO** is a Steinway recorded note by note; long notes fade as on the real one.
 
@@ -718,14 +721,14 @@ The **SAMPLE** sets are free recordings (CC0: Versilian Studios VSCO-2 CE and VC
 
 **FM6** is msfa, the synthesis core of Dexed, as Felucca 1.0 ported it: six operators with their own four-stage envelopes, keyboard scaling, velocity, ratio or fixed frequency and detune; 32 algorithms, feedback, LFO, pitch envelope; six voices per track. The eight EDIT values above are **macros on top of the patch**; the track's FLT moves MLVL (so LFO → FLT still brightens it), SHP the feedback, PIT the pitch.
 
-Edit full patches in the web editor's **FM6** panel (Sound page, on an FM6 track): every operator, **Send to track**, **Store in bank** (B1–B27), **Import SysEx** (a DX7 voice or a 32-voice bank: thousands of DX7 and Dexed patches play on the FM-1) and **Export SysEx**. A project keeps the track's **PTCH**, not the patch itself: store an edited patch in the bank to keep it.
+Edit full patches in the web editor's **FM6** panel (Sound page, on an FM6 track): every operator, **Send to track**, **Store in bank** (B1–B27), **Import SysEx** (a DX7 voice or a 32-voice bank: thousands of DX7 and Dexed patches play on the FM-1; or drop the .syx file on the panel) and **Export SysEx**. **Store cartridge in bank** (2.5) puts a whole 32-voice cartridge on the FM-1 at once: the first 27 voices are ticked (or tick the ones you want, up to 27), and one write puts them in B1, B2… in order; the editor asks before replacing, and the rest of the bank stays. Stop the song first. Before storing you can choose to **also add them to the user presets** (in the free slots, or from a slot you pick): each voice gets a user preset with its name that plays its B slot, so on the FM-1 you pick it by name with **PRESETS** or **SELECT**, like any sound; the editor says which user presets it would replace. (A user preset keeps PTCH, not the patch: the voice itself stays in the bank.) Then pick them on the FM-1 with **PTCH** (EDIT page 2: B1–B27 after the factory F1–F8). A project keeps the track's **PTCH**, not the patch itself: store an edited patch in the bank to keep it.
 
 
 ### The DX7 voice banks (this fork)
 
 FM6's own bank holds 27 patches. This build adds **twelve banks of 32 DX7 voices** in flash after it — the FM-1's own 128 factory sounds fill banks 1 to 4 exactly, and banks 5 to 12 are yours for carts — as **PTCH D1–D384**, and puts them **in the PRESETS list by name**, tagged DX1 to DX12, after the factory sounds and before your user presets. Turn PRESETS on a synth track and the loaded voices go by like any other sound; land on one and the track is FM6 on that voice. **Hold HOME and turn PRESETS** to jump a bank at a time; the PRESETS page's KIND knob does the same. TRACKS and the footer show the voice's name.
 
-The editor's **Library** page, *DX7 voice banks*, **fills every empty bank by itself** when it connects: the FM-1's 128 factory voices are fetched from [KingParamount/fm1-factory-presets](https://github.com/KingParamount/fm1-factory-presets) (a CC0 capture of M-VAVE's updater; the voices are not in this repository), each file checked against the size and SHA-256 pinned in the editor before anything is written, with one status line per bank and a Retry when a fetch fails. A bank that holds voices is left alone; **Load the factory banks** replaces all four after a confirm, and the checkbox turns the automatic fill off. **Load .syx** loads your own file — a 32-voice bank replaces the bank, a single voice goes into the selected slot — with the device stopped; **Load several .syx** takes a whole folder of banks at once, checks each, and fills the empty banks above the factory four in file-name order, reporting per file (too many files for the empty banks writes nothing and says so). The bank list names each bank by its voice count and first voice, or by a name you give it (**Name bank** — kept by this editor and in a backup file; the FM-1 itself shows DX1 to DX12). **Delete voice** clears the selected slot, **Move voice to** puts it into another bank's first empty slot, **Tidy bank** closes the gaps. **Play on this track** puts the selected voice on the track (the FM6 engine, PTCH = the slot). **Export .syx** writes a bank back as a file Dexed opens; **Erase bank** clears it. A **backup** carries the four banks (objects 9–12) and a restore puts them back; on upstream SLOOP a restore skips them.
+The editor's **Library** page, *DX7 voice banks*, **fills every empty bank by itself** when it connects: the FM-1's 128 factory voices are fetched from [KingParamount/fm1-factory-presets](https://github.com/KingParamount/fm1-factory-presets) (a CC0 capture of M-VAVE's updater; the voices are not in this repository), each file checked against the size and SHA-256 pinned in the editor before anything is written, with one status line per bank and a Retry when a fetch fails. A bank that holds voices is left alone; **Load the factory banks** replaces all four after a confirm, and the checkbox turns the automatic fill off. **Load .syx** loads your own file — a 32-voice bank replaces the bank, a single voice goes into the selected slot — with the device stopped; **Load several .syx** takes a whole folder of banks at once, checks each, and fills the empty banks above the factory four in file-name order, reporting per file (too many files for the empty banks writes nothing and says so). A bank file may hold fewer than 32 voices: a slot of zeros or the INIT VOICE (what **Export .syx** writes for an empty slot) loads as an empty slot. The bank list names each bank by its voice count and first voice, or by a name you give it (**Name bank** — kept by this editor and in a backup file; the FM-1 itself shows DX1 to DX12). **Delete voice** clears the selected slot, **Move voice to** puts it into another bank's first empty slot, **Tidy bank** closes the gaps. **Play on this track** puts the selected voice on the track (the FM6 engine, PTCH = the slot). **Export .syx** writes a bank back as a file Dexed opens; **Erase bank** clears it. A **backup** carries the four banks (objects 9–12) and a restore puts them back; on upstream SLOOP a restore skips them.
 
 A project or a user preset keeps the track's **PTCH**, as with every FM6 patch: replace the voice in its slot and the sound follows. The FM6 macros (ALG, FB, MLVL, MRAT, MEG, VMOD, DTUN) work on a bank voice as on any patch. **USR4 is 32 KiB on this build** (80 on upstream): the banks took its last twelve sectors, so a USR3+4 kit holds about 6 s less. A bank newly claimed from that flash is erased once, at the first boot of the build that claims it — an earlier firmware may have left real voices there (the stock firmware's preset store sits in this region), which would otherwise show up as a full bank — and never again; what you load afterwards stays through every update. The banks end at a fixed address and grow downward, so when a build adds banks the existing ones keep their place but get higher numbers: the first builds' bank 1 is bank 9 of twelve.
 ---
@@ -734,7 +737,7 @@ A project or a user preset keeps the track's **PTCH**, as with every FM6 patch: 
 
 ### Signal path
 
-Each synth track: engine → **drive** (DST) → **SLICER** → **FILTER** (the track's own) → level (and DUCK) → pan and **sends** to the stereo chorus, the tempo delay and the reverb. The drum track has its own slicer, filter, level, pan and reverb send. Then the whole mix, with the effect returns: **DUST** → **punch-in effects** → **FILT** (the DJ filter) → **MASTER** volume → limiter.
+Each synth track: engine → **drive** (DST) → **SLICER** → **FILTER** (the track's own) → level (and DUCK) → pan and **sends** to the stereo chorus, the tempo delay and the reverb. The drum track has its own slicer, filter, level, pan, reverb send and (2.5) delay send. Then the whole mix, with the effect returns: **DUST** → **punch-in effects** → **FILT** (the DJ filter) → **MASTER** volume → limiter.
 
 ### Master: DUST, DUCK, FILT, ROLL
 
@@ -859,7 +862,7 @@ Both work at once.
 | --- | --- | --- |
 | KNOB 1 | **MIDI** (out) | **KEYS**: only what you play on the keys goes out · **SEQ**: the sequencer, the arp and the rolls go out too |
 | KNOB 2 | **SYNC** (clock in) | **INT**: SLOOP's own tempo · **USB** or **TRS**: follow that MIDI clock |
-| KNOB 3 | **IN** | **NOTES**: notes and clock · **CLOCK**: only the clock and START / CONTINUE / STOP, every incoming note ignored |
+| KNOB 3 | **IN** | **NOTES**: notes, CCs and clock · **CLOCK**: only the clock and START / CONTINUE / STOP, every incoming note and CC ignored |
 | KNOB 4 | **CPU** | the processor load (or the USB link state while no computer is connected) |
 
 All three are settings of the FM-1, kept when you load a project.
@@ -869,11 +872,27 @@ All three are settings of the FM-1, kept when you load a project.
 - **Clock only (IN = CLOCK):** for a DAW or sequencer that sends notes to other gear on the same cable. A note-off still gets through, so nothing held when you switch is left hanging.
 - **Bluetooth MIDI** is not supported: SLOOP never switches the radio on.
 
+### MIDI CCs (2.5)
+
+The knobs of a MIDI controller set the sound (the standard CC map of Felucca 1.1.5). A CC acts on the track its channel plays, as the notes do (1–3 the synths, the drum channel the drum track, 4–16 the selected track), and sets its parameter as a knob would: 0–127 over the parameter's range, 64 the middle of PAN and FILTER. It changes the sound's value itself (as a knob, so saving keeps it); the screen and the web editor follow.
+
+| CC | Sets |
+| --- | --- |
+| 5 | GLIDE |
+| 7 | LEVEL (on the drum channel: GLO → DRUMS → LVL) |
+| 10 | PAN |
+| 71 | the engine's resonance (RES or Q: ANALOG, TRIO, VOICE, NOISE; the others ignore it) |
+| 72 · 73 · 75 | release · attack · decay |
+| 74 | the track's FILTER: 64 off, lower a low-pass, higher a high-pass (every engine, the drums too) |
+| 91 · 93 · 94 | the reverb, chorus and delay sends (on the drum channel 91 and 94 are GLO → DRUMS → REV and DLY) |
+
+Other CCs (mod wheel, sustain, pitch bend…) are ignored.
+
 ---
 
 ## 22. USB audio
 
-On USB the FM-1 is also an audio input named **Felucca**: 44.1 kHz, 16-bit stereo, class compliant, no driver. In your DAW or Audacity choose that input and record: you get the master output, exactly what the headphones play (after DUST, DUCK and FILT; the click and count-in too if they are on). MIDI, the editor and the installer keep working on the same cable.
+On USB the FM-1 is also an audio input named **Felucca**: 44.1 or 48 kHz (the computer, phone or tablet picks; 48 kHz since 2.5, for the phones and apps that only take it), 16-bit stereo, class compliant, no driver. In your DAW, in Audacity or in a sampler app on your phone (with a USB-C cable or adapter) choose that input and record: you get the master output, exactly what the headphones play (after DUST, DUCK and FILT; the click and count-in too if they are on). MIDI, the editor and the installer keep working on the same cable.
 
 **HOME menu → AUDIO → USB AUDIO:**
 
@@ -927,26 +946,61 @@ A recording of any length works: keep the chops you want, the slot takes about 7
 
 On the FM-1 your kit works like any other: steps, levels, ratchets, fill conditions, the DRUMS grid, the keys, MIDI channel 10 (a note plays its lane's sound), the filter, the slicer, mute. The closed hat cuts the open one. A lane without a sound is silent, and so is an empty slot.
 
+### Your own synthesised kits (SYN1–SYN4)
+
+SLOOP 2.5: the editor's **Drum synth** page changes every value of a synthesised kit, sound by sound, and the FM-1 plays the change at once. Never stored, SYN1–SYN4 are copies of 808, 909, TRAP and TECHNO.
+
+1. **Pick a kit**, SYN1 to SYN4, and give it a name (8 letters: the DRUMS screen shows it). **Start from** + **Copy** makes it a copy of any of the 32 kits.
+2. **Pick a sound** (KICK, SNARE, CLAP, HAT, OPEN HAT, LOW TOM, HI TOM, CRASH, RIDE, SHAKER, CONGA, RIM, COWBELL, CLAVE, KICK 2, SNARE 2): it plays (also **Play**; **Play on change** plays it after every change).
+3. **Change it.** Each value is a tile you drag up or down, or a bar; **double-click** puts back the value of the kit it started from.
+
+| Group | Values |
+| --- | --- |
+| **Tone** | **WAVE** (OFF, SINE, TRI, SQUARE, FM, BELL) · **PITCH** (a note, its Hz) and **FINE** · **BEND** (semitones the pitch falls from at the hit) and **B.TIME** (how fast) · **HOLD** (at full level) and **DECAY** · **LEVEL** · **2ND** (a second partial: its ratio, the drum head's second mode) and **2ND LVL** · **CLICK** (the attack: the beater, the stick) |
+| **Noise** | **NOISE** (OFF, WHITE, METAL: the 808's six squares, CYM: metal and white, CHIP: an 8-bit noise) · **CLAP** (three bursts, then the tail) · **LEVEL**, **HOLD**, **DECAY** · **HPF** (a high-pass on the noise) · **CHIP** (the chip noise's clock) |
+| **Filter** | **FILTER** (OFF, LP, BP, HP) · **ON** (the noise, or ALL: the tone too) · **CUTOFF**, **RES** · **ENV** (octaves the cutoff starts above it, falling with the pitch) |
+| **Out** | **DRIVE** · **LEVEL** (dB) |
+
+**CRUSH** (bits off) and **S&H** (a lower sample rate) act on the whole kit.
+
+4. **Store on the FM-1** keeps the four kits in flash (stop the song first); until then *not stored yet* shows (switched off before, the FM-1 may come back with the last stored kits). **Use on the drum track** sets KIT to it. **Save file / Open file**: a kit as a file, to share or to keep. A [backup](#backup-and-restore) holds the four kits too.
+
 ---
 
 ## 24. The web editor
 
 Open it from the [installer page](https://isod89.github.io/sloop-fm1/), the [editor link](https://isod89.github.io/sloop-fm1/webapp/editor/), or **`OPEN-EDITOR.bat`**, in **Chrome or Edge** with the FM-1 on USB, and press **Connect** (allow MIDI). It follows the device live: turn a knob on the FM-1, the editor moves. It looks like the FM-1: the black screen, the four track colours, the FM-1's own pixel font. The language button switches English / Japanese.
 
-**Layout:** the side bar has the pages in three groups — **Track** (Sound, Sequencer, Tracks), **Sounds** (Library, Samples, Drum kit), **Device** (Projects, Settings) — and the connection. On top: the page title, the messages, and on the Track pages the **four tracks** (number, sound, engine): click one to select it. With the side bar focused, the arrow keys move between pages.
+**Layout:** the side bar has the pages in three groups — **Track** (Sound, Sequencer, Tracks, Song), **Sounds** (Library, Samples, Drum kit, Drum synth), **Device** (Projects, Settings) — and the connection. On top: the page title, the messages, and on the Track pages the **four tracks** (number, sound, engine): click one to select it. With the side bar focused, the arrow keys move between pages.
 
 **Values:** each value is a tile you **drag up or down like a knob** (Shift: fine), or a bar: click it, then the wheel or the arrow keys (Shift: steps of 10); **double-click** resets it.
 
 | Page | What you do there |
 | --- | --- |
-| **Sound** | every parameter of the selected track, as on the device: a card per button (ENV, LFO, EDIT, VOICE, FX, SCL, ARP), its pages as rows of four coloured values. **Engine** and **Presets** pickers, **Init sound**, **Copy to library**, **Save to file / Load file** (a sound as a file). On an FM6 track, the **FM6** panel: the six operators, **Read from track**, **Send to track** (*Send while editing* to hear every change), **Store in bank** (B1–B27), **Import SysEx**, **Export SysEx**, **Export bank as SysEx** |
-| **Sequencer** | the pattern settings (LEN, DIV, SWG, GATE) and the steps as the device's tiles; the **step list** takes typed note names (*C4 E4 G4*). On the drum track: a **grid** of the 16 sounds × the steps, with the **kit**: choose a **level** (GHOST, SOFT, NORM, HARD) and a **roll** (x1–x4), then click a cell — a hit; click again (same level and roll) — cleared; **Shift+click** — one level louder. Click a step for its **detail**: **Nudge**, **Parameter locks** (+ lock, pick the parameter, set or delete), **Fill** (normal, fill only, no fill). **Reload**, **Clear sequence** |
+| **Sound** | every parameter of the selected track, as on the device: a card per button (ENV, LFO, EDIT, VOICE, FX, SEL, ARP), its pages as rows of four coloured values. **Engine** and **Presets** pickers, **Init sound**, **Copy to library**, **Save to file / Load file** (a sound as a file). On an FM6 track, the **FM6** panel: the six operators, **Read from track**, **Send to track** (*Send while editing* to hear every change), **Store in bank** (B1–B27), **Import SysEx** (or drop a .syx), **Store cartridge in bank** (2.5: the ticked voices of a bank into B1… in one write, and as user presets if you choose), **Export SysEx**, **Export bank as SysEx** |
+| **Sequencer** | the pattern settings (LEN, DIV, SWG, GATE) and the steps as the device's tiles; the **step list** takes typed note names (*C4 E4 G4*). On the drum track: a **grid** of the 16 sounds × the steps, with the **kit**: choose a **level** (GHOST, SOFT, NORM, HARD) and a **roll** (x1–x4), then click a cell — a hit; click again (same level and roll) — cleared; **Shift+click** — one level louder. Click a step for its **detail**: **Nudge**, **Parameter locks** (+ lock, pick the parameter, set or delete), **Fill** (normal, fill only, no fill). **Reload**, **Clear sequence**. **Length**: − / + or type 1–64. **Grid / Piano roll** and **Export MIDI / Import MIDI**: see below |
 | **Tracks** | the four channel strips: level, pan, mute, select; SOLO and REC shown as on the device |
+| **Song** | the song order of the [SONG screen](#14-song-mode-sections-chains-songs): a row per section (A–D), its **bars** (1–64) and how many **times** in a row; **▲ ▼** move a row, **✕** removes it, **Add**; **At the end**: stop or start again. **Read from the FM-1**, **Send to the FM-1** (16 entries in all; stop the song first). A section whose slot is empty is marked: save it on the FM-1 first (SAVE + key 5–8) |
 | **Library** | your sound library, kept in the browser: **Save current sound**, search by name or tag, filter by engine, sort, **Audition**, **To device slot**, **Rename**, **Tags**, **Duplicate**, **Delete**, **Export** / **Import** / **Export library**; copy factory presets in. Next to it the **32 user presets on the device**: **Load**, **Store current sound**, **To library**, **Erase**, **Export bank**. Drag sounds between the library and the slots |
 | **Samples** | your instruments in USR1–USR4, in three steps (see [above](#an-instrument-editor--samples)), with CHOP |
 | **Drum kit** | your own drum kits, in three steps (see [above](#a-drum-kit-editor--drum-kit)) |
+| **Drum synth** | your own synthesised kits SYN1–SYN4: every value of every sound (see [above](#your-own-synthesised-kits-syn1syn4)) |
 | **Projects** | the four project slots (**Load**, **Save**) and **Backup** (see below) |
-| **Settings** | GLOBAL (BPM, SWING, CLICK, TUNE), **MASTER** (DUST, DUCK, FILT, ROLL), DRUMS (CH, LVL, REV), and the system information (firmware, sync, slots) |
+| **Settings** | GLOBAL (BPM, SWING, CLICK, TUNE), **MASTER** (DUST, DUCK, FILT, ROLL), DRUMS (CH, LVL, REV, DLY), and the system information (firmware, sync, slots) |
+
+### Piano roll and MIDI files (Sequencer)
+
+**Piano roll** (a synth track): the steps left to right, the notes bottom to top (**Octave up / down** scroll). Choose a **note length** (1/1 to 1/16 of a bar, in steps of the track's DIV), then:
+
+- click an empty spot: a note of that length. On the first step of a chord: one more note of it (4 at most, one length for all, as on the device);
+- click a note: it goes (the last note of a chord leaves rests);
+- drag the right end of a note: shorter or longer (ties), up to the next chord.
+
+Every change goes to the FM-1 at once, and the grid shows the same steps.
+
+**Export MIDI** saves the selected track's pattern as a MIDI file (`sloop-track1.mid`…): the notes with their lengths, levels and accents, at the song's tempo; the drum track as GM drum notes on channel 10.
+
+**Import MIDI** reads a MIDI file into the selected track, at its DIV. First a preview: the file's track to take, how many notes and steps, and what changes on the way: notes off the grid moved to the nearest step, more than 4 notes on a step (the loudest kept), a note cut short by the next one, notes past step 64. **Import** replaces the track's pattern (and, ticked, sets its length); **Cancel** leaves it as it was. On the drum track, the GM notes go to the lanes (36 kick, 38 snare, 42 hat…) and the velocity to the levels, ghost to hard.
 
 The editor writes presets, the FM6 bank and backups to flash only while the song is stopped, as the FM-1 does (it asks you to stop first). Try it without hardware: add `?mock=1` to the editor's address. The protocol is documented in [web/EDITOR_PROTOCOL.md](web/EDITOR_PROTOCOL.md).
 
@@ -958,7 +1012,7 @@ The editor writes presets, the FM6 bank and backups to flash only while the song
 
 Editor → **Projects** → **Backup**:
 
-- **Save a backup** writes everything on the FM-1 to one file (`SLOOP-backup-DATE.json`): the music you are working on, the projects 1–4 (the song sections A–D), the 32 user presets, the FM6 bank, the samples **USR1–USR4** (your drum kits with them) and the settings (colours, calibration, song order, lights, SYNC, MIDI OUT).
+- **Save a backup** writes everything on the FM-1 to one file (`SLOOP-backup-DATE.json`): the music you are working on, the projects 1–4 (the song sections A–D), the 32 user presets, the FM6 bank, the SYN drum kits, the samples **USR1–USR4** (your drum kits with them) and the settings (colours, calibration, song order, lights, SYNC, MIDI OUT).
 - **Restore from a file** puts it all back: what is on the FM-1 is replaced. Stop the song (PLAY) first. A damaged file is refused before anything is written, and each object is written as a save writes it (a cut-off restore never leaves half an object).
 
 A 2.4 backup restores into 2.4 (or later) only. **Save a backup before every update and before going back.**
@@ -981,7 +1035,7 @@ On the installer page, open **Return to the official firmware (V15)**: save a ba
 | Problem | Fix |
 | --- | --- |
 | The installer or editor does not find the FM-1 | Chrome or Edge, a data cable, no hub, allow MIDI; close every other app or tab that uses MIDI, then reload |
-| The black keys are silent on a synth track | it plays chords or the scale: SCL → CHORD OFF and KEYS OFF (with a chord on, the black keys change the chord: CHORD+) |
+| The black keys are silent on a synth track | it plays chords or the scale: SEL → CHORD OFF and KEYS OFF (with a chord on, the black keys change the chord: CHORD+) |
 | Recorded notes move | SLOOP quantises to the track's DIV: use 1/32, or nudge the step (SEQ + step + KNOB 4) |
 | Notes fade out on a dense part | the processor is at its limit; SLOOP fades one voice at a time (never the bass or lead) rather than glitching. Fewer held notes or a lighter engine help |
 | Nothing from the MIDI IN jack | try the other adapter type (A / B); check the channel (1–3, 10, 4–16) and that GLO → SYSTEM → IN is NOTES |
@@ -1006,7 +1060,7 @@ On the installer page, open **Return to the official firmware (V15)**: save a ba
 | tap HOME | TRACKS · on TRACKS: visualiser |
 | hold HOME | menu |
 | tap SAVE | on TRACKS: SONG screen · else SAVE pages |
-| tap ENV, LFO, FX, SCL, EDIT, ARP, SEQ, GLO | their pages (again: next page) |
+| tap ENV, LFO, FX, SEL, EDIT, ARP, SEQ, GLO | their pages (again: next page) |
 | tap EDIT / SEQ on TRACKS, drum track | DRUMS screen (again: grid ↔ kit) |
 | OCT− / OCT+ | octave (both: 0) · drums: ghost / hard while held |
 | ALGORITHM | track |
@@ -1022,7 +1076,7 @@ On the installer page, open **Return to the official firmware (V15)**: save a ba
 | **ARP** | note repeat | RATE | — | — | — | OCT− / OCT+: ghost / hard (drums) |
 | **SEQ** | steps · black keys 1–4: page | SOUND / NOTE | DIV | SWING | LENGTH | OCT− / OCT+: page |
 | **SEQ + step** | more steps | drums: which sound · synths: NOTE | LEVEL | RATCHET | NUDGE | PRESETS lock · ALGORITHM lock parameter · OCT+ fill condition · OCT− clear nudge, locks, condition |
-| **SCL** | key of the song | CHORD | SCALE | KEYS | TRANSPOSE | — |
+| **SEL** | key of the song | CHORD | SCALE | KEYS | TRANSPOSE | — |
 | **GLO** | 1–4 mute · 5–8 solo · 9 fill · 10 fill bar · 16 tap tempo | level 1 | level 2 | level 3 | level 4 | SELECT: tempo |
 | **SAVE** | 1–4 play A–D (several: chain) · 5–8 save A–D · 13 loop / song · 14 SONG REC · 16 song screen | — | — | — | — | — |
 | **any layer + HOME** | lock it open | | | | | any other button unlocks |
@@ -1060,10 +1114,11 @@ On the installer page, open **Return to the official firmware (V15)**: save a ba
 | a track's level / pan | TRACKS KNOB 2 / KNOB 4 · GLO + KNOB 1–4 |
 | the drum kit | PRESETS on the drum track · DRUMS kit page KNOB 1 |
 | the drum level / reverb | DRUMS kit page KNOB 2 / 3 · GLO → DRUMS |
+| the drum delay (2.5) | GLO → DRUMS → DLY (KNOB 4) |
 | a track's filter | FX + KNOB 4 · FX → FILTER |
 | delay time | FX → DLY → TIME |
-| chords | SCL + KNOB 1 · SCL page |
-| STRUM, VLEAD | SCL 2 |
+| chords | SEL + KNOB 1 · SEL page |
+| STRUM, VLEAD | SEL 2 |
 | your projects | SAVE + keys 1–4 (play) / 5–8 (save) · SAVE → PROJECT |
 | your sounds | SAVE → USER · PRESETS (after the factory sounds) |
 | MIDI out / clock / clock only | GLO → SYSTEM: MIDI · SYNC · IN |

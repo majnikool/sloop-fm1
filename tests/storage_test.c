@@ -104,6 +104,25 @@ int main(void)
         bad += check("data stays in the Felucca regions (autosave too)", inside);
         bad += check("every object copy has its own sector", apart);
     }
+    {   /* SLOOP 2.5: the settings in two parts (persist_t, then the SYN kits): one record, A/B as any other */
+        static char p1[88], p2[1464], all[88 + 1464], got2[88 + 1464];
+        memset(p1, 'P', sizeof p1);
+        memset(p2, 'K', sizeof p2);
+        memcpy(all, p1, sizeof p1);
+        memcpy(all + sizeof p1, p2, sizeof p2);
+        bad += check("2.5: save in two parts", st_save2(OBJ_SETTINGS, p1, sizeof p1, p2, sizeof p2) == 0);
+        n = st_load(OBJ_SETTINGS, got2, sizeof got2);
+        bad += check("2.5: ... loads as one object", n == (int)sizeof all && !memcmp(got2, all, sizeof all));
+        n = st_load(OBJ_SETTINGS, got2, sizeof p1);
+        bad += check("2.5: ... a 2.4 load takes its part only", n == (int)sizeof p1 && !memcmp(got2, p1, sizeof p1));
+        memset(p2, 'L', sizeof p2);
+        fail_after = 4;                              /* a torn second save: the first copy stays */
+        st_save2(OBJ_SETTINGS, p1, sizeof p1, p2, sizeof p2);
+        fail_after = -1;
+        n = st_load(OBJ_SETTINGS, got2, sizeof got2);
+        bad += check("2.5: ... a torn save keeps the last one", n == (int)sizeof all && !memcmp(got2, all, sizeof all));
+        bad += check("2.5: ... too big for a sector: refused", st_save2(OBJ_SETTINGS, p2, 3000, p2, 1000) == -1);
+    }
     printf("%s\n", bad ? "STORAGE TEST FAILED" : "storage test passed");
     return bad != 0;
 }

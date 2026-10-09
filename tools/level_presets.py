@@ -51,7 +51,7 @@ def main(raw, rep, only=None):
         for e, name, v in re.findall(r"/\* (\d+)\.\d+ (.*?) \*/ (-?\d+)", OUT.read_text()):
             old[(int(e), name)] = int(v)              # (by name: presets may move in their table)
     neng = max(int(r[0]) for r in rows) + 1
-    pmax = 16
+    pmax = 32
     tab = [[0] * pmax for _ in range(neng)]
     names = [[""] * pmax for _ in range(neng)]
     for i, (e, p, role, name) in enumerate(rows):

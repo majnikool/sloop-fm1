@@ -33,8 +33,15 @@ static uint32_t nhits;
 static void run_block(void)
 {
     int32_t out[CTL * 2];
-    uint32_t a = drums.age, k;
+    uint32_t a = drums.age, k, c = click_n;
     mix_block(out, CTL);
+    if (click_n != c && nhits < 200000u) {             /* (2.4.1: the click is its own voice, drums.c click_on;
+                                                        * logged as the GM wood blocks it used to play) */
+        hits[nhits].blk = blk;
+        hits[nhits].note = click_acc ? 77u : 76u;
+        hits[nhits].vel = click_acc ? 120u : 72u;
+        nhits++;
+    }
     if (drums.age != a)
         for (k = 0; k < NDRUM; k++)
             if (drums.v[k].age > a && nhits < 200000u) {
@@ -1109,6 +1116,59 @@ static void t_midiin(void)
     mi_r = mi_w;
 }
 
+/* SLOOP 2.5: MIDI CCs set track parameters (Felucca 1.1.5's CC map), on the track the channel plays */
+static void cc_push(uint32_t ch, uint32_t cc, uint32_t v) { mclk_push(0x0Bu | (0xB0u | ch) << 8 | cc << 16 | v << 24); }
+static void t_midicc(void)
+{
+    track_t *a, *b;
+    int16_t before[P_COUNT];
+    uint32_t i, res = 99, same = 1, drch;
+    reset(120);
+    mi_r = mi_w;
+    song.g[G_ROUTE] = 0;
+    a = &trk[0]; b = &trk[1];
+    a->eng_req = a->engine = 0;                         /* ANALOG: has RES */
+    b->eng_req = b->engine = 1;                         /* DIGITAL: none */
+    for (i = 0; i < 8u; i++)
+        if (str_eq(ENGINES[0]->edit[i].label, "RES"))
+            res = i;
+    cc_push(0, 7, 0); cc_push(0, 10, 127); cc_push(0, 74, 64); cc_push(0, 72, 127); cc_push(0, 73, 0);
+    cc_push(0, 75, 64); cc_push(0, 5, 127); cc_push(0, 91, 127); cc_push(0, 93, 64); cc_push(0, 94, 1);
+    run_block(); run_block();
+    check(a->p[P_LEVEL] == 0 && a->p[P_PAN] == 63 && a->p[P_TFLT] == 0 && a->p[P_REL] == 127 && a->p[P_ATK] == 0
+          && a->p[P_DEC] == 64 && a->p[P_GLIDE] == 127 && a->p[P_REV] == 127 && a->p[P_CHOR] == 64 && a->p[P_DLY] == 1,
+          "2.5: CC 7 10 74 72 73 75 5 91 93 94 on ch 1 set track 1 (64 = the middle of PAN / FILTER)");
+    cc_push(0, 10, 0); cc_push(0, 74, 0); cc_push(0, 7, 127);
+    run_block(); run_block();
+    check(a->p[P_PAN] == -64 && a->p[P_TFLT] == -64 && a->p[P_LEVEL] == 127, "2.5: CC 0 / 127: the ends of the range");
+    cc_push(0, 71, 127);
+    for (i = 0; i < P_COUNT; i++) before[i] = b->p[i];
+    cc_push(1, 71, 127); cc_push(1, 1, 99); cc_push(1, 64, 127);   /* DIGITAL has no RES; mod wheel, sustain: not mapped */
+    run_block(); run_block();
+    for (i = 0; i < P_COUNT; i++) same &= b->p[i] == before[i];
+    check(res < 8u && a->p[P_E0 + res] == 127 && same, "2.5: CC71 = the engine's RES; an engine without one, and unmapped CCs, change nothing");
+    song.sel = 2;
+    cc_push(6, 93, 127);                                /* ch 7: the selected track */
+    run_block(); run_block();
+    check(trk[2].p[P_CHOR] == 127, "2.5: a CC on ch 4-16 sets the selected track");
+    drch = song.g[G_DRCH] ? (uint32_t)song.g[G_DRCH] - 1u : 9u;
+    song.g[G_DRCH] = (int16_t)(drch + 1u);
+    for (i = 0; i < P_COUNT; i++) before[i] = TDRUM->p[i];
+    cc_push(drch, 7, 0); cc_push(drch, 91, 127); cc_push(drch, 10, 0); cc_push(drch, 74, 127); cc_push(drch, 73, 127);
+    cc_push(drch, 94, 64);
+    run_block(); run_block();
+    check(song.g[G_DRLVL] == 0 && song.g[G_DRREV] == 127 && song.g[G_DRDLY] == 64 && TDRUM->p[P_PAN] == -64 && TDRUM->p[P_TFLT] == 63
+          && TDRUM->p[P_ATK] == before[P_ATK] && TDRUM->p[P_DLY] == before[P_DLY],
+          "2.5: the drum channel: 7 / 91 / 94 = DRUMS LVL / REV / DLY, 10 PAN, 74 FILTER; 73 ignored");
+    song.g[G_DRDLY] = 0;
+    song.g[G_ROUTE] = 1;
+    cc_push(0, 7, 55);
+    run_block(); run_block();
+    check(a->p[P_LEVEL] == 127, "2.5: IN = CLOCK: CCs ignored");
+    song.g[G_ROUTE] = 0;
+    mi_r = mi_w;
+}
+
 /* menu USB AUDIO = FULL (2.3): the USB input at the level of MASTER all the way up, whatever the knob;
  * the DAC path keeps following the knob */
 static void t_usbfull(void)
@@ -1193,8 +1253,35 @@ static void t_tflt(void)
     lock_del(&trk[1], 3, P_COUNT);
 }
 
+/* SLOOP 2.5: GLO > DRUMS > DLY sends the drums to the tempo delay: echoes after a hit has died; 0 none
+ * (the drums' path bit for bit as 2.4); through the drum track's FILTER too */
+static double drdly_echo(int32_t dly, int32_t flt)
+{
+    double e;
+    reset(120);
+    song.g[G_DRREV] = 0;
+    song.g[G_DRDLY] = (int16_t)dly;
+    TDRUM->p[P_TFLT] = (int16_t)flt;
+    tf_measure(40);
+    trk_note_on(TDRUM, 38u, 120);
+    tf_measure(120);                                     /* the hit */
+    tf_measure(1600);                                    /* then its echoes (or silence) */
+    e = tf_rms;
+    song.g[G_DRDLY] = 0;
+    TDRUM->p[P_TFLT] = 0;
+    return e;
+}
+static void t_drdly(void)
+{
+    double off = drdly_echo(0, 0), on = drdly_echo(127, 0), onf = drdly_echo(127, -30), half = drdly_echo(64, 0);
+    printf("  drum DLY: echo rms off %.0f, 64 %.0f, 127 %.0f, 127 + filter %.0f\n", off, half, on, onf);
+    check(on > off * 10.0 + 1.0 && half < on && half > off * 3.0 && onf > off * 10.0 + 1.0,
+          "2.5: GLO > DRUMS > DLY: the drums echo in the tempo delay (more with more DLY, through the FILTER too); 0: none");
+}
+
 int main(void)
 {
+    t_drdly();
     t_tflt();
     t_usbfull();
     t_micro();
@@ -1207,6 +1294,7 @@ int main(void)
     t_longdiv();
     t_midiout();
     t_midiin();
+    t_midicc();
     t_shed();
     t_drift();
     t_burst();

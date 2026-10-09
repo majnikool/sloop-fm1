@@ -79,8 +79,8 @@ int main(void)
     song.g[G_DRREV] = 0;                                 /* (no reverb tail between the checks) */
     slot_build(0, notes, lens, 4);
     check(usr_nz[0] == 4u && !usr_nz[1], "USR1 read by smp_user_scan: 4 zones; USR2 empty");
-    check(DRUM_KITS == DRUM_USR + 5u && !strcmp(DRUM_KIT_NAMES[DRUM_USR], "USR1") && !strcmp(DRUM_KIT_NAMES[DRUM_USR + 3u], "USR4") &&
-          !strcmp(DRUM_KIT_NAMES[DRUM_PAIR], "USR3+4") && DRUM_PAIR == DRUM_KITS - 1u && !strcmp(DRUM_KIT_NAMES[DRUM_SAMPLED], "808"),
+    check(DRUM_SYN == DRUM_USR + 5u && DRUM_KITS == DRUM_SYN + 4u && !strcmp(DRUM_KIT_NAMES[DRUM_USR], "USR1") && !strcmp(DRUM_KIT_NAMES[DRUM_USR + 3u], "USR4") &&
+          !strcmp(DRUM_KIT_NAMES[DRUM_PAIR], "USR3+4") && DRUM_PAIR == DRUM_SYN - 1u && !strcmp(DRUM_KIT_NAMES[DRUM_SAMPLED], "808"),
           "KIT: USR1..USR4, USR3+4 after the synthesised kits (the old kit numbers kept)");
     check(SMP_USER_OFF(0u) == 0xA0000u && SMP_USER_OFF(2u) == 0xC8000u && SMP_USER_OFF(3u) == 0xE7000u &&
           SMP_USER_SIZE_OF(2u) == 0x14000u && SMP_USER_SIZE_OF(3u) == 0x8000u &&
@@ -182,6 +182,26 @@ int main(void)
         uint32_t i, gm = 0;
         for (i = 0; i < NDRUM; i++) gm += drums.v[i].active && !drums.synth[i] && drums.v[i].s[4] < DZ_USR;
         check(gm == 1u && run_peak(40) > 2000, "ACOUSTIC (the GM sample set) as before");
+    }
+    {   /* 2.4.1: the click (GLO > GLOBAL > CLICK = ON) is its own voice: heard with a user kit (it has no wood
+         * block: in 2.4 it was silent), with the drum track muted, at the level of GLO > DRUMS > LVL */
+        uint32_t j, k;
+        int32_t pk[4];
+        for (k = 0; k < 4u; k++) {
+            host_tracks_init();
+            song.g[G_BPM] = 120; song.g[G_CLOCK] = 2; song.g[G_DRLVL] = k == 3u ? 0 : 100;
+            for (j = 0; j < NSTEP; j++) memset(&TDRUM->dstep[j], 0, sizeof(dstep_t));
+            TDRUM->p[P_E0] = (int16_t)(k == 0u ? DRUM_PAIR : k == 1u ? DRUM_USR + 1u : DRUM_SAMPLED);
+            TDRUM->p[P_MUTE] = (int16_t)(k == 2u);
+            transport_req = 1;
+            pk[k] = run_peak(2u * FS / CTL);
+            transport_req = 2;
+            run_peak(4);
+        }
+        check(pk[0] > 8000 && pk[1] > 8000, "the click with KIT USR3+4 and an empty USR2: heard");
+        check(pk[2] > 8000, "the click with the drum track muted: heard");
+        check(pk[3] < 64, "the click at GLO > DRUMS > LVL 0: silent (its level)");
+        song.g[G_CLOCK] = 0;
     }
     printf("userkit: %s\n", fails ? "FAILED" : "KIT USR1..USR4, USR3+4 PASS");
     return fails != 0;

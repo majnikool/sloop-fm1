@@ -11,7 +11,7 @@
  *           condition go; + OCT+: the condition (normal, fill only, no fill)
  *   EDIT    held + a key: erase; OCT- / OCT+: undo / redo; KNOB 1 shift, 2 length x2
  *   ARP     held + a key: a roll; KNOB 1 the rate
- *   SCL     held + a key: the key of the song
+ *   SEL     held + a key: the key of the song
  *   GLO     held + keys: mute, solo, fill (held) / fill the next bar, tap tempo; knobs: levels
  *   REC     press: arm / record at once; held: the clear ring, to the end: cleared (undo brings it back)
  *   SAVE    tapped: the song page; held: the SONG layer (sections A..D: play / store, SONG REC; two or more
@@ -234,6 +234,21 @@ int main(int argc, char **argv)
             dx_layout_old = 8;
             check(dx_claim_banks() == DX_USER_BANKS - 8u && dx_count() == 8u && dx_layout == DX_USER_BANKS, "build 17's count of eight: the top eight stay, the four below are erased once");
             dx_layout_old = 0;
+            {   /* the FM-1 as the owner has it (builds 19-23: twelve banks loaded, the record says twelve sectors, a punch-in
+                 * kept): the settings word those builds wrote, read by this one (SLOOP 2.5 base) erases nothing and keeps both */
+                const uint32_t w23 = 12u << 27 | 2u << 21 | 1u << 8;
+                for (i = 0; i < DX_USER_BANKS; i++) memcpy(dx_host_store + i * 4096u, FM6_INIT, 128);
+                dx_gen++;
+                lights_from_word(w23);
+                check(dx_layout == 12u && dx_layout_old == 0u && punch_keep == 2u, "the settings word of builds 19-23 reads back: twelve sectors claimed, the kept punch-in");
+                check(dx_claim_banks() == 0u && dx_count() == DX_USER_BANKS, "an install over builds 19-23 with twelve banks loaded: nothing is erased");
+                check((lights_word() >> 21 & 3u) == 2u && (lights_word() >> 27) == 12u, "and the next settings save writes the same record");
+                lights_from_word(0);
+                lights_lvl = LIGHTS_N - 1u; lights_keys = KEYS_N - 1u; lights_notes = rec_tempo = rec_count = usb_full = 1;
+                lights_sync = 2; lights_mout = lights_min = usb_serial = 1; vis_style = 11;
+                check(lights_word() >> 21 == 0u, "upstream's settings bits all sit below 21: the fork's bits 21-31 are its own");
+                lights_from_word(0);
+            }
         }
         memset(dx_host_store, 0xFF, sizeof dx_host_store); dx_gen++;
         check(dx_count() == 0u, "banks erased: the list is as before");
@@ -486,13 +501,13 @@ int main(int argc, char **argv)
     fm1_in.notes = 0; frame(); check(!roll[0].on, "key up: the roll ends");
     release(B_ARP);
 
-    /* ---- SCL: the key of the song; GLO: mute, solo, tap */
+    /* ---- SEL: the key of the song; GLO: mute, solo, tap */
     song.sel = 0; go_home(); frame();
     press(B_SCL); frames(10);
     key(9);                                           /* D4 */
-    check(trk[0].p[P_ROOT] == 2 && trk[1].p[P_ROOT] == 2 && trk[2].p[P_ROOT] == 2, "SCL + D: every part in D");
+    check(trk[0].p[P_ROOT] == 2 && trk[1].p[P_ROOT] == 2 && trk[2].p[P_ROOT] == 2, "SEL + D: every part in D");
     encs[panel.enc[EN_K1]] = 2; frame();
-    check(trk[0].p[P_CHORD] == 2, "SCL + KNOB 1: chords (7TH) on the track");
+    check(trk[0].p[P_CHORD] == 2, "SEL + KNOB 1: chords (7TH) on the track");
     ppm("layer-key");
     release(B_SCL);
     press(B_GLO); frames(10);
@@ -778,7 +793,7 @@ int main(int argc, char **argv)
         }
         {   /* every screen and layer: lit where the keys are notes, a glow under the tiles */
             static const struct { uint32_t ly; int lit; const char *name; } L[] = {
-                {LY_ERASE, 1, "EDIT erase"}, {LY_ROLL, 1, "ARP roll"}, {LY_SCALE, 1, "SCL key"}, {LY_SONG, 1, "SAVE song"},
+                {LY_ERASE, 1, "EDIT erase"}, {LY_ROLL, 1, "ARP roll"}, {LY_SCALE, 1, "SEL key"}, {LY_SONG, 1, "SAVE song"},
                 {LY_FX, 0, "FX punch"}, {LY_STEP, 0, "SEQ steps"}, {LY_MIX, 0, "GLO mix"}};
             uint32_t k, ok = 1, ly0 = ui.layer;
             char what[96];
@@ -792,12 +807,12 @@ int main(int argc, char **argv)
                 check(ok, what);
             }
             ui.layer = LY_SCALE;
-            check((keys_notes_dim() & scale_keys(0)) == scale_keys(0), "NOTES on, SCL: the scale glows");
+            check((keys_notes_dim() & scale_keys(0)) == scale_keys(0), "NOTES on, SEL: the scale glows");
             lights_notes = 0;
             ui.layer = LY_ERASE;
             check((keys_lit() >> 7 & 1u) == 0 && keys_notes_dim() == 0u, "NOTES off, EDIT erase: as before (no note lights)");
             ui.layer = LY_SCALE;
-            check(keys_notes_dim() == 0u, "NOTES off, SCL: as before");
+            check(keys_notes_dim() == 0u, "NOTES off, SEL: as before");
             lights_notes = 1;
             ui.layer = (uint8_t)ly0;
         }
@@ -1050,6 +1065,28 @@ int main(int argc, char **argv)
               "STEP on the drum track: not a page for the drums (DRUM TRACK shown, no piano roll of the drum steps)");
         for (j = 0; j < NSTEP; j++) memset(&TDRUM->dstep[j], 0, sizeof(dstep_t));
         song.sel = 0; go_home(); frames(4);
+    }
+    {   /* (2.4.1) the STEP page in chord mode: a key writes the whole chord it sounds (it wrote only the root, as
+         * 2.3 did); with a CHORD+ modifier held, the changed chord; a single note without chord mode */
+        uint32_t j, k5 = key_of_white(4), kmin = 1u;            /* key 5 = C4 (the I chord); F#3 (key index 1): minor */
+        track_t *t = &trk[1];
+        song.sel = 1; go_home(); frames(2);
+        steps_clear(t); t->p[P_SLEN] = 16; t->p[P_VOICE] = V_POLY;
+        t->p[P_ROOT] = 0; t->p[P_SCALE] = 1; t->p[P_QUANT] = 0; t->p[P_CHORD] = 1;   /* C major, TRIAD */
+        for (j = 0; j < NPAGES; j++) if (!strcmp(PAGES[j].title, "STEP")) break;
+        open_family(FAM_SEQ); ui.page = (uint8_t)j; ui.fam_last[FAM_SEQ] = (uint8_t)j; page_entered(); ui.force = 1; frames(2);
+        cursor_set(0); frames(1);
+        key(k5); frames(2);
+        check(t->step[0].n == 3u && t->step[0].note[0] % 12u == 0u && t->step[0].note[1] % 12u == 4u && t->step[0].note[2] % 12u == 7u,
+              "STEP page, chord mode TRIAD: C4 writes the chord C E G (not only C)");
+        fm1_in.notes = 1u << kmin; frames(2);
+        key(k5); frames(2);
+        fm1_in.notes = 0; frames(2);
+        check(t->step[1].n == 3u && t->step[1].note[1] % 12u == 3u, "STEP page, CHORD+: F# held, C4 writes C minor (C Eb G)");
+        t->p[P_CHORD] = 0;
+        key(k5); frames(2);
+        check(t->step[2].n == 1u && t->step[2].note[0] % 12u == 0u, "STEP page, no chord mode: one note");
+        steps_clear(t); song.sel = 0; go_home(); frames(4);
     }
     {   /* the visualiser (2.4): HOME on HOME opens it, SELECT its 12 styles, HOME / a page closes it; a layer
          * shows its screen over it; the style is kept with the settings */

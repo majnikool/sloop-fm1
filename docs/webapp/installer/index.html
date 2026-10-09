@@ -73,9 +73,9 @@
   
   
   <h1>Firmware for the M-VAVE FM-1</h1>
-  <p class="lead">A groovebox you play live: four tracks — three synths and a drum machine — 10 synth engines (with six-operator FM and DX7 patches), 76 sounds, 37 drum kits from 808 to techno, amapiano and ambient, your own samples and drum kits, 16 punch-in effects. House, techno, hip-hop, drum &amp; bass, synthwave, lo-fi, ambient: make what you want. No factory patterns, nothing to load: everything you hear, you play.</p>
+  <p class="lead">A groovebox you play live: four tracks — three synths and a drum machine — 12 synth engines (with six-operator FM and DX7 patches), 153 sounds, 37 drum kits from 808 to techno, amapiano and ambient, your own samples and drum kits, 16 punch-in effects. House, techno, hip-hop, drum &amp; bass, synthwave, lo-fi, ambient: make what you want. No factory patterns, nothing to load: everything you hear, you play.</p>
   <div class="tiles">
-    <div class="tile" style="--c: var(--blue)"><b>76</b><span>sounds, 10 engines, your samples</span></div>
+    <div class="tile" style="--c: var(--blue)"><b>153</b><span>sounds, 12 engines, your samples</span></div>
     <div class="tile" style="--c: var(--green)"><b>37</b><span>drum kits, 909 to afro, + your own</span></div>
     <div class="tile" style="--c: var(--yellow)"><b>16</b><span>punch-in fx: hold fx + key</span></div>
     <div class="tile" style="--c: var(--orange)"><b>rec</b><span>no click: the loop follows you</span></div>
@@ -479,7 +479,7 @@ const sayK = (k, arg = "") => { lastKey = k; lastArg = arg; $("status").textCont
 const say = (txt) => { lastKey = null; $("status").textContent = txt; };
 const log = (t) => { $("log").textContent += t + "\n"; };
 let image = null;
-const meta = {"version": "2.4.1", "product": "FM-1_900", "pkg": "../../firmware/sloop-2.4.1.fwsc", "sha256": "98ccc614d67a6fe48ee180368d5586b64f071f3c196224bfff3daef1631fb005"};
+const meta = {"version": "2.5", "product": "FM-1_900", "pkg": "../../firmware/sloop-2.5.fwsc", "sha256": "b23f95c40ab9ba9e3f3a1dbfc30f7f693d7ebe323b613c0f87d7b433048c741f"};
 
 let writing = false, stock = null;
 const lockAll = (on) => {

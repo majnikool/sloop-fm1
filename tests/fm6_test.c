@@ -87,7 +87,8 @@ static void setup(const uint8_t *v, const int16_t *e)
 {
     uint32_t i;
     memset(trk, 0, sizeof trk);
-    memset(fm6_note, 0, sizeof fm6_note);
+    memset(eng_arena, 0, sizeof eng_arena);       /* (2.5: the voices' state is in the parts' arena) */
+    memset(eng_arena_own, 0, sizeof eng_arena_own);
     memset(fm6_eff, 0, sizeof fm6_eff);
     memset(fm6_lfo, 0, sizeof fm6_lfo);
     host_tracks_init();
@@ -216,7 +217,7 @@ static void envelopes(void)
         op_set(base, i, Z, LZ, 0, 1);
     setup(base, 0);
     trk_note_on(&trk[0], 60, 100);
-    n = &fm6_note[0][0];
+    n = (fm6_note_t *)eng_arena_of(&trk[0], ENGI_FM6);
     e = &n->env[5];
     for (i = 0; i < FS * 2u / CTL; i++) {
         static int32_t b[CTL];
@@ -248,7 +249,7 @@ static void envelopes(void)
             op_set(base, 1, RR, L, 99, 1);
             setup(base, 0);
             trk_note_on(&trk[0], 60, 100);
-            for (tl[r] = 0; tl[r] < 2000u && fm6_note[0][0].env[5].ix == 0u; tl[r]++) {
+            for (tl[r] = 0; tl[r] < 2000u && ((fm6_note_t *)eng_arena_of(&trk[0], ENGI_FM6))[0].env[5].ix == 0u; tl[r]++) {
                 static int32_t b[CTL];
                 track_render(&trk[0], b, CTL);
             }
@@ -614,7 +615,8 @@ static void demo(const char *dir, uint32_t pi)
         return;
     wav_hdr(w, 0);
     memset(trk, 0, sizeof trk);
-    memset(fm6_note, 0, sizeof fm6_note);
+    memset(eng_arena, 0, sizeof eng_arena);       /* (2.5: the voices' state is in the parts' arena) */
+    memset(eng_arena_own, 0, sizeof eng_arena_own);
     host_tracks_init();
     host_preset(&trk[0], ENGI_FM6, pi);
     for (s = 0; s < 48u; s++) {                       /* three times through the pattern's 16 steps, 120 BPM 1/16 */

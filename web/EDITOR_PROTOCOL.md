@@ -182,7 +182,9 @@ and the P_COUNT it was stored with; another count is mapped by count (last 8 val
 first ones = P_LEVEL.. in order, missing ones = defaults). P_COUNT was 53 (P_E0 45) until the SLICER
 parameters (SLCR, PAT, RATE, DEPTH: ids 45..48) went in just before P_E0: P_COUNT 57, P_E0 49; SLOOP 2.0
 added CHORD (id 49): P_COUNT 58, P_E0 50 (and G_COUNT 32: DUST, DUCK, FILT, ROLL, NEW at 27..31). An
-editor takes them from `INFO`; older records load with the SLICER off and CHORD off.
+editor takes them from `INFO`; older records load with the SLICER off and CHORD off. SLOOP 2.5 adds `G_DRDLY` (id 32,
+GLO > DRUMS DLY, the drums' delay send): G_COUNT 33 (a 2.4 device says 32; the editor takes both). A project keeps it in
+the byte after `sel` (format 5 unchanged; 0 in older projects).
 
 ## v2: live sync
 
@@ -276,7 +278,7 @@ empty). Numbers are 5 × 7 bit (u35, LSB first); data is pack7.
 | --- | --- | --- |
 | 34 BK_LIST | — | rc (0 ok, 4 no flash), count, then per object: id, length u35, CRC-32 u35 (zlib). Takes a snapshot of the working project and the settings for GET |
 | 35 BK_GET | id, offset u35, count (2 × 7 bit, 1..256) | id, rc (0 ok, 1 arguments, 5 the snapshot is gone: LIST again), offset u35, count, pack7 data |
-| 36 BK_PUT | op 0 begin: id 0..7, length u35, CRC-32 u35 · op 1 data: id, offset u35, pack7 (≤ 256 bytes, in order) · op 2 commit: id · op 3 abort: id | op, id, rc: 0 ok, 1 arguments, 2 not a valid object (CRC, magic, sizes, ranges), 3 stop the song first (projects and preset banks), 4 flash, 5 no begin for this object (or more than 15 s ago) |
+| 36 BK_PUT | op 0 begin: id 0..9 (8: v9, 9: v10), length u35, CRC-32 u35 · op 1 data: id, offset u35, pack7 (≤ 256 bytes, in order) · op 2 commit: id · op 3 abort: id | op, id, rc: 0 ok, 1 arguments, 2 not a valid object (CRC, magic, sizes, ranges), 3 stop the song first (projects and preset banks; since 2.5 the settings too when their song order differs), 4 flash, 5 no begin for this object (or more than 15 s ago) |
 
 A restore stages one object in RAM (the project load buffer), checks it at the commit as a load checks it
 (projects: magic, size and sum, older formats converted; banks: magic, record size, slot count; settings:
@@ -286,6 +288,12 @@ A/B commit; the working project is loaded at once (the song must be stopped). Sa
 512), an empty slot with `SMP_ERASE`. The editor's file is JSON: `{format: "sloop-backup", version: 1,
 firmware, date, objects: [{id, len, crc, data (base64)}]}`; it is checked (lengths, CRCs) before anything is
 written.
+
+**The song order (SLOOP 2.5, the editor's Song page)** is bytes 48..83 of the settings object: `arr_config_t`
+(`firmware/src/arranger.h`): count (1..16), loop (0/1), 2 reserved, then 16 × {section 0..3 = A..D, bars
+1..64}; bytes 0..3 are the magic "PER3" (0x50455233, little-endian). The editor reads object 1 (BK_LIST, BK_GET),
+changes those 36 bytes only and writes it back (BK_PUT). The commit answers rc 2 for an invalid order and,
+since 2.5, rc 3 while the song plays if the order changed (as the SONG screen saves only when stopped).
 
 ## v7: step nudge and parameter locks (SLOOP 2.4)
 
@@ -350,7 +358,7 @@ armed fill.
 
 ## The fork: the DX7 voice banks and KEEP
 
-`INFO` carries one more byte after the protocol version: the number of DX7 voice banks this build has (**12** since test build 18, 8 on builds 16–17; **1** on the first builds meant four), and with it FX > FILTER KEEP (upstream SLOOP ends at the version, and an editor reads 0). The banks are **backup objects 9..9+n-1** (9..20), 4096 bytes each (32 packed 128-byte voices, an erased slot 0xFF; length 0 = empty), listed by `BK_LIST`, read by `BK_GET`, written whole by `BK_PUT` (begin with the length and CRC, data, commit; a damaged voice in the data is blanked, not refused; rc 3 while the song plays). FM6's `PTCH` runs to 162: D1..D128 after B27. `FM6_LIST` is unchanged (FM6's own bank only).
+`INFO` carries one more byte after the protocol version: the number of DX7 voice banks this build has (**12** since test build 18, 8 on builds 16–17; **1** on the first builds meant four), and with it FX > FILTER KEEP (upstream SLOOP ends at the version, and an editor reads 0). The banks are **backup objects 100..100+n-1** (100..111) from the fork on SLOOP 2.5 (protocol 10), which gave object 9 to its SYN drum kits; on the fork's builds before it (protocol 9) they were **9..9+n-1** (9..20), and the editor translates both ways (a backup file always holds 100..; a file of the older builds is read as such: its 10..20 are banks, and its 9 is a bank unless it starts `DSU1`). Each is 4096 bytes (32 packed 128-byte voices, an erased slot 0xFF; length 0 = empty), listed by `BK_LIST`, read by `BK_GET`, written whole by `BK_PUT` (begin with the length and CRC, data, commit; a damaged voice in the data is blanked, not refused; rc 3 while the song plays). FM6's `PTCH` runs to 162: D1..D128 after B27. `FM6_LIST` is unchanged (FM6's own bank only).
 
 ## v9: FM6 patches (SLOOP 2.4)
 
@@ -375,9 +383,39 @@ Felucca 1.0's numbers (68–71) so the two editors stay close; firmware `editor_
 - **SysEx files** are the editor's business, not the device's: a single voice (`F0 43 0n 00 01 1B`, 155 bytes, checksum,
   `F7`: 163 bytes) or a bank (`F0 43 0n 09 20 00`, 32 × 128, checksum, `F7`: 4104 bytes). Import unpacks, sanitizes every
   value into its range and PUTs the record; export packs. A wrong checksum is read but reported.
+- **Store cartridge** (editor 2.5, no new command): the ticked voices of a bank go to B1..Bn in one write. The editor
+  reads object 8 (`BK_LIST`, `BK_GET`), replaces records 0..n-1 (sets their `used` bits), keeps the others, and writes the
+  whole `fm6_bank_t` back with `BK_PUT` (begin / data / commit; rc 3 while the song plays). One sector erase instead of n.
+  A bank it cannot read (another layout) is never overwritten. If asked, it then writes a user preset per voice (`UP_PUT`,
+  one each): engine FM6, the voice's name, every value at its default and PTCH (P_E7) = 8 + the bank slot.
 - No pushes: after a PTCH change on the device (a `CHANGED` of P_E7) the editor re-reads the track's patch.
 - A device that does not know these commands (v8 and older) sends no reply: use `INFO`'s version byte (the editor hides
   its FM6 panel).
+
+## v10: the SYN drum kits (SLOOP 2.5)
+
+`INFO` ends with 10. The drum track's kits end with **SYN1..SYN4** (drums.c `DRUM_SYN`): synthesised kits of the user's,
+kept in RAM (the drum voices play them from there) and in flash after the settings (`persist_t`, then `dsu_bank_t`:
+one A/B object; firmware before 2.5 reads its `persist_t` and leaves the rest). A sound is the firmware's `dsnd_t`
+(drum_synth.c), 22 bytes in this order: wave (0 OFF, 1 SINE, 2 TRI, 3 SQUARE, 4 FM, 5 BELL), src (noise 0 OFF, 1 WHITE,
+2 METAL, 3 CYM, 4 CHIP; | 16 CLAP), pitch (MIDI note), fine (1/16 semitones), bend (semitones, 0..96), btime (DECAY_K
+index), hold (2 ms units), decay (DECAY_K), tlev, t2 (the second partial's ratio x 32, 0 none), t2lev, click, nlev, nhold
+(2 ms), ndec (DECAY_K), flt (mode 0..3 OFF LP BP HP | 4 the tone too | resonance 0..31 << 3), fcut (CUTOFF_HZ index),
+fenv (signed: CUTOFF_HZ steps), hpf (CUTOFF_HZ index, 0 off), chip (MIDI note of the chip noise's clock / 8), drive,
+level (128 + 4 x dB). DECAY_K: 5 ms .. 4 s over 0..127 (exponential), CUTOFF_HZ: 30 Hz .. 16 kHz. Every value received
+is put into range before a voice sees it.
+
+| cmd | Request args | Reply args |
+| --- | --- | --- |
+| 72 DSYN_LIST | — | factory count (32), user count (4), stored (0: an edit not stored yet), the factory names, then per user kit: its name, the factory kit it started from |
+| 73 DSYN_GET | which: a factory kit 0..31, or 64 + k (SYN k+1) | which, rc (1: no such kit), name, pack7 (crush, src, 16 x 22 bytes) |
+| 74 DSYN_PUT | k 0..3, part, pack7 data | k, part, rc (0 ok, 1 arguments). part 0..15: a sound (22 bytes, in the synthesised lanes' order KICK SNARE CLAP HAT OPEN-HAT TOM-LO TOM-HI CRASH RIDE SHAKER CONGA RIM COWBELL CLAVE KICK-2 SNARE-2); 16: name (8 ASCII) + crush + src; 17: the whole kit from a factory kit (1 byte) |
+| 75 DSYN_STORE | — | rc: 0 ok, 3 stop the song first, 4 flash |
+| 76 DSYN_PLAY | k, lane 0..15, velocity 1..127 | k, lane, rc: the sound on the drum voices (at the next audio block) |
+
+Backup object **9** is the four kits (`dsu_bank_t`, 1464 bytes: "DSU1", version 1, count 4, then per kit name 8,
+crush, src, 2 reserved, 16 x 22). Its commit answers rc 3 while the song plays. A device before v10 answers the
+begin of object 9 with rc 5: the editor skips it (as object 8 on a v8 device).
 
 ## Notes for the editor
 

@@ -145,6 +145,13 @@
   .group h3 { color: var(--dim); text-transform: uppercase; margin: 10px 0 6px; display: flex; align-items: center; }
   .group h2 + h3 { margin-top: 0; }
   .knobs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+  /* 2.5: the DRUM SYNTH page */
+  .dslanes { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; margin: 6px 0 10px; }
+  .dslanes button { --c: var(--t4); padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dslanes button[aria-pressed=true] { background: var(--c); border-color: var(--c); color: #000; }
+  .dsrng { display: inline-flex; align-items: center; gap: 6px; }
+  .dsrng input[type=range] { width: 110px; --c: var(--t4); }
+  #dsgroups .knob { --c: var(--t4); }
   .knob { --c: var(--t1); position: relative; padding: 8px 10px 10px; min-width: 0; border-left: 1px solid var(--line);
           display: flex; flex-direction: column; gap: 4px; }
   .knob:first-child { border-left: 0; padding-left: 0; }
@@ -206,6 +213,20 @@
   #steps .bad { border-color: var(--red); color: var(--red); }
   #steps tr.off td { color: var(--s3); }
   #steps tr.hl td { background: var(--s2); }
+  /* ---- 2.5: LEN at hand, the piano roll, the MIDI preview, the song order ---- */
+  .seqtools input[type=number] { width: 64px; text-align: center; }
+  .seqtools .sq { min-width: 34px; padding: 0 8px; }
+  .seqtools > * { margin-right: 6px; }
+  .rollbox { overflow-x: auto; margin: 8px 0; border: 1px solid var(--line); }
+  .rollbox canvas { display: block; touch-action: none; }
+  .midiprev { border: 1px solid var(--line); padding: 12px; margin: 8px 0 16px; }
+  .midiprev ul { margin: 6px 0; padding-left: 20px; }
+  .midiprev ul.warn li { color: var(--t3); }
+  table.song td, table.song th { padding: 4px 8px; text-align: left; }
+  table.song input[type=number] { width: 64px; }
+  table.song td.acts button { min-width: 34px; padding: 0 6px; margin-right: 4px; }
+  table.song tr.bad td { color: var(--red); }
+  #p-song .bad { color: var(--red); }
   details.more { margin-top: 8px; }
   details.more > summary { cursor: pointer; color: var(--dim); text-transform: lowercase; list-style: none; padding: 6px 0; }
   details.more > summary::before { content: "\25B8  "; }
@@ -366,6 +387,11 @@
   #sysinfo th { padding-right: 24px; }
   #sysinfo td { color: var(--fg); }
   .fm6ops { overflow-x: auto; }
+  .fm6list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px; margin: 6px 0 10px; }
+  .fm6v { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .fm6v button { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none; }
+  .fm6v .dim { width: 2.6em; }
+  #fm6panel.drop { outline: 2px dashed var(--trk); outline-offset: -6px; }
   .fm6ops td, .fm6ops th { padding: 1px 3px; }
   input.fm6n { width: 3.6em; padding: 2px 3px; }
   #fm6panel h3 { margin: 16px 0 6px; color: var(--dim); text-transform: uppercase; }
@@ -390,6 +416,7 @@
     .mixer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pads { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .knobs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dslanes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .knobs > .knob:nth-child(2n + 1) { border-left: 0; padding-left: 0; }
     .kithead { grid-template-columns: 1fr; }
     .dest, .dest.slots4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -426,10 +453,12 @@
       <button role="tab" data-tab="sound" data-t="sound" data-ic="symbol_audio"></button>
       <button role="tab" data-tab="sequencer" data-t="tabSeq" data-ic="symbol_grid"></button>
       <button role="tab" data-tab="tracks" data-t="tabTracks" data-ic="ui_slider_vertical"></button>
+      <button role="tab" data-tab="song" data-t="tabSong" data-ic="control_arrow_loop"></button>
       <div class="navh" data-t="navSounds"></div>
       <button role="tab" data-tab="library" data-t="library" data-ic="symbol_books"></button>
       <button role="tab" data-tab="samples" data-t="samples" data-ic="symbol_waves"></button>
       <button role="tab" data-tab="kits" data-t="tabKits" data-ic="symbol_drum"></button>
+      <button role="tab" data-tab="drumsynth" data-t="tabDrumSynth" data-ic="symbol_waves"></button>
       <div class="navh" data-t="navDevice"></div>
       <button role="tab" data-tab="projects" data-t="projects" data-ic="symbol_folder"></button>
       <button role="tab" data-tab="settings" data-t="tabSettings" data-ic="symbol_cog"></button>
@@ -481,7 +510,7 @@
           <input type="file" id="fm6file" accept=".syx,.SYX,.bin,application/octet-stream" hidden>
           <button id="fm6export" data-t="fm6Export" data-ic="symbol_download"></button>
           <button id="fm6bankexp" data-t="fm6BankExport" data-ic="symbol_download"></button>
-          <button id="fm6init" data-t="fm6Init"></button></p>
+          <button id="fm6init" data-t="fm6Init"></button> <span class="dim" data-t="fm6Drop"></span></p>
         <div id="fm6imported"></div>
         <h3 data-t="fm6Voice"></h3>
         <div id="fm6voice"></div>
@@ -497,9 +526,22 @@
         <p class="bar"><button id="reloadsteps" data-t="reload" data-ic="control_arrow_loop"></button>
           <button id="clearseq" class="warn" data-t="clearSeq" data-ic="symbol_trash"></button>
           <span class="dim" id="noteshelp"></span></p>
+        <p class="bar seqtools"><span data-t="lenLabel"></span>
+          <button type="button" id="lenminus" class="sq">&minus;</button><input id="lenval" type="number" min="1" max="64"><button type="button" id="lenplus" class="sq">+</button>
+          <span class="seg" id="viewseg"><button type="button" data-v="grid" data-t="viewGrid"></button><button type="button" data-v="roll" data-t="viewRoll"></button></span>
+          <button type="button" id="midiexp" data-t="midiExport" data-ic="symbol_download"></button>
+          <button type="button" id="midiimp" data-t="midiImportBtn" data-ic="symbol_upload"></button>
+          <input id="midifile" type="file" accept=".mid,.midi,audio/midi" hidden></p>
+        <div class="midiprev" id="midiprev" hidden></div>
         <div class="bar" id="drumbar" hidden></div>
         <div class="dgrid" id="drumgrid" hidden></div>
         <div class="grid" id="stepgrid"></div>
+        <div class="roll" id="roll" hidden>
+          <p class="bar"><span class="dim" data-t="rollLen"></span> <span class="seg" id="rolllen"></span>
+            <button type="button" id="rolldown" data-t="rollDown"></button> <span class="dim" id="rollrange"></span> <button type="button" id="rollup" data-t="rollUp"></button></p>
+          <div class="rollbox"><canvas id="rollcv"></canvas></div>
+          <p class="dim" data-t="rollHelp"></p>
+        </div>
         <div class="stepdetail" id="stepdetail" hidden></div>
         <details class="more" id="steplist"><summary data-t="stepList"></summary>
           <div class="stepcols" id="steptables"></div></details>
@@ -515,6 +557,23 @@
     </section>
 
     <!-- works without a device too (the device bank shows while connected) -->
+    <section class="panel" id="p-song" data-tab="song" data-dev hidden>
+      <div class="card">
+        <h2 data-t="songTitle" data-ic="control_arrow_loop"></h2>
+        <p class="dim" data-t="songHelp"></p>
+        <p class="bad" id="songerr" hidden></p>
+        <div id="songbody" hidden>
+          <table class="song"><thead><tr><th>#</th><th data-t="songSection"></th><th data-t="songBars"></th><th data-t="songTimes"></th><th></th></tr></thead>
+            <tbody id="songrows"></tbody></table>
+          <p class="bad" id="songempty" data-t="songEmpty" hidden></p>
+          <p class="bar"><button type="button" id="songadd" data-t="songAdd"></button> <span class="dim" id="songsum"></span></p>
+          <p class="bar"><span data-t="songLoop"></span> <span class="seg" id="songloop"><button type="button" data-v="0" data-t="songLoopOff"></button><button type="button" data-v="1" data-t="songLoopOn"></button></span></p>
+          <p class="bar"><button type="button" id="songread" data-t="songRead" data-ic="control_arrow_loop"></button>
+            <button type="button" id="songsend" data-t="songSend" data-ic="symbol_upload"></button></p>
+        </div>
+      </div>
+    </section>
+
     <section class="panel" id="p-library" data-tab="library" hidden>
       <div class="libcols" id="libsec">
         <div class="card" id="libpane">
@@ -575,6 +634,32 @@
       <div id="kit"></div>
     </section>
 
+    <section class="panel" id="p-drumsynth" data-tab="drumsynth" data-dev hidden>
+      <div class="card">
+        <h2 data-t="dsTitle" data-ic="symbol_waves"></h2>
+        <p class="dim" data-t="dsHelp"></p>
+        <p class="bad" id="dsold" data-t="dsOld" hidden></p>
+        <div id="dsbody" hidden>
+          <p class="bar"><span class="seg" id="dsk"><button type="button" data-v="0">SYN1</button><button type="button" data-v="1">SYN2</button><button type="button" data-v="2">SYN3</button><button type="button" data-v="3">SYN4</button></span>
+            <span data-t="name"></span> <input id="dsname" type="text" maxlength="8" size="9" spellcheck="false">
+            <span class="dim" id="dsstate"></span></p>
+          <p class="bar"><span data-t="dsFrom"></span> <select id="dsfrom"></select> <button type="button" id="dscopy" data-t="dsCopy"></button>
+            <span class="dsrng"><span data-t="dsBits"></span> <input id="dsbits" type="range" min="0" max="15" step="1"> <span class="dim" id="dsbitsv"></span></span>
+            <span class="dsrng"><span data-t="dsHoldS"></span> <input id="dssh" type="range" min="1" max="16" step="1"> <span class="dim" id="dsshv"></span></span></p>
+          <p class="bar"><button type="button" id="dsstore" data-t="dsStore" data-ic="symbol_upload"></button>
+            <button type="button" id="dsuse" data-t="dsUse" data-ic="symbol_drum"></button>
+            <button type="button" id="dssave" data-t="dsSave" data-ic="symbol_download"></button>
+            <button type="button" id="dsopen" data-t="dsOpen" data-ic="symbol_folder_open"></button>
+            <input id="dsfile" type="file" accept=".json,application/json" hidden></p>
+          <div class="dslanes" id="dslanes"></div>
+          <p class="bar"><button type="button" id="dsplay" class="pri" data-t="dsPlay" data-ic="symbol_audio"></button>
+            <label><input type="checkbox" id="dsauto" checked> <span data-t="dsAuto"></span></label>
+            <span class="dim" id="dslane" style="margin-left:auto"></span></p>
+        </div>
+      </div>
+      <div class="groups" id="dsgroups"></div>
+    </section>
+
     <section class="panel" id="p-projects" data-tab="projects" data-dev hidden>
       <div class="card">
         <h2 data-t="projects" data-ic="symbol_folder"></h2>
@@ -618,7 +703,8 @@ const CMD = { INFO: 1, GET: 2, SET: 3, DUMP: 4, DESC: 5, STEP_GET: 6, STEP_SET: 
   BK_LIST: 34, BK_GET: 35, BK_PUT: 36,                /* v6: backup / restore */
   LOCK_GET: 37, LOCK_SET: 38, MICRO_GET: 39, MICRO_SET: 40,     /* v7 (SLOOP 2.4): parameter locks, nudges */
   FILL_GET: 41, FILL_SET: 42,                         /* v8 (SLOOP 2.4): the steps' fill conditions */
-  FM6_GET: 68, FM6_PUT: 69, FM6_LIST: 70, FM6_ERASE: 71 };   /* v9 (SLOOP 2.4): the FM6 engine's patches (Felucca 1.0's numbers) */
+  FM6_GET: 68, FM6_PUT: 69, FM6_LIST: 70, FM6_ERASE: 71,    /* v9 (SLOOP 2.4): the FM6 engine's patches (Felucca 1.0's numbers) */
+  DSYN_LIST: 72, DSYN_GET: 73, DSYN_PUT: 74, DSYN_STORE: 75, DSYN_PLAY: 76 };   /* v10 (SLOOP 2.5): the SYN drum kits */
 /* v7: the parameters a step can lock (firmware seq.c p_lockable: the sound, not the sequencer / arp / key / voice
    mode); ids as core.h: LEVEL .. LFO dests, GATE, the sends, GLIDE, PAN, DETUNE, the SLICER, the engine's 8 */
 const lockable = (id) => id <= 16 || id === 32 || (id >= 33 && id <= 36) || id === 38 || id === 39 || id === 44 || (id >= 45 && id <= 48) || id === 50 || (id >= 53 && id <= 60);
@@ -820,6 +906,26 @@ const parse = {
     return o;
   },
   [CMD.FM6_ERASE](a) { return { index: a[0], rc: a[1] }; },
+  /* v10: the SYN drum kits (editor_dsyn.c) */
+  [CMD.DSYN_LIST](a) {
+    const r = new Reader(a), o = { factory: r.b(), user: r.b(), stored: !!r.b(), names: [], kits: [] };
+    for (let i = 0; i < o.factory; i++) o.names.push(r.s());
+    for (let i = 0; i < o.user; i++) o.kits.push({ name: r.s(), src: r.b() });
+    return o;
+  },
+  [CMD.DSYN_GET](a) {
+    const r = new Reader(a), o = { which: r.b(), rc: r.b() };
+    if (o.rc) return o;
+    o.name = r.s();
+    const d = unpack7(a.slice(r.i));
+    o.crush = d[0]; o.src = d[1];
+    o.sounds = Array.from({ length: DSYN.LANES }, (_, l) => d.slice(2 + l * DSYN.SIZE, 2 + (l + 1) * DSYN.SIZE));
+    if (d.length < 2 + DSYN.LANES * DSYN.SIZE) o.rc = 2;
+    return o;
+  },
+  [CMD.DSYN_PUT](a) { return { k: a[0], part: a[1], rc: a[2] }; },
+  [CMD.DSYN_STORE](a) { return { rc: a[0] }; },
+  [CMD.DSYN_PLAY](a) { return { k: a[0], lane: a[1], rc: a[2] }; },
 };
 
 /* a name the device accepts: printable ASCII, 1..12 characters */
@@ -894,6 +1000,14 @@ const req = {
   fm6Put: (target, i, packed) => [CMD.FM6_PUT, [target & 0x7F, i & 0x7F, ...Array.from(packed, (x) => x & 0x7F)]],
   fm6List: () => [CMD.FM6_LIST, []],
   fm6Erase: (i) => [CMD.FM6_ERASE, [i & 0x7F]],
+  /* v10: the SYN drum kits (firmware proto >= 10). which: a factory kit 0.., or DSYN.USER + k */
+  dsynList: () => [CMD.DSYN_LIST, []],
+  dsynGet: (which) => [CMD.DSYN_GET, [which & 0x7F]],
+  dsynSound: (k, lane, bytes22) => [CMD.DSYN_PUT, [k & 0x7F, lane & 0x7F, ...pack7(bytes22)]],
+  dsynHead: (k, name, crush, src) => [CMD.DSYN_PUT, [k & 0x7F, 16, ...pack7(Uint8Array.from([...DSYN.name8(name), crush & 255, src & 255]))]],
+  dsynCopy: (k, src) => [CMD.DSYN_PUT, [k & 0x7F, 17, ...pack7(Uint8Array.of(src & 255))]],
+  dsynStore: () => [CMD.DSYN_STORE, []],
+  dsynPlay: (k, lane, vel = 110) => [CMD.DSYN_PLAY, [k & 0x7F, lane & 0x7F, Math.max(1, Math.min(127, vel | 0))]],
 };
 
 /* which reply belongs to which request (the device echoes these) */
@@ -915,6 +1029,8 @@ function replyMatches(cmd, args, a) {
     case CMD.MICRO_SET: case CMD.FILL_SET: return a[0] === args[0] && a[1] === args[1];
     case CMD.FM6_GET: case CMD.FM6_PUT: return a[0] === args[0] && a[1] === args[1];
     case CMD.FM6_ERASE: return a[0] === args[0];
+    case CMD.DSYN_GET: return a[0] === args[0];
+    case CMD.DSYN_PUT: case CMD.DSYN_PLAY: return a[0] === args[0] && a[1] === args[1];
     default: return true;
   }
 }
@@ -1033,7 +1149,7 @@ function fmtValue(d, v) {
   const sign = (x) => (x > 0 ? "+" + x : String(x));
   switch (d.fmt) {
     case F.PCT: return [String(d.max > 0 ? Math.trunc((v * 100 + Math.trunc(d.max / 2)) / d.max) : v), "%"];
-    case F.SWING: return [String(50 + Math.trunc((Math.max(0, Math.min(100, v)) + 2) / 4)), "%"];   /* MPC: 50 % straight .. 75 % */
+    case F.SWING: return [String(Math.max(0, Math.min(100, v))), ""];   /* 0 straight .. 100 the most (as the FM-1, 2.5) */
     case F.FILT: return !v ? ["OFF", ""] : v < 0 ? ["LP" + Math.trunc((-v * 100 + 32) / 64), "%"] : ["HP" + Math.trunc((v * 100 + 31) / 63), "%"];
     case F.BIPCT: return [sign(Math.trunc(v * 100 / 64)), "%"];
     case F.TIME: {
@@ -1572,8 +1688,8 @@ function b64dec(s) {
 /* object ids (firmware editor.c ED_BK_IDS): 0 the working project, 1 the settings, 2..5 projects A..D,
    6..7 the user preset banks, 32..35 the sample slots USR1..4 (35, USR4: SLOOP 2.4) */
 /* RESTORE: the objects in the order they are written back (banks first; 8 = the FM6 patch bank, firmware v9: a
-   file without it restores fine, a v8 device gets no object 8 sent) */
-const BK = { FORMAT: "sloop-backup", VERSION: 1, SAMPLES: [32, 33, 34, 35], RESTORE: [6, 7, 8, 2, 3, 4, 5, 0, 1] };
+   file without it restores fine, a v8 device gets no object 8 sent; 9 = the SYN drum kits, firmware v10, likewise) */
+const BK = { FORMAT: "sloop-backup", VERSION: 1, SAMPLES: [32, 33, 34, 35], RESTORE: [6, 7, 8, 9, 2, 3, 4, 5, 0, 1] };
 class BackupError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
 /* read everything; progress(done, total bytes) */
 async function backupCapture(rq, info, progress = () => {}) {
@@ -1619,7 +1735,8 @@ async function backupRestore(rq, file, progress = () => {}) {
     if (!m.has(id)) continue;
     const d = m.get(id);
     let r = parse[CMD.BK_PUT](await rq(req.bkBegin(id, d.length, crc32(d)), { timeout: 1500, retries: 1 }));
-    if (r.rc === 1 && id === 8) continue;           /* a device without the FM6 bank (v8): skipped */
+    if ((r.rc === 1 || r.rc === 5) && (id === 8 || id === 9)) continue;   /* a device without the FM6 bank (v8) / the SYN kits
+                                                       * (v9): skipped (its BK_PUT answers an unknown id's begin with 5) */
     if (r.rc) throw new BackupError("bkWrite", `begin ${id} rc ${r.rc}`);
     for (let off = 0; off < d.length; off += 256) {
       r = parse[CMD.BK_PUT](await rq(req.bkData(id, off, d.subarray(off, off + 256)), { timeout: 1500, retries: 1 }));
@@ -1652,6 +1769,63 @@ async function backupRestore(rq, file, progress = () => {}) {
     if (r.rc) throw new BackupError("bkWrite", `USR${k + 1} end rc ${r.rc}`);
   }
   return true;
+}
+
+/* 2.5 Store cartridge: packed patches into B1..Bn in one write. The bank (backup object 8) is read whole, slots
+   0..n-1 replaced, the others kept, and written back whole (BK_PUT, as a restore: one flash write, stopped only).
+   -> 0 written, 3 the song plays (nothing changed), "old" a device without object 8 (before v9) */
+async function fm6CartWrite(rq, packs) {
+  if (!packs.length || packs.length > FM6.BANK_N) throw new Error(`bank: ${packs.length} voices`);
+  const L = parse[CMD.BK_LIST](await rq(req.bkList(), { timeout: 5000, retries: 0 }));
+  if (L.rc) throw new Error(`bank: LIST rc ${L.rc}`);
+  const it = L.items.find((x) => x.id === 8);
+  if (!it) return "old";
+  const cur = new Uint8Array(it.len);
+  for (let off = 0; off < it.len; off += 256) {
+    const nn = Math.min(256, it.len - off);
+    const g = parse[CMD.BK_GET](await rq(req.bkGet(8, off, nn), { timeout: 1500, retries: 2 }));
+    if (g.rc || g.data.length !== nn) throw new Error(`bank: GET rc ${g.rc}`);
+    cur.set(g.data, off);
+  }
+  const slots = FM6.bankUnobj(cur);                  /* a bank this page can't read is never overwritten */
+  if (!slots) throw new Error("bank: unknown format");
+  packs.forEach((pk, i) => { slots[i] = FM6.pack(FM6.unpack(pk)); });   /* every value in range, as fm6_bank_put */
+  const d = FM6.bankObj(slots);
+  let r = parse[CMD.BK_PUT](await rq(req.bkBegin(8, d.length, crc32(d)), { timeout: 1500, retries: 1 }));
+  if (r.rc) throw new Error(`bank: begin rc ${r.rc}`);
+  for (let off = 0; off < d.length; off += 256) {
+    r = parse[CMD.BK_PUT](await rq(req.bkData(8, off, d.subarray(off, off + 256)), { timeout: 1500, retries: 1 }));
+    if (r.rc) throw new Error(`bank: data rc ${r.rc}`);
+  }
+  r = parse[CMD.BK_PUT](await rq(req.bkCommit(8), { timeout: 5000, retries: 0 }));
+  if (r.rc === 3) return 3;
+  if (r.rc) throw new Error(`bank: commit rc ${r.rc}`);
+  return 0;
+}
+/* 2.5: a user preset that plays bank slot k (B(k+1)): engine FM6, the voice's name, every value at its default
+   (base: P_COUNT values; the macros neutral, so the patch plays as it is), PTCH (P_E7) = F count + k. A user preset
+   keeps PTCH, not the patch (a record has no room for 128 bytes): loading it loads B(k+1) */
+function fm6CartPreset(info, base, nf, k, name) {
+  const p = Array.from({ length: info.pcount }, (_, i) => base[i] ?? 0);
+  p[info.pe0 + 7] = nf + k;
+  return { engine: info.engines.indexOf("FM6"), name: upName(name || `FM6 B${k + 1}`), p, pattern: [] };
+}
+/* the preset slots for n voices: from "free" = the first n free ones, from a slot s = s..s+n-1; null: no room */
+function fm6CartSlots(list, n, from) {
+  if (from === "free") {
+    const f = list.slots.filter((x) => !x.used).map((x) => x.slot);
+    return f.length >= n ? f.slice(0, n) : null;
+  }
+  const s = from | 0;
+  return s >= 0 && s + n <= list.total ? Array.from({ length: n }, (_, i) => s + i) : null;
+}
+/* the presets after the bank (fm6CartWrite): one UP_PUT each -> 0, or the first rc (3: the song plays) */
+async function fm6CartPresets(rq, puts) {
+  for (const { slot, pt } of puts) {
+    const rc = await bank.put(rq, slot, pt);
+    if (rc) return rc;
+  }
+  return 0;
 }
 
 async function capturePatch(rq, info, name) {
@@ -1870,13 +2044,37 @@ const FM6 = (() => {
     [99,99,99,85,99,99,99,0,39,0,0,0,56,0,72,2,50,99,99,99,85,99,99,99,0,39,0,0,0,56,0,78,8,0,99,99,99,85,99,99,99,0,39,0,0,0,56,0,76,6,0,99,99,99,85,99,99,99,0,39,0,0,0,56,0,86,4,0,99,99,99,85,99,99,99,0,39,0,0,0,56,0,84,0,0,99,99,99,85,99,99,99,0,39,0,0,0,56,0,90,2,0,99,99,99,99,50,50,50,50,31,8,60,0,3,0,57,24,68,82,65,87,66,65,82,83,32,32],   /* ORGAN */
     [99,99,99,99,99,99,99,0,39,0,0,0,56,0,0,2,0,99,99,99,99,99,99,99,0,39,0,0,0,56,0,0,2,0,99,75,40,60,99,30,0,0,39,0,0,0,58,12,68,2,0,99,60,40,60,99,30,0,0,39,0,0,0,66,8,74,4,0,99,70,40,60,99,40,0,0,39,0,0,0,58,16,76,6,0,99,45,30,60,99,60,0,0,39,0,0,0,58,8,98,2,0,99,99,99,99,50,50,50,50,4,8,35,0,0,0,1,24,78,89,76,79,78,32,80,73,67,75],   /* PLUCK */
   ];
+  /* backup object 8, the PTCH bank as the firmware stores it (fm6_bank.c fm6_bank_t, 3472 bytes): "FM6B", version 1,
+     27 slots, the used bits, 4 reserved, then 27 packed records (an empty slot: zeros). slots: [packed 128 | null] */
+  function bankObj(slots) {
+    const o = new Uint8Array(16 + 27 * PACKED);
+    let used = 0;
+    o.set([0x46, 0x4D, 0x36, 0x42, 1, 0, 27, 0]);
+    for (let k = 0; k < 27; k++) if (slots[k]) { o.set(Array.from(slots[k], (x) => x & 0x7F), 16 + k * PACKED); used |= 1 << k; }
+    o.set([used & 255, (used >> 8) & 255, (used >> 16) & 255, (used >>> 24) & 255], 8);
+    return o;
+  }
+  /* bytes -> [packed | null] x 27; an empty object (length 0): all empty; anything else: null (not a bank) */
+  function bankUnobj(b) {
+    if (!b || !b.length) return new Array(27).fill(null);
+    if (b.length !== 16 + 27 * PACKED || b[0] !== 0x46 || b[1] !== 0x4D || b[2] !== 0x36 || b[3] !== 0x42 || b[4] !== 1 || b[6] !== 27) return null;
+    const used = (b[8] | (b[9] << 8) | (b[10] << 16) | (b[11] << 24)) >>> 0;
+    if (used >>> 27 || b.subarray(16).some((x) => x > 127)) return null;
+    return Array.from({ length: 27 }, (_, k) => ((used >> k) & 1 ? b.slice(16 + k * PACKED, 16 + (k + 1) * PACKED) : null));
+  }
   const init = () => unpack(INIT_PK);
   const factory = (k) => unpack(FACTORY_PK[k]);
   return { OP, VOICE, OPI, VI, NAME, SIZE, PACKED, max, at, sanitize, unpack, pack, name, setName, checksum, parseSysex,
-    singleSysex, bankSysex, ALG, carriers, feedbackOp, freqText, INIT_PK, FACTORY_PK, init, factory,
-    TARGET: { TRACK: 0, BANK: 1, FACTORY: 2 } };
+    singleSysex, bankSysex, ALG, carriers, feedbackOp, freqText, INIT_PK, FACTORY_PK, init, factory, bankObj, bankUnobj,
+    TARGET: { TRACK: 0, BANK: 1, FACTORY: 2 }, BANK_N: 27 };
 })();
 
+/* the mock's settings object: "PER3", the rest opaque, the song order A B C D, 4 bars each (arranger.h arr_defaults) */
+function mockSettings() {
+  const b = Uint8Array.from({ length: 88 }, (_, i) => (i * 37 + 5) & 0xFF);
+  b.set([0x33, 0x52, 0x45, 0x50]);
+  return ARR.encode(b, { loop: false, entries: [0, 1, 2, 3].map((scene) => ({ scene, bars: 4 })) });
+}
 function makeMockDevice(opt = {}) {
   const NONOFF = ["OFF", "ON"], NDIV = ["1/4", "1/8", "1/16", "1/32", "8T", "16T"], NGO = ["--", "GO"], NDASH = ["--"];
   const NSDIV = [...NDIV, "1/2", "1BAR", "2BAR"], NDLY = [...NDIV, "1/8D", "1/16D"];   /* SLOOP 2.4: long steps, dotted delays */
@@ -1906,14 +2104,14 @@ function makeMockDevice(opt = {}) {
     E("MIDI", ["KEYS", "SEQ"], 0), E("SYNC", ["INT", "USB", "TRS"], 0), E("IN", ["NOTES", "CLOCK"], 0), D("CPU", F.INT, 0, 0, 0),
     D("SLOT", F.INT, 1, 4, 1), E("NAME", NDASH, 0), E("LOAD", NGO, 0), E("SAVE", NGO, 0),
     E("ENG", ["ANALOG", "DIGITAL", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO", "WHEEL",
-      "GRAIN", "FM6"], 0), E("SET", NGO, 0),
+      "GRAIN", "FM6", "PHYS", "NOISE"], 0), E("SET", NGO, 0),
     E("CLRSQ", NGO, 0), E("INIT", NGO, 0),
     D("CH", F.INT, 0, 16, 10), D("LVL", F.INT, 0, 127, 100), D("REV", F.INT, 0, 127, 16),
     D("DUST", F.PCT, 0, 127, 0), D("DUCK", F.PCT, 0, 127, 0), D("FILT", F.FILT, -64, 63, 0),
-    E("ROLL", ["1/8", "1/16", "1/32", "32T", "1/64"], 1), E("NEW", NGO, 0),
+    E("ROLL", ["1/8", "1/16", "1/32", "32T", "1/64"], 1), E("NEW", NGO, 0), D("DLY", F.INT, 0, 127, 0),
   ];
   /* the drum track's P_E0: its kit (drums.c DRUM_KIT_NAMES; 5 = 808, the power-on kit) */
-  const KIT = E("KIT", ["ACOUSTIC", "DEEP", "TIGHT", "BRIGHT", "DUST", "808", "909", "606", "80S", "VINTAGE", "TRAP", "DRILL", "BOOMBAP", "LO-FI", "PHONK", "HOUSE", "D.HOUSE", "TECHNO", "MINIMAL", "ELECTRO", "DISCO", "GARAGE", "JUNGLE", "DUBSTEP", "DEMBOW", "AMAPIANO", "AFRO", "LATIN", "TRIBAL", "SYNTHWV", "CHIP", "ARCADE", "GLITCH", "INDUSTR", "HYPER", "AMBIENT", "JAZZ", "USR1", "USR2", "USR3", "USR4", "USR3+4"], 0);
+  const KIT = E("KIT", ["ACOUSTIC", "DEEP", "TIGHT", "BRIGHT", "DUST", "808", "909", "606", "80S", "VINTAGE", "TRAP", "DRILL", "BOOMBAP", "LO-FI", "PHONK", "HOUSE", "D.HOUSE", "TECHNO", "MINIMAL", "ELECTRO", "DISCO", "GARAGE", "JUNGLE", "DUBSTEP", "DEMBOW", "AMAPIANO", "AFRO", "LATIN", "TRIBAL", "SYNTHWV", "CHIP", "ARCADE", "GLITCH", "INDUSTR", "HYPER", "AMBIENT", "JAZZ", "USR1", "USR2", "USR3", "USR4", "USR3+4", "SYN1", "SYN2", "SYN3", "SYN4"], 0);
   /* a GM note -> its drum lane (drums.c LANE_OF_GM: 35..81) */
   const LANE_OF_GM = [1, 0, 7, 2, 3, 8, 9, 4, 9, 6, 9, 5, 10, 10, 11, 10, 12, 11, 12, 13, 11, 15, 11, 13, 12, 14, 14, 14, 14, 14,
     14, 14, 15, 15, 13, 13, 15, 15, 13, 13, 7, 7, 7, 14, 14, 15, 15];
@@ -1955,13 +2153,15 @@ function makeMockDevice(opt = {}) {
         P("WOBBLE", [0, 9, 64, 0, 38, 72, 62, 30], [0, 64, 127, 22], 1, 1), P("FUNK BASS", [1, 6, 50, 0, 50, 30, 22, 64], [0, 55, 62, 20], 1),
         P("G-FUNK LD", [2, 0, 0, 0, 92, 0, 10, 64], [6, 70, 112, 46], 1), P("TRAP PLUCK", [0, 8, 64, 0, 30, 35, 0, 64], [0, 58, 0, 45], 0),
         P("SYN BRASS", [0, 10, 64, 0, 45, 20, 16, 64], [12, 70, 96, 35], 0), P("WARM PAD", [4, 12, 64, 6, 52, 8, 0, 32], [75, 90, 115, 90], 0),
-        P("DARK STR", [0, 18, 64, 0, 48, 6, 0, 32], [60, 90, 118, 85], 0), P("ATMOS PAD", [4, 25, 64, 20, 60, 15, 0, 32], [90, 100, 120, 100], 0)] },
+        P("DARK STR", [0, 18, 64, 0, 48, 6, 0, 32], [60, 90, 118, 85], 0), P("ATMOS PAD", [4, 25, 64, 20, 60, 15, 0, 32], [90, 100, 120, 100], 0),
+        P("PAN FLUTE", [2, 0, 0, 30, 70, 10, 0, 64], [14, 70, 110, 40], 1), P("FAT LEAD", [0, 8, 64, 0, 70, 30, 30, 64], [2, 70, 110, 30], 1), P("MONO BASS", [0, 4, 64, 0, 48, 36, 30, 64], [0, 60, 70, 20], 1)] },
     { name: "DIGITAL", titles: ["OPS", "MOD"], edit: [E("ALG", ["1", "2", "3", "4", "5", "6", "7", "8"], 0), E("R2", RATIO, 1), E("R3", RATIO, 1), E("R4", RATIO, 1),
         D("IDX", F.PCT, 0, 127, 60), D("MDEC", F.TIME, 0, 127, 60), D("FB", F.PCT, 0, 127, 0), NONE],
       presets: [P("RHODES", [4, 1, 1, 14, 26, 35, 0, 0], [0, 85, 35, 55], 0), P("DX RHODES", [4, 1, 1, 14, 85, 45, 0, 0], [0, 82, 40, 55], 0),
         P("WURLI", [4, 1, 2, 3, 62, 35, 8, 0], [0, 75, 30, 45], 0), P("CLAV", [3, 1, 3, 5, 90, 25, 20, 0], [0, 50, 20, 18], 0),
         P("TRAP BELL", [4, 8, 1, 4, 80, 70, 0, 0], [0, 92, 0, 70], 0), P("MUSIC BOX", [4, 4, 3, 9, 45, 75, 0, 0], [0, 90, 0, 75], 0),
-        P("MARIMBA", [4, 4, 1, 1, 60, 30, 0, 0], [0, 80, 0, 60], 0), P("FM BASS", [0, 1, 1, 1, 34, 40, 8, 0], [0, 60, 70, 25], 1)] },
+        P("MARIMBA", [4, 4, 1, 1, 60, 30, 0, 0], [0, 80, 0, 60], 0), P("FM BASS", [0, 1, 1, 1, 34, 40, 8, 0], [0, 60, 70, 25], 1),
+        P("STEEL DRUM", [4, 2, 2, 2, 45, 45, 0, 0], [0, 88, 0, 66], 0), P("GLOCKEN", [4, 5, 1, 8, 40, 60, 0, 0], [0, 95, 0, 85], 0), P("CELESTA", [4, 2, 1, 4, 30, 50, 0, 0], [0, 84, 0, 70], 0), P("XYLOPHONE", [4, 4, 3, 3, 70, 18, 0, 0], [0, 77, 0, 58], 0), P("HARP", [4, 1, 1, 2, 45, 30, 10, 0], [0, 92, 0, 80], 0), P("BASS GTR", [4, 1, 1, 2, 40, 30, 6, 0], [0, 76, 40, 22], 1)] },
     { name: "PHASE", titles: ["PHS", "LINE"], edit: [E("WAVE", ["SAW", "SQR", "PLS", "DSIN", "SPLS", "RSAW", "RTRI", "RTRP"], 0),
         E("WAVE2", ["--", "SAW", "SQR", "PLS", "DSIN", "SPLS", "RSAW", "RTRI", "RTRP"], 0), D("DCW", F.PCT, 0, 127, 60), D("ENV", F.PCT, 0, 127, 64),
         D("DTN", F.INT, 0, 127, 0, null, "ct"), E("LINE", ["MIX", "RING"], 0), D("SUB", F.PCT, 0, 127, 0), NONE],
@@ -1982,13 +2182,15 @@ function makeMockDevice(opt = {}) {
     { name: "VOICE", titles: ["VOWL", "TONE"], edit: [D("VOWL", F.INT, 0, 127, 0), D("VOWL2", F.INT, 0, 127, 64), D("TALK", F.TIME, 0, 127, 0),
         D("SHIFT", F.SEMI, -12, 12, 0), D("BUZZ", F.PCT, 0, 127, 64), D("BRTH", F.PCT, 0, 127, 10), D("Q", F.PCT, 0, 127, 64), D("RAND", F.PCT, 0, 127, 0)],
       presets: [P("CHOIR AAH", [0, 0, 0, 0, 40, 22, 60, 0], [85, 90, 115, 95], 0), P("SOUL OOH", [110, 0, 0, 0, 30, 30, 55, 0], [70, 90, 115, 90], 0),
-        P("TALKBOX", [32, 95, 60, 0, 100, 4, 75, 0], [4, 70, 110, 40], 1), P("WOW BASS", [95, 0, 68, 0, 100, 0, 80, 0], [0, 70, 70, 30], 1)] },
+        P("TALKBOX", [32, 95, 60, 0, 100, 4, 75, 0], [4, 70, 110, 40], 1), P("WOW BASS", [95, 0, 68, 0, 100, 0, 80, 0], [0, 70, 70, 30], 1),
+        P("HARMONICA", [64, 0, 0, 0, 127, 20, 70, 0], [4, 70, 115, 25], 1)] },
     { name: "TRIO", titles: ["OSC", "TONE"], edit: [E("WAVE", ["SAW3", "PLS3", "PPT", "SST", "TRI3", "S&T", "P&S", "P+N", "NOIS", "SYNC", "SYNCP", "SYNC3",
         "RING", "RING3", "R+S", "R+SP"], 0), D("INT2", F.SEMI, -24, 24, 0), D("INT3", F.SEMI, -24, 24, -12), D("DTN", F.INT, 0, 50, 6, null, "ct"),
         E("MODE", ["LP", "BP", "HP", "NOT"], 0), D("CUT", F.CUTOFF, 0, 127, 80), D("RES", F.PCT, 0, 127, 40), D("PW", F.PCT, 0, 127, 64)],
       presets: [P("FAT BASS", [0, 0, -12, 9, 0, 62, 45, 64], [0, 62, 60, 25], 1), P("MIN STAB", [0, 3, 7, 6, 0, 80, 20, 64], [0, 50, 0, 30], 0),
         P("MIN7 STAB", [3, 3, 10, 5, 0, 75, 15, 64], [0, 60, 20, 40], 0), P("SYNC LEAD", [9, 9, 0, 0, 0, 82, 30, 64], [2, 70, 100, 40], 1),
-        P("HOOVER", [0, 0, -12, 40, 0, 70, 20, 64], [10, 70, 110, 40], 1)] },
+        P("HOOVER", [0, 0, -12, 40, 0, 70, 20, 64], [10, 70, 110, 40], 1),
+        P("ACCORDION", [1, 0, 12, 14, 0, 92, 10, 40], [6, 70, 118, 24], 0), P("ENSEMBLE", [0, 12, 0, 10, 0, 85, 0, 64], [50, 90, 118, 80], 0), P("80S POLY", [0, 0, 12, 12, 0, 70, 30, 64], [2, 72, 70, 50], 0)] },
     { name: "WHEEL", titles: ["BARS", "TONE"], edit: [E("REG", ["FLUTE", "MELLO", "HOLLW", "SMOOT", "3BAR", "BLUES", "GOSPL", "ROCK",
         "TOPS", "CLARI", "REED", "STRNG", "CHAPL", "BRITE", "BASS", "FULL"], 4), D("SUB", F.INT, -8, 8, 0), D("BODY", F.INT, -8, 8, 0), D("TOP", F.INT, -8, 8, 0),
         E("PERC", ["OFF", "2ND", "3RD", "2SOFT", "3SOFT", "2SLOW", "3SLOW"], 0), D("CLICK", F.PCT, 0, 127, 40), D("DRV", F.PCT, 0, 127, 0), E("ROTR", ["OFF", "SLOW", "FAST"], 1)],
@@ -1998,7 +2200,8 @@ function makeMockDevice(opt = {}) {
         D("POS", F.PCT, 0, 127, 32), D("SIZE", F.PCT, 0, 127, 80), D("DENS", F.PCT, 0, 127, 80),
         D("PTCH", F.SEMI, -24, 24, 0), D("SPRD", F.PCT, 0, 127, 30), D("RAND", F.PCT, 0, 127, 10), D("TONE", F.PCT, 0, 127, 127)],
       presets: [P("LOFI CLOUD", [0, 45, 95, 85, 0, 35, 12, 80], [70, 90, 120, 90], 0), P("VIBE HAZE", [2, 30, 100, 90, 0, 25, 10, 90], [50, 100, 120, 95], 0),
-        P("FLUTE DUST", [5, 50, 108, 72, 0, 10, 10, 85], [50, 100, 127, 100], 0)] },
+        P("FLUTE DUST", [5, 50, 108, 72, 0, 10, 10, 85], [50, 100, 127, 100], 0),
+        P("STR CLOUD", [4, 40, 100, 90, 0, 30, 12, 80], [70, 100, 120, 95], 0), P("SHIMMER", [0, 30, 90, 95, 12, 40, 15, 110], [60, 100, 120, 100], 0), P("DRONE", [3, 50, 115, 80, -12, 20, 20, 50], [90, 100, 127, 100], 0)] },
     /* 9: FM6 (SLOOP 2.4, eng_fm6.c): the macros on top of the patch; ALG and PTCH are F_INT with names on the device */
     { name: "FM6", titles: ["OPS", "PATCH"], edit: [D("ALG", F.INT, 0, 32, 0), D("FB", F.INT, -7, 7, 0), D("MLVL", F.BIPCT, -64, 63, 0),
         D("MRAT", F.INT, -16, 16, 0), D("MEG", F.BIPCT, -64, 63, 0), D("VMOD", F.INT, -7, 7, 0), D("DTUN", F.PCT, 0, 127, 0),
@@ -2007,9 +2210,55 @@ function makeMockDevice(opt = {}) {
         P("ROUND BASS", [0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 127, 0], 1), P("BRASS SECT", [0, 0, 0, 0, 0, 0, 0, 3], [0, 0, 127, 0], 0),
         P("SOFT PAD", [0, 0, 0, 0, 0, 0, 30, 4], [0, 0, 127, 0], 0), P("WOOD BARS", [0, 0, 0, 0, 0, 0, 0, 5], [0, 0, 127, 0], 0),
         P("DRAWBARS", [0, 0, 0, 0, 0, 0, 0, 6], [0, 0, 127, 0], 0), P("NYLON PICK", [0, 0, 0, 0, 0, 0, 0, 7], [0, 0, 127, 0], 0)] },
+    { name: "PHYS", titles: ["BODY", "EXCT"], edit: [E("MODEL", ["MODAL", "STRNG", "MEMB", "SYMP"], 0), D("STRC", F.PCT, 0, 127, 64),
+        D("BRIT", F.PCT, 0, 127, 80), D("DAMP", F.PCT, 0, 127, 80), D("POS", F.PCT, 0, 127, 20), D("ACC", F.PCT, 0, 127, 90),
+        D("BOW", F.PCT, 0, 127, 0), D("EXC", F.PCT, 0, 127, 0)],
+      presets: [
+        P("BELL TREE", [0, 70, 100, 106, 12, 100, 0, 6], [0, 100, 127, 96], 0),
+        P("MODAL BAR", [0, 116, 38, 40, 24, 90, 0, 30], [0, 90, 127, 52], 0),
+        P("STR PLUCK", [1, 56, 72, 84, 40, 96, 0, 0], [0, 100, 127, 58], 0),
+        P("BOWED MTL", [0, 98, 70, 112, 10, 80, 90, 0], [60, 90, 127, 90], 0),
+        P("THUMB PNO", [0, 34, 16, 56, 100, 90, 0, 48], [0, 100, 127, 60], 0),
+        P("HAND DRUM", [2, 112, 76, 56, 44, 100, 14, 24], [0, 100, 127, 64], 0),
+        P("MEMB TOMS", [2, 0, 52, 40, 30, 100, 40, 30], [0, 100, 127, 70], 0),
+        P("SITAR", [3, 127, 80, 88, 64, 100, 92, 0], [0, 100, 127, 90], 0),
+        P("PHYS HARP", [3, 8, 62, 74, 60, 90, 0, 0], [0, 100, 127, 80], 0),
+        P("NYLON GTR", [1, 40, 50, 80, 30, 80, 0, 10], [0, 100, 127, 50], 0),
+        P("STEEL GTR", [1, 56, 85, 88, 22, 96, 0, 6], [0, 100, 127, 56], 0),
+        P("MUTED GTR", [1, 50, 40, 55, 30, 90, 0, 20], [0, 100, 127, 20], 0),
+        P("PLUCK BASS", [1, 60, 45, 74, 35, 100, 0, 8], [0, 100, 127, 30], 1),
+        P("KOTO", [1, 20, 70, 82, 15, 96, 0, 4], [0, 100, 127, 60], 0),
+        P("BANJO", [1, 70, 100, 60, 12, 110, 0, 12], [0, 100, 127, 40], 0),
+        P("CELLO BOW", [0, 34, 60, 110, 12, 70, 90, 0], [60, 90, 127, 70], 0),
+        P("TANPURA", [3, 0, 70, 120, 90, 80, 110, 0], [0, 100, 127, 100], 0),
+        P("CHIMES", [0, 70, 110, 118, 8, 110, 0, 4], [0, 100, 127, 100], 0),
+        P("BIG BELL", [0, 80, 90, 124, 16, 120, 0, 8], [0, 100, 127, 110], 0),
+        P("VIBRA BAR", [0, 116, 60, 100, 20, 80, 0, 10], [0, 100, 127, 70], 0),
+        P("GLASS BOWL", [0, 98, 90, 120, 6, 60, 70, 0], [70, 90, 127, 100], 0),
+        P("STEEL PAN", [0, 36, 80, 90, 30, 100, 0, 20], [0, 100, 127, 60], 0),
+        P("WOOD BLOCK", [0, 116, 30, 35, 40, 110, 0, 60], [0, 100, 127, 20], 0),
+        P("TABLA", [2, 120, 70, 70, 50, 110, 20, 30], [0, 100, 127, 50], 0),
+        P("CONGA", [2, 90, 60, 50, 40, 100, 8, 40], [0, 100, 127, 40], 0),
+        P("TIMPANI", [2, 10, 50, 100, 20, 110, 6, 10], [0, 100, 127, 90], 0)] },
+    { name: "NOISE", titles: ["SRC", "MOVE"], edit: [E("MODE", ["ANLG", "DUST", "LFSR", "META"], 0), D("COLR", F.PCT, 0, 127, 64),
+        D("FREQ", F.CUTOFF, 0, 127, 80), D("RES", F.PCT, 0, 127, 30), D("TRK", F.PCT, 0, 127, 64), D("DENS", F.PCT, 0, 127, 0),
+        D("DRFT", F.PCT, 0, 127, 0), D("CRSH", F.PCT, 0, 127, 0)],
+      presets: [
+        P("WIND", [0, 64, 70, 100, 127, 0, 70, 0], [90, 90, 110, 90], 0),
+        P("RAIN", [1, 30, 88, 80, 64, 105, 40, 0], [10, 90, 127, 70], 0),
+        P("NZ ARCADE", [2, 0, 127, 0, 127, 112, 0, 84], [0, 80, 0, 50], 0),
+        P("NZ METAL", [3, 0, 100, 40, 100, 32, 0, 0], [0, 75, 40, 60], 0),
+        P("OCEAN", [0, 100, 50, 20, 0, 0, 110, 0], [100, 90, 127, 100], 0),
+        P("VINYL", [1, 0, 110, 10, 0, 70, 20, 0], [0, 64, 127, 40], 0),
+        P("HISS", [0, 0, 115, 0, 0, 0, 0, 0], [20, 64, 127, 40], 0),
+        P("RISER", [0, 30, 60, 110, 127, 0, 0, 0], [100, 90, 127, 60], 0),
+        P("NZ SNARE", [0, 20, 90, 30, 64, 0, 0, 0], [0, 60, 0, 44], 0),
+        P("BITCRUSH", [0, 40, 90, 40, 64, 0, 0, 100], [0, 70, 110, 40], 0),
+        P("RADIO", [2, 20, 70, 90, 64, 0, 60, 48], [10, 70, 120, 50], 0)] },
   ];
   const FM6_E = ENG.findIndex((e) => e.name === "FM6"), FM6_BANK = 27, FM6_NPART = 3;
   const v9 = !opt.legacy && !opt.v3 && !opt.noBackup && !opt.v7 && !opt.v8;   /* SLOOP 2.4: FM6 patches */
+  const v10 = v9 && !opt.v9;                         /* SLOOP 2.5: the SYN drum kits */
   /* demo patterns of the mock only (the LIVE firmware has no factory patterns: a preset never writes the
      sequencer); used to seed the mock's user presets and track 1 as if they had been recorded */
   const T_ = 4;
@@ -2026,7 +2275,7 @@ function makeMockDevice(opt = {}) {
     [[60, 60, 61, 61, 62, 0, 63, 63, 64, 65, 65, 0, 66, 66, 66, 67], [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]],
     [[60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75], [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]],
   ];
-  const P_COUNT = 61, G_COUNT = 32, NSTEP = 64, P_E0 = 53, G_ENGSEL = 20, P_SLCR = 45, P_CHORD = 49;
+  const P_COUNT = 61, G_COUNT = 33, NSTEP = 64, P_E0 = 53, G_ENGSEL = 20, P_SLCR = 45, P_CHORD = 49;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   /* four tracks (firmware v3); engine / preset / p / step below are the selected track's */
   const NTRK = 4, TRK_DRUM = 3;
@@ -2044,7 +2293,8 @@ function makeMockDevice(opt = {}) {
     smp: [0, 1, 2, 3].map(() => ({ flash: new Uint8Array(SMP.SLOT_SIZE).fill(0xFF), zones: 0, name: "", len: 0, next: SMP.DATA_OFF })),   /* USR1..4 (2.4: USR4) */
     bank: new Array(opt.slots || 32).fill(null),     /* user presets: {engine, name, p, pattern} */
     fm6bank: new Array(FM6_BANK).fill(null),         /* the FM6 patch bank (fm6_bank.c): packed records */
-    settings: Uint8Array.from({ length: 88 }, (_, i) => (i * 37 + 5) & 0xFF),   /* v6: the settings object (opaque here) */
+    settings: mockSettings(),                       /* v6: the settings object (2.5: a PER3 with a song order) */
+    dsyn: null, dsynStored: null, dsynPlayed: [],  /* v10: the SYN kits (RAM, flash), the auditions heard */
     bkSnap: null, bkPut: null,
     watch: false, v4: false, lastReq: 0, playing: false,
   };
@@ -2115,6 +2365,17 @@ function makeMockDevice(opt = {}) {
   clearSteps();
   applyPreset(4, true);                             /* WOBBLE, a recorded-looking pattern on track 1 (mock only) */
   const project = () => JSON.parse(JSON.stringify({ tracks: st.tracks, sel: st.sel, g: st.g }));
+  /* v10: a factory synthesised kit (DSYN_MOCK_KITS), SYN1..4 = copies of 808, 909, TRAP, TECHNO */
+  const dsynRaw = b64dec(DSYN_MOCK_KITS);
+  function dsynFactory(i) {
+    const at = i * (1 + DSYN.LANES * DSYN.SIZE);
+    return { name: DSYN_MOCK_NAMES[i], crush: dsynRaw[at], src: i,
+      sounds: Array.from({ length: DSYN.LANES }, (_, l) => dsynRaw.slice(at + 1 + l * DSYN.SIZE, at + 1 + (l + 1) * DSYN.SIZE)) };
+  }
+  function dsynKits() {
+    if (!st.dsyn) { st.dsyn = [0, 1, 5, 12].map(dsynFactory); st.dsynStored = DSYN.bankEncode(st.dsyn); }
+    return st.dsyn;
+  }
   st.slots[0] = project();
 
   function handle(cmd, a) {
@@ -2125,6 +2386,7 @@ function makeMockDevice(opt = {}) {
     if (opt.noBackup && cmd >= CMD.LOCK_GET) return null;   /* (a v5 device: no locks either) */
     if (opt.v7 && cmd >= CMD.FILL_GET) return null;         /* (a v7 device: no fill conditions) */
     if (!v9 && cmd >= CMD.FM6_GET) return null;             /* (a v8 device: no FM6 patches) */
+    if (!v10 && cmd >= CMD.DSYN_LIST) return null;          /* (a v9 device: no SYN kits) */
     const NB = st.bank.length;
     switch (cmd) {
       case CMD.UP_LIST: {
@@ -2151,6 +2413,7 @@ function makeMockDevice(opt = {}) {
           for (let i = 0; i < P_COUNT; i++) p.push(r.v());
           for (let i = 0; i < UP.PAT; i++) pattern.push(patNorm(r.b(), r.b()));
           if (slot >= NB || engine >= ENG.length || !name.length || name.length > UP.NAME_MAX || /[^\x20-\x7E]/.test(name)) rc = 1;
+          else if (st.playing) rc = 3;                /* editor.c: no flash write while the song plays */
           else {
             const saved = st.engine;                /* values clamped to the ranges of that engine */
             st.engine = engine;
@@ -2199,7 +2462,7 @@ function makeMockDevice(opt = {}) {
         s(opt.legacy ? "FELUCCA 0.4 BETA (MOCK)" : opt.v3 ? "FELUCCA 0.8 (MOCK)" : "FELUCCA SLOOP 2.0 (MOCK)"); b(ENG.length); b(P_COUNT); b(G_COUNT); b(NSTEP); b(P_E0);
         ENG.forEach((e) => s(e.name));
         if (!opt.legacy) b(NTRK);
-        if (v5) b(opt.noBackup ? 5 : opt.v7 ? 7 : opt.v8 ? 8 : 9);   /* v9: FM6 patches (v8: fill conditions, v7: nudges and locks, v6: backup) */
+        if (v5) b(opt.noBackup ? 5 : opt.v7 ? 7 : opt.v8 ? 8 : opt.v9 ? 9 : 10);   /* v10: SYN kits (v9: FM6 patches, v8: fill conditions, v7: nudges and locks, v6: backup) */
         break;
       case CMD.GET: case CMD.SET: {
         if (a.length < 2) return null;
@@ -2412,7 +2675,8 @@ function makeMockDevice(opt = {}) {
         const enc = (o) => Uint8Array.from(Array.from(JSON.stringify(o), (c) => c.charCodeAt(0) & 0x7F));
         const bankOf = (h) => { const x = st.bank.slice(h * 16, h * 16 + 16); return x.some(Boolean) ? enc(x) : new Uint8Array(0); };
         st.bkSnap = new Map([[0, enc(project())], [1, st.settings.slice()], ...[0, 1, 2, 3].map((k) => [2 + k, st.slots[k] ? enc(st.slots[k]) : new Uint8Array(0)]),
-          [6, bankOf(0)], [7, bankOf(1)], ...(v9 ? [[8, st.fm6bank.some(Boolean) ? enc(st.fm6bank) : new Uint8Array(0)]] : []),
+          [6, bankOf(0)], [7, bankOf(1)], ...(v9 ? [[8, st.fm6bank.some(Boolean) ? FM6.bankObj(st.fm6bank) : new Uint8Array(0)]] : []),
+          ...(v10 ? [[9, DSYN.bankEncode(dsynKits())]] : []),
           ...st.smp.map((_, k) => [32 + k, st.smp[k].zones ? st.smp[k].flash.slice(0, SMP.DATA_OFF + st.smp[k].len) : new Uint8Array(0)])]);
         st.bkPut = null;
         b(0); b(st.bkSnap.size);
@@ -2432,7 +2696,7 @@ function makeMockDevice(opt = {}) {
         if (opt.noBackup || a.length < 2) return null;
         const op = a[0], id = a[1], r = new Reader(a.slice(2));
         let rc = 1;
-        if (op === 0 && a.length === 12 && [0, 1, 2, 3, 4, 5, 6, 7, ...(v9 ? [8] : [])].includes(id)) {
+        if (op === 0 && a.length === 12 && [0, 1, 2, 3, 4, 5, 6, 7, ...(v9 ? [8] : []), ...(v10 ? [9] : [])].includes(id)) {
           const len = u35dec(r), crc = u35dec(r);
           if ((id >= 2 || len) && len <= 1 << 20) { st.bkPut = { id, len, crc, pos: 0, buf: new Uint8Array(len) }; st.bkSnap = null; rc = 0; }
         } else if (!st.bkPut || st.bkPut.id !== id) rc = 5;
@@ -2445,10 +2709,25 @@ function makeMockDevice(opt = {}) {
           rc = P.pos !== P.len || crc32(P.buf) !== P.crc ? 2 : 0;
           if (!rc) try {
             const js = () => JSON.parse(Array.from(P.buf, (c) => String.fromCharCode(c)).join(""));
-            if (id === 1) { if (P.len !== st.settings.length) throw 0; st.settings = P.buf.slice(); }
+            if (id === 1) {                                 /* project.c settings_restore */
+              if (P.len !== st.settings.length || !ARR.ok(P.buf) || P.buf[ARR.OFF] > ARR.STEPS || P.buf[ARR.OFF + 1] > 1 || !ARR.valid(ARR.decode(P.buf))) throw 0;
+              if (st.playing && P.buf.subarray(ARR.OFF, ARR.OFF + ARR.SIZE).some((v, k) => v !== st.settings[ARR.OFF + k])) { rc = 3; }
+              else st.settings = P.buf.slice();
+            }
             else if (id === 0) { const o = js(); st.tracks = o.tracks; st.sel = o.sel; st.g = o.g; }
             else if (id <= 5) st.slots[id - 2] = P.len ? js() : null;
-            else if (id === 8) { const x = P.len ? js() : []; if (P.len && x.length !== FM6_BANK) throw 0; st.fm6bank = st.fm6bank.map((_, i) => x[i] || null); st.fm6bank.forEach((_, i) => fm6BankChanged(i)); }
+            else if (id === 9) {                            /* the SYN kits (with the settings: stopped only) */
+              const k = DSYN.bankDecode(P.buf);
+              if (!k) throw 0;
+              if (st.playing) rc = 3;
+              else { st.dsyn = k.map((x) => ({ ...x, sounds: x.sounds.map((y) => DSYN.encode(DSYN.decode(y))) })); st.dsynStored = DSYN.bankEncode(st.dsyn); }
+            }
+            else if (id === 8) {                            /* the PTCH bank (fm6_bank_t; editor.c: stopped only) */
+              const x = FM6.bankUnobj(P.buf);
+              if (!x) throw 0;
+              if (st.playing) rc = 3;
+              else { st.fm6bank = x.map((pk) => (pk ? FM6.pack(FM6.unpack(pk)) : null)); st.fm6bank.forEach((_, i) => fm6BankChanged(i)); }
+            }
             else { const x = P.len ? js() : new Array(16).fill(null); for (let i = 0; i < 16; i++) st.bank[(id - 6) * 16 + i] = x[i] || null; }
           } catch (e) { rc = 2; }
         } else if (op === 3) { st.bkPut = null; rc = 0; }
@@ -2483,6 +2762,37 @@ function makeMockDevice(opt = {}) {
             if (st.playing) rc = 3;
             else { st.fm6bank[a[1]] = pk; fm6BankChanged(a[1]); }
           } else rc = 1;
+          b(a.length ? a[0] : 127); b(a.length > 1 ? a[1] : 127); b(rc);
+        }
+        break;
+      }
+      case CMD.DSYN_LIST: case CMD.DSYN_GET: case CMD.DSYN_PUT: case CMD.DSYN_STORE: case CMD.DSYN_PLAY: {   /* editor_dsyn.c */
+        const K = dsynKits(), nf = DSYN_MOCK_NAMES.length;
+        if (cmd === CMD.DSYN_LIST) {
+          if (a.length) return null;
+          b(nf); b(K.length); b(DSYN.bankEncode(K).every((x, i) => x === st.dsynStored[i]) ? 1 : 0);
+          DSYN_MOCK_NAMES.forEach(s);
+          K.forEach((k) => { s(k.name); b(k.src); });
+        } else if (cmd === CMD.DSYN_GET) {
+          const w = a.length === 1 ? a[0] : 127, k = w < nf ? dsynFactory(w) : w >= DSYN.USER && w < DSYN.USER + K.length ? K[w - DSYN.USER] : null;
+          b(w); b(k ? 0 : 1);
+          if (k) { s(k.name); pack7(Uint8Array.from([k.crush, k.src, ...k.sounds.flatMap((x) => Array.from(x))])).forEach(b); }
+        } else if (cmd === CMD.DSYN_PUT) {
+          const k = a.length >= 2 ? a[0] : 127, part = a.length >= 2 ? a[1] : 127, d = unpack7(a.slice(2));
+          let rc = 1;
+          if (k < K.length && part < DSYN.LANES && d.length === DSYN.SIZE) { K[k].sounds[part] = DSYN.encode(DSYN.decode(d)); rc = 0; }
+          else if (k < K.length && part === 16 && d.length === 10) {
+            K[k].name = String.fromCharCode(...d.subarray(0, 8)).replace(/\0.*$/, ""); K[k].crush = d[8]; K[k].src = d[9] % nf; rc = 0;
+          } else if (k < K.length && part === 17 && d.length === 1 && d[0] < nf) { K[k] = dsynFactory(d[0]); rc = 0; }
+          b(k); b(part); b(rc);
+        } else if (cmd === CMD.DSYN_STORE) {
+          if (a.length) return null;
+          const rc = st.playing ? 3 : 0;
+          if (!rc) st.dsynStored = DSYN.bankEncode(K);
+          b(rc);
+        } else {
+          const rc = a.length !== 3 || a[0] >= K.length || a[1] >= DSYN.LANES || !a[2] ? 1 : 0;
+          if (!rc) st.dsynPlayed.push({ k: a[0], lane: a[1], vel: a[2], sound: K[a[0]].sounds[a[1]].slice() });
           b(a.length ? a[0] : 127); b(a.length > 1 ? a[1] : 127); b(rc);
         }
         break;
@@ -2711,6 +3021,354 @@ async function zipRead(bytes) {
   return out;
 }
 
+/* ------------------------------------------------ SLOOP 2.5: piano roll --- */
+/* A synth track's steps as a piano roll. A NOTE step starts a chord (up to 4 notes, one length for all of
+   them: the device ties every note of a step), the TIE steps after it hold it, a REST is silence. These
+   functions never change their input: they return the steps to write, as a Map index -> new step. */
+const ROLL = {
+  DIV_PER_BAR: [4, 8, 16, 32, 12, 24, 2, 1, 0.5],     /* steps in a 4/4 bar for DIV (params.c N_SDIV) */
+  LENGTHS: [["whole", 1], ["half", 1 / 2], ["quarter", 1 / 4], ["eighth", 1 / 8], ["sixteenth", 1 / 16]],
+  /* a length (a fraction of a bar) in steps at DIV div: at least one step */
+  steps: (frac, div) => Math.max(1, Math.round((ROLL.DIV_PER_BAR[div] ?? 16) * frac)),
+  rest: () => ({ n: 0, notes: [0, 0, 0, 0], time: 2, flags: 0, vel: 0, lvl: 0, rat: 0 }),
+  tie: () => ({ n: 0, notes: [0, 0, 0, 0], time: 1, flags: 0, vel: 0, lvl: 0, rat: 0 }),
+  isNote: (s) => !!s && s.time === 0 && s.n > 0,
+  /* the chords: {at, dur, notes[], vel} for every NOTE step, dur = 1 + the TIE steps after it (within len) */
+  chords(steps, len) {
+    const out = [];
+    for (let i = 0; i < len; i++) {
+      const s = steps[i];
+      if (!ROLL.isNote(s)) continue;
+      let d = 1;
+      while (i + d < len && steps[i + d] && steps[i + d].time === 1) d++;
+      out.push({ at: i, dur: d, notes: s.notes.slice(0, s.n), vel: s.vel, flags: s.flags });
+    }
+    return out;
+  },
+  /* the chord sounding at step i (its NOTE step), or -1 */
+  owner(steps, i) {
+    for (let k = i; k >= 0; k--) {
+      const s = steps[k];
+      if (ROLL.isNote(s)) return k;
+      if (!s || s.time !== 1) return -1;
+    }
+    return -1;
+  },
+  /* the steps after a chord that ends at `end` and were holding it (TIE) become rests */
+  _cutTies(steps, len, end, out) {
+    for (let k = end; k < len && steps[k] && steps[k].time === 1 && !out.has(k); k++) out.set(k, ROLL.rest());
+  },
+  /* put note `pitch` at step `at` for `dur` steps. On a chord's first step: added to it (it keeps its length,
+     at most 4 notes). Inside a held chord: that chord ends there and a new one starts. Elsewhere: a new chord. */
+  place(steps, len, at, pitch, dur) {
+    const out = new Map(), s = steps[at];
+    if (at < 0 || at >= len) return out;
+    if (ROLL.isNote(s)) {
+      if (s.notes.slice(0, s.n).includes(pitch) || s.n >= 4) return out;
+      const notes = s.notes.slice(0, s.n).concat(pitch);
+      out.set(at, { ...s, n: notes.length, notes: notes.concat([0, 0, 0, 0]).slice(0, 4) });
+      return out;
+    }
+    out.set(at, { n: 1, notes: [pitch, 0, 0, 0], time: 0, flags: 0, vel: 96, lvl: 0, rat: 0 });
+    let k = 1;
+    for (; k < dur && at + k < len; k++) {
+      const x = steps[at + k];
+      if (ROLL.isNote(x)) break;                       /* the next chord: this one stops before it */
+      out.set(at + k, ROLL.tie());
+    }
+    ROLL._cutTies(steps, len, at + k, out);            /* (inside a long chord: its rest is silence now) */
+    return out;
+  },
+  /* take note `pitch` off the chord starting at `at`; the last one leaves rests where the chord was */
+  remove(steps, len, at, pitch) {
+    const out = new Map(), s = steps[at];
+    if (!ROLL.isNote(s)) return out;
+    const notes = s.notes.slice(0, s.n).filter((n) => n !== pitch);
+    if (notes.length === s.n) return out;
+    if (notes.length) { out.set(at, { ...s, n: notes.length, notes: notes.concat([0, 0, 0, 0]).slice(0, 4) }); return out; }
+    out.set(at, ROLL.rest());
+    ROLL._cutTies(steps, len, at + 1, out);
+    return out;
+  },
+  /* the chord at `at` lasts `dur` steps: shorter, the steps it leaves become rests; longer, it ties over
+     the rests after it, up to the next chord */
+  resize(steps, len, at, dur) {
+    const out = new Map();
+    if (!ROLL.isNote(steps[at])) return out;
+    let cur = 1;
+    while (at + cur < len && steps[at + cur] && steps[at + cur].time === 1) cur++;
+    dur = Math.max(1, Math.min(dur, len - at));
+    if (dur < cur) for (let k = dur; k < cur; k++) out.set(at + k, ROLL.rest());
+    else for (let k = cur; k < dur; k++) { if (ROLL.isNote(steps[at + k])) break; out.set(at + k, ROLL.tie()); }
+    return out;
+  },
+};
+
+/* ------------------------------------------ SLOOP 2.5: Standard MIDI Files --- */
+const SMF = {
+  PPQ: 96,
+  /* ticks of one step at DIV div (a quarter = ppq ticks) */
+  stepTicks: (div, ppq = SMF.PPQ) => Math.round(ppq * 4 / (ROLL.DIV_PER_BAR[div] ?? 16)),
+  vlq(n) { const a = [n & 0x7F]; while ((n >>= 7)) a.unshift(0x80 | (n & 0x7F)); return a; },
+  /* a format 0 file: notes [{t, dur, key, vel}] on channel ch (0..15), the tempo, a track name */
+  write(notes, { ppq = SMF.PPQ, bpm = 120, ch = 0, name = "" } = {}) {
+    const ev = [];
+    for (const n of notes) {
+      ev.push({ t: n.t, o: 1, b: [0x90 | ch, n.key & 0x7F, Math.max(1, Math.min(127, n.vel | 0))] });
+      ev.push({ t: n.t + Math.max(1, n.dur), o: 0, b: [0x80 | ch, n.key & 0x7F, 0] });
+    }
+    ev.sort((a, b) => a.t - b.t || a.o - b.o);           /* (a note-off before a note-on at the same tick) */
+    const us = Math.round(60000000 / Math.max(1, bpm));
+    const nm = Array.from(String(name), (c) => c.charCodeAt(0) & 0x7F);
+    const tr = [0, 0xFF, 0x51, 3, (us >> 16) & 255, (us >> 8) & 255, us & 255, 0, 0xFF, 0x58, 4, 4, 2, 24, 8];
+    if (nm.length) tr.push(0, 0xFF, 0x03, ...SMF.vlq(nm.length), ...nm);
+    let last = 0;
+    for (const e of ev) { tr.push(...SMF.vlq(e.t - last), ...e.b); last = e.t; }
+    tr.push(0, 0xFF, 0x2F, 0);
+    const u32 = (n) => [(n >>> 24) & 255, (n >> 16) & 255, (n >> 8) & 255, n & 255];
+    return Uint8Array.from([0x4D, 0x54, 0x68, 0x64, ...u32(6), 0, 0, 0, 1, (ppq >> 8) & 255, ppq & 255,
+      0x4D, 0x54, 0x72, 0x6B, ...u32(tr.length), ...tr]);
+  },
+  /* -> {format, ppq, bpm, tracks: [{name, notes: [{t, dur, key, vel, ch}]}]}; throws on a non-MIDI file */
+  read(bytes) {
+    const d = bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes);
+    const str = (o) => String.fromCharCode(d[o], d[o + 1], d[o + 2], d[o + 3]);
+    const u32 = (o) => ((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]) >>> 0;
+    if (d.length < 14 || str(0) !== "MThd") throw new Error("not a MIDI file");
+    const format = (d[8] << 8) | d[9], ntrk = (d[10] << 8) | d[11], div = (d[12] << 8) | d[13];
+    if (div & 0x8000) throw new Error("SMPTE time is not supported");
+    let o = 8 + u32(4), bpm = 0;
+    const tracks = [];
+    for (let k = 0; k < ntrk && o + 8 <= d.length; k++) {
+      if (str(o) !== "MTrk") { o += 8 + u32(o + 4); k--; if (o >= d.length) break; continue; }
+      const end = Math.min(d.length, o + 8 + u32(o + 4));
+      let p = o + 8, t = 0, run = 0, name = "";
+      const on = new Map(), notes = [];
+      const vlq = () => { let n = 0, c; do { c = d[p++]; n = (n << 7) | (c & 0x7F); } while (c & 0x80 && p < end); return n; };
+      const off = (ch, key) => {
+        const q = on.get(ch * 128 + key);
+        if (q && q.length) { const n = q.shift(); n.dur = Math.max(1, t - n.t); notes.push(n); }
+      };
+      while (p < end) {
+        t += vlq();
+        let st = d[p];
+        if (st & 0x80) p++; else st = run;
+        if (st === 0xFF) {
+          const type = d[p++], len = vlq();
+          if (type === 0x51 && len === 3 && !bpm) bpm = 60000000 / ((d[p] << 16) | (d[p + 1] << 8) | d[p + 2]);
+          if (type === 0x03 && !name) name = String.fromCharCode(...d.subarray(p, p + len)).replace(/[^\x20-\x7E]/g, "");
+          p += len;
+          continue;
+        }
+        if (st === 0xF0 || st === 0xF7) { p += vlq(); continue; }
+        run = st;
+        const hi = st & 0xF0, ch = st & 15;
+        const a = d[p++], b = hi === 0xC0 || hi === 0xD0 ? 0 : d[p++];
+        if (hi === 0x90 && b) {
+          const q = on.get(ch * 128 + a) || [];
+          q.push({ t, dur: 0, key: a, vel: b, ch });
+          on.set(ch * 128 + a, q);
+        } else if (hi === 0x80 || (hi === 0x90 && !b)) off(ch, a);
+      }
+      for (const [k, q] of on) for (const n of q) { n.dur = Math.max(1, t - n.t); notes.push(n); }   /* (no note-off: to the end) */
+      notes.sort((x, y) => x.t - y.t || x.key - y.key);
+      tracks.push({ name, notes });
+      o = end;
+    }
+    return { format, ppq: div || SMF.PPQ, bpm: Math.round(bpm || 120), tracks };
+  },
+  /* a synth track's steps -> notes (a chord's notes last its steps; the step's level as the device plays it) */
+  fromSteps(steps, len, div, ppq = SMF.PPQ) {
+    const tk = SMF.stepTicks(div, ppq), V = [0, 42, 72, 127], out = [];
+    for (const c of ROLL.chords(steps, len)) {
+      const s = steps[c.at], base = s.flags & 1 ? 127 : s.vel || 96;
+      c.notes.forEach((key, i) => {
+        const lv = (s.lvl >> (2 * i)) & 3;
+        out.push({ t: c.at * tk, dur: c.dur * tk - Math.max(1, tk >> 4), key, vel: lv ? V[lv] : base });
+      });
+    }
+    return out;
+  },
+  /* the drum track's steps -> GM notes on their lanes (a hit lasts a quarter of its step) */
+  fromDrums(dsteps, len, div, ppq = SMF.PPQ) {
+    const tk = SMF.stepTicks(div, ppq), V = [100, 42, 72, 127], out = [];
+    for (let i = 0; i < len; i++) {
+      const d = dsteps[i];
+      if (!d) continue;
+      for (let l = 0; l < 16; l++) if ((d.on >> l) & 1) out.push({ t: i * tk, dur: Math.max(1, tk >> 2), key: DRUM_LANES[l][0], vel: V[d.lvl[l] & 3] });
+    }
+    return out;
+  },
+  /* the GM drum note -> its lane (firmware drums.c LANE_OF_GM) */
+  LANE_OF_GM: [1, 0, 7, 2, 3, 8, 9, 4, 9, 6, 9, 5, 10, 10, 11, 10, 12, 11, 12, 13, 11, 15, 11, 13, 12, 14, 14, 14, 14, 14,
+    14, 14, 15, 15, 13, 13, 15, 15, 13, 13, 7, 7, 7, 14, 14, 15, 15],
+  laneOf: (key) => (key < 35 ? 0 : key > 81 ? 13 : SMF.LANE_OF_GM[key - 35]),
+  levelOf: (vel) => (vel < 56 ? 1 : vel < 88 ? 2 : vel < 116 ? 0 : 3),   /* (drums.c vel_lvl: GHOST, SOFT, NORM, HARD) */
+  /* notes -> the steps of a track at DIV div, at most nstep. The report says what changed on the way:
+     {notes, steps, moved (off the grid by more than a quarter step), chordCut (notes over 4 on a step),
+      overlap (a chord cut short by the next one), dropped (past the last step), merged (on the same step)} */
+  toSteps(notes, ppq, div, nstep, drum = false) {
+    const tk = ppq * 4 / (ROLL.DIV_PER_BAR[div] ?? 16);
+    const rep = { notes: notes.length, steps: 0, moved: 0, chordCut: 0, overlap: 0, dropped: 0, merged: 0 };
+    const at = new Map();
+    for (const n of notes) {
+      const pos = n.t / tk, i = Math.round(pos);
+      if (Math.abs(pos - i) > 0.25) rep.moved++;
+      if (i >= nstep) { rep.dropped++; continue; }
+      if (!at.has(i)) at.set(i, []);
+      at.get(i).push({ ...n, end: Math.max(i + 1, Math.round((n.t + n.dur) / tk)) });
+    }
+    if (drum) {
+      const ds = Array.from({ length: nstep }, emptyDrum);
+      let last = -1;
+      for (const [i, list] of at) {
+        for (const n of list) {
+          const l = SMF.laneOf(n.key);
+          if ((ds[i].on >> l) & 1) { rep.merged++; continue; }
+          ds[i].on |= 1 << l;
+          ds[i].lvl[l] = SMF.levelOf(n.vel);
+        }
+        last = Math.max(last, i);
+      }
+      rep.steps = last + 1;
+      return { dsteps: ds, len: Math.max(1, last + 1), report: rep };
+    }
+    const steps = Array.from({ length: nstep }, ROLL.rest);
+    const starts = [...at.keys()].sort((a, b) => a - b);
+    let last = -1;
+    starts.forEach((i, k) => {
+      let list = at.get(i);
+      const keys = new Set();
+      list = list.filter((n) => (keys.has(n.key) ? (rep.merged++, false) : keys.add(n.key)));
+      if (list.length > 4) { rep.chordCut += list.length - 4; list = list.slice().sort((a, b) => b.vel - a.vel).slice(0, 4); }
+      list.sort((a, b) => a.key - b.key);
+      const vel = Math.max(...list.map((n) => n.vel));
+      let end = Math.min(nstep, Math.max(...list.map((n) => n.end)));
+      const next = k + 1 < starts.length ? starts[k + 1] : nstep;
+      if (end > next) { rep.overlap++; end = next; }
+      steps[i] = { n: list.length, notes: list.map((n) => n.key).concat([0, 0, 0, 0]).slice(0, 4), time: 0, flags: 0, vel, lvl: 0, rat: 0 };
+      for (let j = i + 1; j < end; j++) steps[j] = ROLL.tie();
+      last = Math.max(last, end - 1);
+    });
+    rep.steps = last + 1;
+    return { steps, len: Math.max(1, last + 1), report: rep };
+  },
+};
+
+/* ------------------------------------------- SLOOP 2.5: the song order --- */
+/* The song order lives in the settings object (backup object 1, firmware project.c persist_t): bytes 48..83
+   are arranger.h arr_config_t: count, loop, 2 reserved, then 16 x {scene 0..3 = A..D, bars 1..64}. */
+const ARR = {
+  OFF: 48, STEPS: 16, SIZE: 36, MAX_BARS: 64, MAGIC: 0x50455233,
+  ok: (b) => !!b && b.length >= ARR.OFF + ARR.SIZE && ((b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24)) >>> 0) === ARR.MAGIC,
+  decode(b) {
+    const count = b[ARR.OFF], loop = b[ARR.OFF + 1], entries = [];
+    for (let i = 0; i < Math.min(count, ARR.STEPS); i++) entries.push({ scene: b[ARR.OFF + 4 + 2 * i], bars: b[ARR.OFF + 5 + 2 * i] });
+    return { loop: loop === 1, entries };
+  },
+  /* the settings bytes with this song order (the rest kept as it was) */
+  encode(b, song) {
+    const o = Uint8Array.from(b), e = song.entries;
+    o[ARR.OFF] = e.length; o[ARR.OFF + 1] = song.loop ? 1 : 0; o[ARR.OFF + 2] = o[ARR.OFF + 3] = 0;
+    for (let i = 0; i < ARR.STEPS; i++) {
+      o[ARR.OFF + 4 + 2 * i] = i < e.length ? e[i].scene : i % 4;
+      o[ARR.OFF + 5 + 2 * i] = i < e.length ? e[i].bars : 4;
+    }
+    return o;
+  },
+  /* arranger.h arr_valid: 1..16 entries, sections A..D, 1..64 bars */
+  valid: (song) => song.entries.length >= 1 && song.entries.length <= ARR.STEPS
+    && song.entries.every((e) => e.scene >= 0 && e.scene < 4 && e.bars >= 1 && e.bars <= ARR.MAX_BARS),
+  /* entries -> rows {scene, bars, times}: the same section with the same bars in a row is one row played `times` */
+  group(entries) {
+    const rows = [];
+    for (const e of entries) {
+      const r = rows[rows.length - 1];
+      if (r && r.scene === e.scene && r.bars === e.bars) r.times++;
+      else rows.push({ scene: e.scene, bars: e.bars, times: 1 });
+    }
+    return rows;
+  },
+  expand: (rows) => rows.flatMap((r) => Array.from({ length: Math.max(1, r.times | 0) }, () => ({ scene: r.scene, bars: r.bars }))),
+};
+
+
+/* ------------------------------------- v10 (SLOOP 2.5): the SYN drum kits --- */
+/* A synthesised drum sound is the firmware's dsnd_t (drum_synth.c, tools/gen_drumkits.py), 22 bytes in this order.
+   The tone (a wave with a falling pitch, a second partial), the click, the noise (white, the 808's six metallic
+   squares, both, a chip LFSR; the clap's bursts), a resonant filter, drive and level. A kit: 16 of them and its
+   crush (bits dropped in the low nibble, sample-and-hold - 1 in the high one). */
+const DSYN = {
+  USER: 64, NUSER: 4, LANES: 16, SIZE: 22,
+  FIELDS: ["wave", "src", "pitch", "fine", "bend", "btime", "hold", "decay", "tlev", "t2", "t2lev", "click",
+    "nlev", "nhold", "ndec", "flt", "fcut", "fenv", "hpf", "chip", "drive", "level"],
+  /* the synthesised lanes (DS_MAP order) and the GM note each plays without an offset (drum_synth.c DS_LANE_NOTE) */
+  LANES_N: ["KICK", "SNARE", "CLAP", "HAT", "OPEN HAT", "LOW TOM", "HI TOM", "CRASH", "RIDE", "SHAKER", "CONGA", "RIM",
+    "COWBELL", "CLAVE", "KICK 2", "SNARE 2"],
+  LANE_NOTE: [36, 38, 39, 42, 46, 43, 48, 49, 51, 70, 63, 37, 56, 75, 35, 40],
+  WAVES: ["OFF", "SINE", "TRI", "SQUARE", "FM", "BELL"],
+  NOISES: ["OFF", "WHITE", "METAL", "CYM", "CHIP"],
+  FMODES: ["OFF", "LP", "BP", "HP"],
+  STEPS_PER_OCT: 127 / Math.log2(16000 / 30),
+  /* 22 bytes -> the values the page edits */
+  decode(b) {
+    const g = (k) => b[DSYN.FIELDS.indexOf(k)] & 255;
+    const f = g("flt"), src = g("src"), fe = g("fenv");
+    return { wave: g("wave"), noise: src & 15, clap: (src >> 4) & 1, pitch: g("pitch"), fine: g("fine"), bend: g("bend"),
+      btime: g("btime"), hold: g("hold"), decay: g("decay"), tlev: g("tlev"), t2: g("t2"), t2lev: g("t2lev"), click: g("click"),
+      nlev: g("nlev"), nhold: g("nhold"), ndec: g("ndec"), fmode: f & 3, fall: (f >> 2) & 1, res: f >> 3, fcut: g("fcut"),
+      fenv: fe > 127 ? fe - 256 : fe, hpf: g("hpf"), chip: g("chip"), drive: g("drive"), level: g("level") };
+  },
+  /* the values -> 22 bytes, into the ranges the firmware keeps (editor_dsyn.c dsu_fix_sound) */
+  encode(o) {
+    const c = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(+v || 0)));
+    const v = { wave: c(o.wave, 0, 5), src: c(o.noise, 0, 4) | (o.clap ? 16 : 0), pitch: c(o.pitch, 0, 127), fine: c(o.fine, 0, 15),
+      bend: c(o.bend, 0, 96), btime: c(o.btime, 0, 127), hold: c(o.hold, 0, 255), decay: c(o.decay, 0, 127), tlev: c(o.tlev, 0, 127),
+      t2: c(o.t2, 0, 255), t2lev: c(o.t2lev, 0, 127), click: c(o.click, 0, 127), nlev: c(o.nlev, 0, 127), nhold: c(o.nhold, 0, 255),
+      ndec: c(o.ndec, 0, 127), flt: c(o.fmode, 0, 3) | (o.fall ? 4 : 0) | (c(o.res, 0, 31) << 3), fcut: c(o.fcut, 0, 127),
+      fenv: c(o.fenv, -128, 127) & 255, hpf: c(o.hpf, 0, 127), chip: c(o.chip, 0, 127), drive: c(o.drive, 0, 127), level: c(o.level, 0, 255) };
+    return Uint8Array.from(DSYN.FIELDS.map((k) => v[k]));
+  },
+  /* what the numbers mean (tools/gen_tables.py, gen_drumkits.py) */
+  hz: (note, fine = 0) => 440 * 2 ** ((note + fine / 16 - 69) / 12),
+  decayMs: (i) => 5 * 800 ** (i / 127),
+  cutHz: (i) => 30 * (16000 / 30) ** (i / 127),
+  db: (level) => (level - 128) / 4,
+  name8: (s) => { const b = new Uint8Array(8); String(s || "").replace(/[^\x20-\x7E]/g, "").slice(0, 8).split("").forEach((ch, i) => { b[i] = ch.charCodeAt(0); }); return b; },
+  /* a kit as a file: {format, version, name, crush, sounds: [22 numbers] x 16} */
+  FORMAT: "sloop-drumsynth",
+  toFile: (k) => ({ format: DSYN.FORMAT, version: 1, name: k.name, crush: k.crush, sounds: k.sounds.map((x) => Array.from(x)) }),
+  /* backup object 9: the firmware's dsu_bank_t ("DSU1", 1, 4, then per kit: name 8, crush, src, 2 reserved, 16 x 22) */
+  BANK_SIZE: 8 + 4 * 364,
+  bankEncode(kits) {
+    const o = new Uint8Array(DSYN.BANK_SIZE);
+    o.set([0x44, 0x53, 0x55, 0x31, 1, 0, 4, 0]);
+    kits.forEach((k, i) => {
+      const at = 8 + i * 364;
+      o.set(DSYN.name8(k.name), at); o[at + 8] = k.crush & 255; o[at + 9] = k.src & 255;
+      k.sounds.forEach((x, l) => o.set(x, at + 12 + l * DSYN.SIZE));
+    });
+    return o;
+  },
+  bankDecode(b) {
+    if (!b || b.length !== DSYN.BANK_SIZE || b[0] !== 0x44 || b[1] !== 0x53 || b[2] !== 0x55 || b[3] !== 0x31 || b[4] !== 1 || b[6] !== 4) return null;
+    return Array.from({ length: 4 }, (_, i) => {
+      const at = 8 + i * 364;
+      return { name: String.fromCharCode(...b.subarray(at, at + 8)).replace(/\0.*$/, ""), crush: b[at + 8], src: b[at + 9],
+        sounds: Array.from({ length: DSYN.LANES }, (_, l) => b.slice(at + 12 + l * DSYN.SIZE, at + 12 + (l + 1) * DSYN.SIZE)) };
+    });
+  },
+  fromFile(j) {
+    if (!j || j.format !== DSYN.FORMAT || !Array.isArray(j.sounds) || j.sounds.length !== DSYN.LANES
+      || j.sounds.some((x) => !Array.isArray(x) || x.length !== DSYN.SIZE)) throw new Error("not a SLOOP drum synth kit");
+    return { name: String(j.name || "KIT").replace(/[^\x20-\x7E]/g, "").slice(0, 8), crush: (j.crush | 0) & 255,
+      sounds: j.sounds.map((x) => DSYN.encode(DSYN.decode(Uint8Array.from(x, (v) => v & 255)))) };
+  },
+};
+/* the device's 32 synthesised kits (build/gen/felucca_drumkits.h), for the mock: per kit its crush, then 16 x 22 */
+const DSYN_MOCK_NAMES = ["808", "909", "606", "80S", "VINTAGE", "TRAP", "DRILL", "BOOMBAP", "LO-FI", "PHONK", "HOUSE", "D.HOUSE", "TECHNO", "MINIMAL", "ELECTRO", "DISCO", "GARAGE", "JUNGLE", "DUBSTEP", "DEMBOW", "AMAPIANO", "AFRO", "LATIN", "TRIBAL", "SYNTHWV", "CHIP", "ARCADE", "GLITCH", "INDUSTR", "HYPER", "AMBIENT", "JAZZ"];
+const DSYN_MOCK_KITS = "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";
+
 /*PROTO-END*/
 
 /* ===================================================================== UI === */
@@ -2746,7 +3404,7 @@ const GLYPH = {
 };
 /* section headings (LAYOUT titles) and page titles */
 const HEAD_IC = { ENV: "function_env_adsr_exp", LFO: "waveform_sine", EDIT: "ui_knob", VOICE: "symbol_keyboard",
-  FX: "symbol_effector", SCL: "symbol_tuning", ARP: "control_arrow_up_down", "SEQ PATTERN": "symbol_grid",
+  FX: "symbol_effector", SEL: "symbol_tuning", ARP: "control_arrow_up_down", "SEQ PATTERN": "symbol_grid",
   GLOBAL: "symbol_cog", MASTER: "ui_slider_vertical", DRUMS: "symbol_drum", INSTRUMENT: "symbol_keyboard" };
 const PAGE_IC = { FLT: "function_filter_lpf_peak", FILT: "function_filter_lpf_peak", DLY: "symbol_echo", "REV/CHO": "symbol_spring", SLICER: "symbol_grid" };
 /* WAVE / WAVE2 choices; phase-distortion shapes without a close glyph (SPLS, RSAW, RTRI, RTRP) get none */
@@ -2868,6 +3526,18 @@ const TEXT = {
     fm6Init: "初期音色", fm6Voice: "ボイス", fm6Ops: "オペレーター", fm6Carriers: "キャリア", fm6Feedback: "フィードバック",
     fm6PitchEg: "ピッチ EG", fm6Freq: "周波数",
     fm6Legend: "R1〜R4 / L1〜L4: EG のレートとレベル、BP LD RD LC RC: キーボードレベルスケーリング、RS: レートスケーリング、AMS: LFO 音量変調、KVS: ベロシティ、OL: 出力レベル、MODE: 比率 / 固定、FC FF: 周波数（粗・細）、DET: デチューン（7 が中央）。● はキャリア。",
+    fm6Drop: "（.syx をこのパネルにドロップしても読み込めます）",
+    fm6PickMany: "ファイルの音色: 名前を押すと編集へ。チェックした音色は「カートリッジを保存」で B1 から順にバンクへ。",
+    fm6CartTick: "バンクに入れる", fm6Cart: "カートリッジをバンクに保存（{n} 音色 → {b}）", fm6CartFirst: "最初の {n}", fm6CartNone: "なし",
+    fm6CartFull: "バンクは最大", fm6CartAsk: "{x} の {n} 音色を {b} に保存します（バンクの残りはそのまま）。よろしいですか？",
+    fm6CartOver: "そのうち {k} スロットは使用中で、置き換えられます。", fm6CartStop: "ソングを止めてから保存してください",
+    fm6CartDone: "バンクに保存しました:", fm6CartOld: "この FM-1 のファームウェアではできません（SLOOP 2.4 以降）",
+    fm6UpWhere: "ユーザープリセットにも追加（FM-1 の PRESETS / SELECT で名前から選べます）:", fm6UpNone: "しない（PTCH で選ぶ）",
+    fm6UpFree: "する: 空きスロットに（空き {k}）", fm6UpFrom: "する: {u} から",
+    fm6UpAsk: "ユーザープリセット {n} 個を {u} に作ります（各音色の名前で、FM6 の PTCH がそのスロットに）。",
+    fm6UpOver: "そのうち {k} 個は既存のユーザープリセットを置き換えます: {names}",
+    fm6UpNoRoom: "ユーザープリセットの空きが足りません。空き:", fm6UpPast: "U32 を超えます:",
+    fm6UpStop: "バンクは保存しました。ユーザープリセットはソングを止めてからもう一度", fm6UpDone: "バンクとユーザープリセットに保存しました:",
     fm6Pick: "読み込んだファイルの音色（押すと編集へ）:", fm6Picked: "編集中:", fm6Sent: "トラックへ送りました:", fm6Read: "トラックから読みました",
     fm6Loaded: "読み込みました", fm6Factory: "F1〜F8 はファクトリー音色です。B1〜B27 を選んでください。", fm6BadSum: "チェックサム不一致あり",
     fm6Short: "途中で切れたデータあり", fm6Skipped: "音色以外の {x} 件は無視",
@@ -2913,6 +3583,45 @@ const TEXT = {
     smpPlaying: "トラック",
     smpFull: "1 スロット 16 ファイルまで",
     chopSendBelow: "送信は下の 3 で。",
+    /* SLOOP 2.5: DRUM SYNTH */
+    tabDrumSynth: "ドラムシンセ", dsTitle: "ドラムシンセ",
+    dsHelp: "自分のシンセドラムキット SYN1〜SYN4（ドラムトラックの KIT の最後）。音を選び、値を変えると FM-1 ですぐ鳴ります。「FM-1 に保存」でフラッシュに残ります（ソングを止めて）。値をダブルクリック: 元のキットの値に戻す。",
+    dsOld: "この FM-1 のファームウェアにはドラムシンセがありません（SLOOP 2.5 以降）。",
+    dsFrom: "元のキット:", dsCopy: "コピー", dsBits: "CRUSH", dsHoldS: "S&H", dsOff: "OFF",
+    dsStore: "FM-1 に保存", dsUse: "ドラムトラックで使う", dsSave: "ファイルに保存", dsOpen: "ファイルを開く",
+    dsPlay: "鳴らす", dsAuto: "変えたら鳴らす",
+    dsTone: "トーン", dsNoise: "ノイズ", dsFilter: "フィルター", dsOut: "出力",
+    dsNotStored: "まだ保存していません", dsStored: "保存済み",
+    dsBad: "FM-1 が受け付けませんでした", dsCopyAsk: "{k} を {x} のコピーにします。よろしいですか？", dsCopied: "コピーしました:",
+    dsStop: "ソングを止めてから保存してください", dsFlash: "フラッシュに書けませんでした", dsSaved: "FM-1 に保存しました",
+    dsFileBad: "SLOOP のドラムシンセキットではありません", dsOpenAsk: "{x} を {k} に読み込みます。よろしいですか？", dsOpened: "読み込みました:",
+    /* SLOOP 2.5: length, piano roll, MIDI files, song */
+    lenLabel: "長さ（ステップ）", viewGrid: "グリッド", viewRoll: "ピアノロール",
+    midiExport: "MIDI 書き出し", midiImportBtn: "MIDI 読み込み",
+    rollLen: "音の長さ", rollUp: "オクターブ上", rollDown: "オクターブ下",
+    rollHelp: "空いた所をクリック: 選んだ長さの音を置く（同じ位置の音は和音に、最大 4 音）。音をクリック: 消す。音の右端をドラッグ: 長さを変える（タイ）。",
+    len_whole: "全音符", len_half: "2分", len_quarter: "4分", len_eighth: "8分", len_sixteenth: "16分",
+    midiEmpty: "このトラックには書き出す音がありません", midiSaved: "MIDI ファイルを保存しました。音の数: ",
+    midiPreview: "MIDI の読み込み", midiNoNotes: "このファイルには音がありません。", midiCancel: "やめる", midiTrack: "トラック",
+    midiSource: "読み込むトラック:", midiNotes: "{n} 音", midiGrid: "グリッド: このトラックの DIV（{div}）",
+    midiSteps: "{n} ステップ（最大 {max}）",
+    midiMoved: "{n} 音がいちばん近いステップに移動します", midiChord: "{n} 音が入りません（1 ステップ 4 音まで、強い音を残す）",
+    midiOverlap: "{n} か所で、音が次の音の所で短くなります", midiMerged: "{n} 音が同じステップの同じ音と重なり、1 つになります",
+    midiDropped: "{n} 音が {max} ステップを越えるので入りません",
+    midiClean: "そのまま入ります。", midiHow: "音の長さはタイになり、各ステップの強さはその中でいちばん大きい velocity になります。",
+    midiHowDrum: "GM ドラムの音（36 キック、38 スネア、42 ハット…）がドラムのレーンに、強さが ghost〜hard のレベルに入ります。",
+    midiSetLen: "トラックの長さを {n} ステップにする", midiImport: "読み込む",
+    midiConfirm: "このトラックのパターンを置き換えます。よろしいですか？", midiDone: "読み込みました。音の数: ", midiBad: "MIDI ファイルを読めません: ",
+    tabSong: "ソング", songTitle: "ソング",
+    songHelp: "FM-1 の SONG 画面と同じもの: セクション A〜D（4 つのプロジェクトスロット）を並べ、それぞれ何小節鳴らすか。全部で 16 項目まで。PLAY はソングモード（SAVE + 13）で。",
+    songSection: "セクション", songBars: "小節", songTimes: "回数",
+    songEmpty: "空のスロットのセクションがあります: FM-1 で先に SAVE + 5〜8 で保存してください。",
+    songAdd: "追加", songSum: "{n} / {max} 項目、{bars} 小節", songLoop: "最後まで来たら:",
+    songLoopOff: "止まる", songLoopOn: "最初に戻る", songRead: "FM-1 から読む", songSend: "FM-1 に送る",
+    songUp: "上へ", songDown: "下へ", songDel: "削除",
+    songOld: "この FM-1 のファームウェアではソングを読めません（SLOOP 2.5 以降）。",
+    songBad: "このソングは送れません（16 項目、1〜64 小節まで）", songRefused: "ソングを止めてから送ってください",
+    songSent: "ソングを FM-1 に送りました",
   },
   en: {
     other: "日本語", connect: "Connect", disconnect: "Disconnect", mock: "Mock device (no hardware)",
@@ -3015,6 +3724,18 @@ const TEXT = {
     fm6Init: "Init voice", fm6Voice: "Voice", fm6Ops: "Operators", fm6Carriers: "carriers", fm6Feedback: "feedback",
     fm6PitchEg: "Pitch EG", fm6Freq: "Frequency",
     fm6Legend: "R1..R4 / L1..L4: EG rates and levels; BP LD RD LC RC: keyboard level scaling; RS: rate scaling; AMS: LFO amplitude modulation; KVS: velocity; OL: output level; MODE: ratio / fixed; FC FF: coarse / fine frequency; DET: detune (7 = centre). ● = carrier.",
+    fm6Drop: "(or drop a .syx file on this panel)",
+    fm6PickMany: "Voices of the file: click a name to edit it. The ticked voices go to the bank in order from B1 with Store cartridge.",
+    fm6CartTick: "Put in the bank", fm6Cart: "Store cartridge in bank ({n} → {b})", fm6CartFirst: "First {n}", fm6CartNone: "None",
+    fm6CartFull: "The bank holds at most", fm6CartAsk: "Store {n} voice(s) of {x} in {b}? The rest of the bank stays as it is.",
+    fm6CartOver: "Slots already in use (their patch will be replaced): {k}.", fm6CartStop: "Stop the song first, then store",
+    fm6CartDone: "Stored in the bank:", fm6CartOld: "This FM-1's firmware cannot do it (SLOOP 2.4 or later)",
+    fm6UpWhere: "Also add them to the user presets (pick them by name with PRESETS / SELECT on the FM-1):", fm6UpNone: "No (pick them with PTCH)",
+    fm6UpFree: "Yes, in the free slots ({k} free)", fm6UpFrom: "Yes, from {u}",
+    fm6UpAsk: "Also {n} user preset(s) in {u}, named after the voices (FM6, PTCH on their slot).",
+    fm6UpOver: "User presets replaced ({k}): {names}",
+    fm6UpNoRoom: "Not enough free user presets. Free:", fm6UpPast: "That goes past U32:",
+    fm6UpStop: "The bank is stored; stop the song, then store again for the user presets", fm6UpDone: "Stored in the bank and the user presets:",
     fm6Pick: "Voices of the imported file (click to edit):", fm6Picked: "Editing:", fm6Sent: "Sent to track", fm6Read: "Read from track",
     fm6Loaded: "Loaded", fm6Factory: "F1..F8 are the factory patches: pick B1..B27.", fm6BadSum: "a checksum did not match",
     fm6Short: "some data was cut short", fm6Skipped: "{x} non-voice blocks skipped",
@@ -3060,6 +3781,45 @@ const TEXT = {
     smpPlaying: "Track",
     smpFull: "A slot takes 16 files at most",
     chopSendBelow: "Sending: step 3 below.",
+    /* SLOOP 2.5: DRUM SYNTH */
+    tabDrumSynth: "Drum synth", dsTitle: "Drum synth",
+    dsHelp: "Your own synthesised drum kits, SYN1 to SYN4 (the last kits of the drum track's KIT). Pick a sound, change its values: the FM-1 plays it at once. Store on the FM-1 keeps them in flash (stop the song first). Double-click a value: back to the kit it started from.",
+    dsOld: "This FM-1's firmware has no drum synth (SLOOP 2.5 or later).",
+    dsFrom: "Start from:", dsCopy: "Copy", dsBits: "CRUSH", dsHoldS: "S&H", dsOff: "OFF",
+    dsStore: "Store on the FM-1", dsUse: "Use on the drum track", dsSave: "Save file", dsOpen: "Open file",
+    dsPlay: "Play", dsAuto: "Play on change",
+    dsTone: "Tone", dsNoise: "Noise", dsFilter: "Filter", dsOut: "Out",
+    dsNotStored: "not stored yet", dsStored: "stored",
+    dsBad: "The FM-1 refused it", dsCopyAsk: "Make {k} a copy of {x}?", dsCopied: "Copied:",
+    dsStop: "Stop the song first, then store", dsFlash: "Could not write the flash", dsSaved: "Stored on the FM-1",
+    dsFileBad: "Not a SLOOP drum synth kit", dsOpenAsk: "Load {x} into {k}?", dsOpened: "Loaded:",
+    /* SLOOP 2.5: length, piano roll, MIDI files, song */
+    lenLabel: "Length (steps)", viewGrid: "Grid", viewRoll: "Piano roll",
+    midiExport: "Export MIDI", midiImportBtn: "Import MIDI",
+    rollLen: "Note length", rollUp: "Octave up", rollDown: "Octave down",
+    rollHelp: "Click an empty spot: a note of the chosen length (notes at the same step make a chord, 4 at most). Click a note: it goes. Drag a note's right end: its length (ties).",
+    len_whole: "1/1", len_half: "1/2", len_quarter: "1/4", len_eighth: "1/8", len_sixteenth: "1/16",
+    midiEmpty: "This track has no notes to export", midiSaved: "MIDI file saved. Notes: ",
+    midiPreview: "MIDI import", midiNoNotes: "This file has no notes.", midiCancel: "Cancel", midiTrack: "track",
+    midiSource: "Track to import:", midiNotes: "Notes: {n}", midiGrid: "Grid: this track's DIV ({div})",
+    midiSteps: "Steps: {n} (of {max})",
+    midiMoved: "Notes moved to the nearest step: {n}", midiChord: "Notes left out (4 a step at most, the loudest kept): {n}",
+    midiOverlap: "Notes cut short where the next one starts: {n}", midiMerged: "The same note twice on a step, played once: {n}",
+    midiDropped: "Notes past step {max}, left out: {n}",
+    midiClean: "Everything fits as it is.", midiHow: "Note lengths become ties; each step keeps the loudest velocity of its notes.",
+    midiHowDrum: "GM drum notes (36 kick, 38 snare, 42 hat…) go to the drum lanes, velocity to the levels ghost to hard.",
+    midiSetLen: "Set the track's length to {n} steps", midiImport: "Import",
+    midiConfirm: "This replaces the track's pattern. Go on?", midiDone: "Imported. Notes: ", midiBad: "Not a readable MIDI file: ",
+    tabSong: "Song", songTitle: "Song",
+    songHelp: "The FM-1's SONG screen: the sections A–D (the four project slots) in order, each for so many bars. 16 entries at most. PLAY it in song mode (SAVE + key 13).",
+    songSection: "Section", songBars: "Bars", songTimes: "Times",
+    songEmpty: "A section has an empty slot: save it on the FM-1 first (SAVE + keys 5–8).",
+    songAdd: "Add", songSum: "{n} of {max} entries, {bars} bars", songLoop: "At the end:",
+    songLoopOff: "stop", songLoopOn: "start again", songRead: "Read from the FM-1", songSend: "Send to the FM-1",
+    songUp: "Up", songDown: "Down", songDel: "Remove",
+    songOld: "This FM-1's firmware cannot share its song (SLOOP 2.5 or later).",
+    songBad: "This song cannot be sent (16 entries, 1–64 bars each)", songRefused: "Stop the song first, then send",
+    songSent: "Song sent to the FM-1",
   },
 };
 let lang = (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
@@ -3089,7 +3849,7 @@ $("lang").addEventListener("click", () => { lang = lang === "ja" ? "en" : "ja"; 
 
 /* ---------------------------------------------------------------- tabs --- */
 /* one panel at a time; the last one is remembered (localStorage) and in the URL hash (#sound ...) */
-const TABS = ["sound", "sequencer", "tracks", "library", "samples", "kits", "projects", "settings"];
+const TABS = ["sound", "sequencer", "tracks", "song", "library", "samples", "kits", "drumsynth", "projects", "settings"];
 const TAB_KEY = "felucca-editor-tab";
 const TRACK_TABS = new Set(["sound", "sequencer", "tracks"]);
 let tab = (() => {
@@ -3133,6 +3893,12 @@ function renderPanels() {
   const nb = $("tabs").querySelector(`button[data-tab="${want}"]`);   /* the page's title: its name in the side bar */
   $("pagetitle").textContent = nb ? t(nb.dataset.t) : "";
   if (want === "kits") renderKits();
+  if (want === "drumsynth" && ready) {                 /* (2.5) the SYN kits, read once per connection */
+    if (DS.dev !== dev) { Object.assign(DS, { dev, kit: null, list: null, k: 0, lane: 0 }); if (dsOk()) op(() => dsLoad(0)); renderDs(); } else renderDs();
+  }
+  if (want === "song" && ready) {                      /* (2.5) read the song order once per connection */
+    if (SG.dev !== dev) { Object.assign(SG, { dev, rows: null, err: "", dirty: false }); op(readSong); } else renderSong();
+  }
 }
 $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); });
 $("tabs").addEventListener("keydown", (e) => {          /* arrow keys move between the tabs */
@@ -3175,7 +3941,7 @@ function selfLoad() {
 const stepEdit = new Map(); /* index -> time of the last edit */
 
 /* parameter ids (firmware/src/core.h); used only when P_COUNT / G_COUNT match */
-const EXPECT = { pcount: 61, gcount: 32, pe0: 53 };
+const EXPECT = { pcount: 61, gcount: [32, 33], pe0: 53 };   /* gcount 33: 2.5's drum DLY (G_DRDLY) */
 const P = { LEVEL: 0, SLEN: 29, CHORD: 49 };
 const LAYOUT = (pe0) => [
   { t: "ENV", pages: [["ENV", 0, [1, 2, 3, 4]], ["ENV DEST", 0, [5, 6, 7, 8]]] },
@@ -3183,12 +3949,12 @@ const LAYOUT = (pe0) => [
   { t: "EDIT", engine: true, pages: [["EDIT 1", 0, [pe0, pe0 + 1, pe0 + 2, pe0 + 3]], ["EDIT 2", 0, [pe0 + 4, pe0 + 5, pe0 + 6, pe0 + 7]]] },
   { t: "VOICE", pages: [["LEVEL", 0, [0]], ["VOICE", 0, [37, 38, 41, 42]], ["VOICE 2", 0, [43, 44, 39, 40]]] },
   { t: "FX", pages: [["FX", 0, [33, 34, 35, 36]], ["FILTER", 0, [50]], ["SLICER", 0, [45, 46, 47, 48]], ["DLY", 1, [4, 5, 6, 7]], ["REV/CHO", 1, [8, 9, 10, 11]]] },
-  { t: "SCL", pages: [["SCL", 0, [25, 26, 27, 49]], ["SCL 2", 0, [28, 51, 52]]] },
+  { t: "SEL", pages: [["SEL", 0, [25, 26, 27, 49]], ["SEL 2", 0, [28, 51, 52]]] },
   { t: "ARP", pages: [["ARP", 0, [17, 18, 19, 20]], ["ARP 2", 0, [21, 22, 23, 24]]] },
   { t: "SEQ PATTERN", tab: "seqgroups", pages: [["PATTERN", 0, [29, 30, 31, 32]]] },
   { t: "GLOBAL", tab: "setgroups", pages: [["GLOBAL", 1, [0, 1, 2, 3]]] },
   { t: "MASTER", tab: "setgroups", pages: [["MASTER", 1, [27, 28, 29, 30]]] },
-  { t: "DRUMS", tab: "setgroups", pages: [["DRUMS", 1, [24, 25, 26]]] },
+  { t: "DRUMS", tab: "setgroups", pages: [["DRUMS", 1, [24, 25, 26, 32]]] },
 ];
 /* globals that are actions or placeholders on the device: buttons instead, or hidden */
 const G_SKIP = new Set(["SLOT", "NAME", "LOAD", "SAVE", "ENG", "SET", "CLRSQ", "INIT", "MIDI", "SYNC", "ROUT", "IN", "CPU", "NEW"]);
@@ -3472,7 +4238,7 @@ function buildGroups() {
   /* Sound: the selected track's parameters; Sequencer: its pattern settings; Settings: globals and drums */
   const groups = { groups: [], seqgroups: [], setgroups: [] };
   const { info } = dev;
-  if (info.pcount === EXPECT.pcount && info.gcount === EXPECT.gcount && info.pe0 === EXPECT.pe0) {
+  if (info.pcount === EXPECT.pcount && EXPECT.gcount.includes(info.gcount) && info.pe0 === EXPECT.pe0) {
     for (const g of LAYOUT(info.pe0)) {
       /* a card per button of the device (ENV, LFO, EDIT ...), its pages as rows of four knobs, one colour per knob */
       const div = el("div", { class: "group" }, el("h2", { ic: HEAD_IC[g.t] },
@@ -3611,6 +4377,7 @@ function userSet(s, id, v, final) {
   (s ? dev.dump.g : dev.dump.p)[id] = v;
   showValue(k, v, false);
   mixFromDump();
+  if (!s && id === pSlen()) lenChanged();            /* (2.5: the grid follows LEN at once) */
   let st = sets.get(k);
   if (!st) sets.set(k, (st = { last: 0, sent: null }));
   st.last = performance.now();
@@ -3628,6 +4395,7 @@ async function sendSet(s, id, k) {
       (s ? dev.dump.g : dev.dump.p)[id] = r.value;
       showValue(k, r.value, false);
       mixFromDump();
+      if (!s && id === pSlen() && r.value !== v) lenChanged();   /* (clamped by the device) */
       if (!s && id === dev.info.pe0 + 7 && fm6On()) fm6Later();   /* PTCH: the device loaded that patch */
     }
   } catch (e) { if (e.message !== "closed") console.warn(e); }
@@ -3710,6 +4478,10 @@ function renderSteps() {
   const dg = drumGrid() && !!dev.dstepsOk;
   $("drumbar").hidden = $("drumgrid").hidden = !dg;
   $("stepgrid").hidden = $("steptables").hidden = dg;
+  renderSeqTools();
+  const rollOn = !dg && !isDrum() && RV.view === "roll";   /* (2.5) the piano roll instead of the tiles */
+  $("roll").hidden = !rollOn;
+  if (rollOn) $("stepgrid").hidden = true;
   renderStepDetail();
   $("steplist").hidden = dg;
   if (dg) { $("noteshelp").textContent = t("drumGridHelp"); $("steplen").textContent = t("stepsOf").replace("{n}", stepLen()); renderDrums(); return; }
@@ -3787,6 +4559,7 @@ function renderGrid() {
     b.title = `${i + 1}: ${on ? txt : tie ? "TIE" : "REST"}${marks}${fc ? " (" + FC.NAMES[fc] + ")" : ""}`;
     b.replaceChildren(el("span", { class: "n", text: String(i + 1) + marks }), el("span", { class: "x", text: txt }));
   }
+  if (!$("roll").hidden) renderRoll();
 }
 function focusStep(i) {
   const tr = $("steptables").querySelector(`tr[data-i="${i}"]`);
@@ -3816,6 +4589,580 @@ async function writeStep(i, tr) {
     if (!tr.contains(document.activeElement) || document.activeElement === c.notes) fillStep(tr, dev.steps[i]);
   } catch (err) { report(err); }
 }
+/* ---- SLOOP 2.5: LEN at hand, the piano roll of a synth track, MIDI files ---- */
+const RV = { view: "grid", frac: 1 / 16, lo: null, rows: 25, trk: -1, drag: null, geo: null };   /* view: grid | roll */
+try { if (localStorage.getItem("sloop-seq-view") === "roll") RV.view = "roll"; } catch (e) { /* no storage */ }
+const ROLL_ROW = 16, ROLL_LAB = 40;
+const pDiv = () => pById("DIV", 30);
+const curDiv = () => Math.max(0, Math.min(ROLL.DIV_PER_BAR.length - 1, dev.dump.p[pDiv()] | 0));
+const gBpm = () => { const i = dev.gdesc.findIndex((d) => d && d.label === "BPM"); return i >= 0 ? dev.dump.g[i] : 120; };
+function setLen(v) {
+  if (!dev || !dev.dump) return;
+  v = Math.max(1, Math.min(dev.info.nstep, Math.round(v) || 1));
+  if (v !== stepLen()) userSet(0, pSlen(), v, true);
+  else $("lenval").value = String(v);
+}
+function lenChanged() { $("steptables").dataset.len = ""; renderSteps(); }
+function renderSeqTools() {
+  if (!dev || !dev.dump) return;
+  const lv = $("lenval");
+  lv.max = String(dev.info.nstep);
+  if (document.activeElement !== lv) lv.value = String(stepLen());
+  const synth = !isDrum();
+  $("viewseg").hidden = !synth;
+  for (const b of $("viewseg").children) b.setAttribute("aria-pressed", b.dataset.v === RV.view ? "true" : "false");
+}
+function setView(v) {
+  RV.view = v;
+  try { localStorage.setItem("sloop-seq-view", v); } catch (e) { /* no storage */ }
+  renderSteps();
+}
+$("lenminus").addEventListener("click", () => setLen(stepLen() - 1));
+$("lenplus").addEventListener("click", () => setLen(stepLen() + 1));
+$("lenval").addEventListener("change", (e) => setLen(+e.target.value));
+for (const b of $("viewseg").children) b.addEventListener("click", () => setView(b.dataset.v));
+
+/* the roll: rows = notes (black keys darker), columns = steps (bar lines from DIV), a chord = one bar per note */
+function rollColors() {
+  const cs = getComputedStyle(document.documentElement), g = (v) => cs.getPropertyValue(v).trim();
+  return { bg: g("--bg"), s1: g("--s1"), s2: g("--s2"), s3: g("--s3"), dim: g("--dim"), fg: g("--fg"), trk: g("--trk") };
+}
+function rollFit(len) {                                  /* around the track's notes, the first time a track shows */
+  const tr = dev.sel || 0;
+  if (RV.trk === tr && RV.lo != null) return;
+  RV.trk = tr;
+  const ns = ROLL.chords(dev.steps, len).flatMap((c) => c.notes);
+  if (!ns.length) { RV.lo = 48; RV.rows = 25; return; }
+  const lo = Math.min(...ns), hi = Math.max(...ns);
+  RV.rows = Math.max(25, Math.min(49, hi - lo + 7));
+  RV.lo = Math.max(0, Math.min(128 - RV.rows, Math.round((lo + hi) / 2 - RV.rows / 2)));
+}
+function renderRollTools() {
+  const box = $("rolllen");
+  if (!box.children.length)
+    box.replaceChildren(...ROLL.LENGTHS.map(([k, f]) => el("button", { type: "button", "data-f": String(f), onclick: () => { RV.frac = f; renderRollTools(); } }, t("len_" + k))));
+  for (const b of box.children) b.setAttribute("aria-pressed", +b.dataset.f === RV.frac ? "true" : "false");
+}
+function renderRoll() {
+  const cv = $("rollcv");
+  if (!dev || !dev.steps.length || $("roll").hidden) return;
+  const len = stepLen();
+  rollFit(len);
+  renderRollTools();
+  const lo = RV.lo, rows = RV.rows, hi = lo + rows - 1;
+  const avail = Math.max(320, cv.parentElement.clientWidth || 800);
+  const cw = Math.max(12, Math.floor((avail - ROLL_LAB) / len));
+  const W = ROLL_LAB + cw * len, H = rows * ROLL_ROW, dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px";
+  const g = cv.getContext("2d"), C = rollColors();
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  RV.geo = { lo, hi, cw, len };
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+  g.font = '16px "SLOOP Terminus", monospace'; g.textBaseline = "top";
+  for (let r = 0; r < rows; r++) {
+    const p = hi - r, black = [1, 3, 6, 8, 10].includes(p % 12);
+    g.fillStyle = black ? C.s1 : C.s2; g.fillRect(ROLL_LAB, r * ROLL_ROW, W - ROLL_LAB, ROLL_ROW - 1);
+    if (p % 12 === 0) { g.fillStyle = C.dim; g.fillText(noteName(p), 2, r * ROLL_ROW); }
+  }
+  const per = ROLL.DIV_PER_BAR[curDiv()], beat = per / 4;
+  for (let i = 0; i <= len; i++) {
+    const bar = per >= 1 && i % per === 0, bt = Number.isInteger(beat) && beat >= 1 && i % beat === 0;
+    if (!bar && !bt) continue;
+    g.fillStyle = bar ? C.dim : C.s3; g.fillRect(ROLL_LAB + i * cw - (bar ? 1 : 0), 0, bar ? 2 : 1, H);
+  }
+  for (const c of ROLL.chords(dev.steps, len)) {
+    const dur = RV.drag && RV.drag.at === c.at ? RV.drag.dur : c.dur, acc = dev.steps[c.at].flags & 1;
+    const x = ROLL_LAB + c.at * cw + 1, w = dur * cw - 2;
+    for (const p of c.notes) {
+      g.fillStyle = C.trk;
+      if (p > hi || p < lo) { g.fillRect(x, p > hi ? 0 : H - 3, w, 3); continue; }   /* (outside the view: a mark at its edge) */
+      const y = (hi - p) * ROLL_ROW + 1;
+      g.fillRect(x, y, w, ROLL_ROW - 3);
+      if (acc) { g.fillStyle = C.fg; g.fillRect(x, y, w, 2); }
+      g.fillStyle = C.bg; g.fillRect(x + w - 4, y + 3, 1, ROLL_ROW - 9);   /* the grip: drag the end */
+    }
+  }
+  $("rollrange").textContent = `${noteName(lo)} – ${noteName(hi)}`;
+}
+function rollAt(e) {
+  const G = RV.geo, r = $("rollcv").getBoundingClientRect();
+  if (!G) return null;
+  const x = e.clientX - r.left - ROLL_LAB, y = e.clientY - r.top;
+  const i = Math.floor(x / G.cw), p = G.hi - Math.floor(y / ROLL_ROW);
+  return { i, p, fx: x / G.cw - i, inside: x >= 0 && i >= 0 && i < G.len && p >= G.lo && p <= G.hi };
+}
+function rollNoteAt(h) {                                 /* the chord (and its note) under the pointer */
+  const own = ROLL.owner(dev.steps, h.i);
+  if (own < 0) return null;
+  const c = ROLL.chords(dev.steps, stepLen()).find((x) => x.at === own);
+  return c && c.notes.includes(h.p) ? c : null;
+}
+let rollWriting = false;
+async function rollApply(ch) {
+  if (!ch.size || rollWriting) { renderRoll(); return; }
+  rollWriting = true;
+  for (const [i, s] of ch) dev.steps[i] = { ...dev.steps[i], ...s, index: i };   /* (drawn at once, the device follows) */
+  renderGrid();
+  try { await writeSteps([...ch.keys()].sort((a, b) => a - b)); } catch (err) { report(err); }
+  finally { rollWriting = false; updateStepRows(); }
+}
+/* dev.steps[i] -> the device, keeping what it answers */
+async function writeSteps(idx) {
+  busy++;
+  try {
+    for (const i of idx) {
+      const s = dev.steps[i];
+      stepEdit.set(i, performance.now());
+      dev.steps[i] = parse[CMD.STEP_SET](await rq(req.stepSet(i, { n: s.n, notes: s.notes, time: s.time, flags: s.flags,
+        vel: s.vel, lvl: s.lvl || 0, rat: s.rat || 0 })));
+    }
+  } finally { busy--; }
+}
+$("rollcv").addEventListener("pointerdown", (e) => {
+  if (!dev || rollWriting) return;
+  const h = rollAt(e);
+  if (!h || !h.inside) return;
+  const c = rollNoteAt(h), len = stepLen();
+  if (c) {
+    if (h.i === c.at + c.dur - 1 && h.fx > 0.55) {      /* the end of a note: drag its length */
+      RV.drag = { at: c.at, dur: c.dur };
+      $("rollcv").setPointerCapture(e.pointerId);
+      renderRoll();
+      return;
+    }
+    rollApply(ROLL.remove(dev.steps, len, c.at, h.p));
+    return;
+  }
+  rollApply(ROLL.place(dev.steps, len, h.i, h.p, ROLL.steps(RV.frac, curDiv())));
+});
+$("rollcv").addEventListener("pointermove", (e) => {
+  const h = rollAt(e);
+  if (RV.drag) {
+    if (!h) return;
+    const d = Math.max(1, Math.min(stepLen() - RV.drag.at, h.i - RV.drag.at + 1));
+    if (d !== RV.drag.dur) { RV.drag.dur = d; renderRoll(); }
+    return;
+  }
+  const c = h && h.inside ? rollNoteAt(h) : null;
+  $("rollcv").style.cursor = c && h.i === c.at + c.dur - 1 && h.fx > 0.55 ? "ew-resize" : "pointer";
+});
+const rollDrop = () => {
+  if (!RV.drag) return;
+  const d = RV.drag;
+  RV.drag = null;
+  rollApply(ROLL.resize(dev.steps, stepLen(), d.at, d.dur));
+};
+$("rollcv").addEventListener("pointerup", rollDrop);
+$("rollcv").addEventListener("pointercancel", () => { RV.drag = null; renderRoll(); });
+$("rollup").addEventListener("click", () => { if (RV.lo != null) { RV.lo = Math.min(128 - RV.rows, RV.lo + 12); renderRoll(); } });
+$("rolldown").addEventListener("click", () => { if (RV.lo != null) { RV.lo = Math.max(0, RV.lo - 12); renderRoll(); } });
+window.addEventListener("resize", () => { if (RV.view === "roll") renderRoll(); });
+
+/* MIDI files: the selected track's pattern out as a .mid, a .mid in (a preview first) */
+function midiExport() {
+  if (!dev || !dev.steps.length) return;
+  const len = stepLen(), div = curDiv(), tr = dev.sel || 0, drum = isDrum();
+  const notes = drum && drumGrid() && dev.dstepsOk ? SMF.fromDrums(dev.dsteps, len, div) : SMF.fromSteps(dev.steps, len, div);
+  if (!notes.length) { sayK("midiEmpty"); return; }
+  downloadBytes(`sloop-track${tr + 1}.mid`, SMF.write(notes, { bpm: gBpm(), ch: drum ? 9 : tr, name: `SLOOP track ${tr + 1}` }));
+  sayK("midiSaved", String(notes.length));
+}
+let MI = null;                                           /* the file being imported: {name, smf, src} */
+const midiDrum = () => isDrum() && drumGrid() && !!dev.dstepsOk;
+const midiPlan = () => SMF.toSteps(MI.smf.tracks[MI.src].notes, MI.smf.ppq, curDiv(), dev.info.nstep, midiDrum());
+function renderMidiPrev() {
+  const box = $("midiprev");
+  if (!MI || !dev || !dev.dump) { box.hidden = true; box.replaceChildren(); return; }
+  const srcs = MI.smf.tracks.map((x, k) => [x, k]).filter(([x]) => x.notes.length);
+  const cancel = el("button", { type: "button", onclick: () => { MI = null; renderMidiPrev(); } }, t("midiCancel"));
+  if (!srcs.length) {
+    box.replaceChildren(el("h3", { text: `${t("midiPreview")}: ${MI.name}` }), el("p", { text: t("midiNoNotes") }), el("p", { class: "bar" }, cancel));
+    box.hidden = false;
+    return;
+  }
+  if (!srcs.some(([, k]) => k === MI.src)) MI.src = srcs[0][1];
+  const plan = midiPlan(), R = plan.report;
+  const sel = el("select", { onchange: (e) => { MI.src = +e.target.value; renderMidiPrev(); } },
+    ...srcs.map(([x, k]) => el("option", { value: k, text: `${k + 1}: ${x.name || t("midiTrack")} (${x.notes.length})` })));
+  sel.value = String(MI.src);
+  const dd = dev.pdesc[pDiv()], divName = dd && dd.names && dd.names[curDiv()] ? dd.names[curDiv()] : "";
+  const info = [t("midiNotes").replace("{n}", R.notes), t("midiGrid").replace("{div}", divName),
+    t("midiSteps").replace("{n}", plan.len).replace("{max}", dev.info.nstep)];
+  const warn = [];
+  if (R.moved) warn.push(t("midiMoved").replace("{n}", R.moved));
+  if (R.chordCut) warn.push(t("midiChord").replace("{n}", R.chordCut));
+  if (R.overlap) warn.push(t("midiOverlap").replace("{n}", R.overlap));
+  if (R.merged) warn.push(t("midiMerged").replace("{n}", R.merged));
+  if (R.dropped) warn.push(t("midiDropped").replace("{n}", R.dropped).replace("{max}", dev.info.nstep));
+  const setlen = el("input", { type: "checkbox", id: "midisetlen" });
+  setlen.checked = true;
+  box.replaceChildren(
+    el("h3", { text: `${t("midiPreview")}: ${MI.name}` }),
+    el("p", { class: "bar" }, el("span", { text: t("midiSource") }), sel),
+    el("ul", {}, ...info.map((s) => el("li", { text: s }))),
+    warn.length ? el("ul", { class: "warn" }, ...warn.map((s) => el("li", { text: s }))) : el("p", { class: "dim", text: t("midiClean") }),
+    el("p", { class: "dim", text: t(midiDrum() ? "midiHowDrum" : "midiHow") }),
+    el("p", { class: "bar" }, el("label", {}, setlen, " " + t("midiSetLen").replace("{n}", plan.len)),
+      el("button", { type: "button", class: "pri", onclick: midiImport }, t("midiImport")), cancel));
+  box.hidden = false;
+}
+async function midiImport() {
+  if (!MI || !dev) return;
+  if (!confirm(t("midiConfirm"))) return;
+  const plan = midiPlan(), setlen = $("midisetlen").checked;
+  busy++;
+  try {
+    if (plan.dsteps) {
+      for (let i = 0; i < dev.info.nstep; i++) {
+        const r = parse[CMD.DRUM_STEP](await rq(req.drumStep(i, plan.dsteps[i])));
+        dev.dsteps[i] = r;
+        dev.steps[i] = drumAsStep(r);
+      }
+    } else {
+      for (let i = 0; i < dev.info.nstep; i++) dev.steps[i] = { ...plan.steps[i], index: i };
+      await writeSteps([...Array(dev.info.nstep).keys()]);
+    }
+    MI = null;
+    renderMidiPrev();
+    if (setlen) setLen(plan.len);
+    RV.lo = null;
+    lenChanged();
+    sayK("midiDone", String(plan.report.notes));
+  } catch (err) { report(err); } finally { busy--; }
+}
+$("midiexp").addEventListener("click", midiExport);
+$("midiimp").addEventListener("click", () => $("midifile").click());
+$("midifile").addEventListener("change", async (e) => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!f || !dev) return;
+  try {
+    MI = { name: f.name, smf: SMF.read(new Uint8Array(await f.arrayBuffer())), src: 0 };
+    renderMidiPrev();
+  } catch (err) { MI = null; renderMidiPrev(); sayK("midiBad", err.message); }
+});
+
+/* ---- SLOOP 2.5: the DRUM SYNTH page (firmware v10, editor_dsyn.c): SYN1..SYN4, your synthesised kits ----
+   Every change goes to the FM-1's RAM at once (the drum voices play from there); STORE keeps the four kits in flash
+   (with the settings, the song stopped). A sound's values as the firmware's dsnd_t (DSYN.decode / encode). */
+const DS = { dev: null, list: null, k: 0, kit: null, lane: 0, src: null, err: "", timer: 0, pend: new Set() };
+const dsOk = () => !!dev && !!dev.info && dev.info.proto >= 10;
+const dsKitName = (k = DS.k) => `SYN${k + 1}`;
+const dsMs = (ms) => (ms >= 1000 ? `${(ms / 1000).toFixed(ms >= 10000 ? 0 : 1)}` : `${Math.round(ms)}`);
+const dsHz = (hz) => (hz >= 1000 ? `${(hz / 1000).toFixed(hz >= 10000 ? 0 : 1)}k` : `${Math.round(hz)}`);
+const NOTE12 = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const dsNote = (n) => `${NOTE12[n % 12]}${Math.floor(n / 12) - 1}`;
+/* the page's values: [key, label, min, max, format -> [value, unit]] by group */
+const DS_GROUPS = [
+  ["dsTone", [
+    ["wave", "WAVE", 0, 5, (v) => [DSYN.WAVES[v]], DSYN.WAVES],
+    ["pitch", "PITCH", 0, 127, (v, o) => [dsNote(v), `${dsHz(DSYN.hz(v, o.fine))} Hz`]],
+    ["fine", "FINE", 0, 15, (v) => [`+${v}`, "/16"]],
+    ["bend", "BEND", 0, 96, (v) => [v, "st"]],
+    ["btime", "B.TIME", 0, 127, (v) => [dsMs(DSYN.decayMs(v)), DSYN.decayMs(v) >= 1000 ? "s" : "ms"]],
+    ["hold", "HOLD", 0, 255, (v) => [v * 2, "ms"]],
+    ["decay", "DECAY", 0, 127, (v) => [dsMs(DSYN.decayMs(v)), DSYN.decayMs(v) >= 1000 ? "s" : "ms"]],
+    ["tlev", "LEVEL", 0, 127, (v) => [v]],
+    ["t2", "2ND", 0, 255, (v) => (v ? [`×${(v / 32).toFixed(2)}`] : ["OFF"])],
+    ["t2lev", "2ND LVL", 0, 127, (v) => [v]],
+    ["click", "CLICK", 0, 127, (v) => [v]]]],
+  ["dsNoise", [
+    ["noise", "NOISE", 0, 4, (v) => [DSYN.NOISES[v]], DSYN.NOISES],
+    ["clap", "CLAP", 0, 1, (v) => [v ? "ON" : "OFF"], ["OFF", "ON"]],
+    ["nlev", "LEVEL", 0, 127, (v) => [v]],
+    ["nhold", "HOLD", 0, 255, (v) => [v * 2, "ms"]],
+    ["ndec", "DECAY", 0, 127, (v) => [dsMs(DSYN.decayMs(v)), DSYN.decayMs(v) >= 1000 ? "s" : "ms"]],
+    ["hpf", "HPF", 0, 127, (v) => (v ? [dsHz(DSYN.cutHz(v)), "Hz"] : ["OFF"])],
+    ["chip", "CHIP", 0, 127, (v) => (v ? [dsHz(DSYN.hz(v) * 8), "Hz"] : ["-"])]]],
+  ["dsFilter", [
+    ["fmode", "FILTER", 0, 3, (v) => [DSYN.FMODES[v]], DSYN.FMODES],
+    ["fall", "ON", 0, 1, (v) => [v ? "ALL" : "NOISE"], ["NOISE", "ALL"]],
+    ["fcut", "CUTOFF", 0, 127, (v) => [dsHz(DSYN.cutHz(v)), "Hz"]],
+    ["res", "RES", 0, 31, (v) => [Math.round((v * 100) / 31), "%"]],
+    ["fenv", "ENV", -128, 127, (v) => [`${v > 0 ? "+" : ""}${(v / DSYN.STEPS_PER_OCT).toFixed(1)}`, "oct"]]]],
+  ["dsOut", [
+    ["drive", "DRIVE", 0, 127, (v) => [v]],
+    ["level", "LEVEL", 0, 255, (v) => [`${v >= 128 ? "+" : ""}${DSYN.db(v).toFixed(1)}`, "dB"]]]],
+];
+const dsCtl = new Map();                 /* key -> {input, out, def, fmt, sel} */
+function dsSound() { return DSYN.decode(DS.kit.sounds[DS.lane]); }
+function dsKnob([key, label, min, max, fmt, names]) {
+  const o = dsSound();
+  let input, out = el("span", { class: "v", title: label });
+  if (names) {
+    input = el("select", { title: label, onchange: () => dsSet(key, +input.value, true) },
+      ...names.map((n, i) => el("option", { value: i + min, text: n })));
+  } else {
+    input = el("input", { type: "range", min, max, step: 1, title: label });
+    input.addEventListener("input", () => dsSet(key, +input.value, false));
+    input.addEventListener("change", () => dsSet(key, +input.value, true));
+    input.addEventListener("dblclick", () => dsSet(key, dsDefault(key), true));
+    let y0 = 0, v0 = 0, on = false;                   /* drag the value up / down like a knob (Shift: fine) */
+    out.addEventListener("pointerdown", (e) => { if (e.button) return; on = true; y0 = e.clientY; v0 = +input.value; out.setPointerCapture(e.pointerId); e.preventDefault(); });
+    out.addEventListener("pointermove", (e) => {
+      if (!on) return;
+      const per = Math.max((max - min) / (e.shiftKey ? 800 : 200), e.shiftKey ? 0.05 : 0.12);
+      const v = Math.max(min, Math.min(max, Math.round(v0 + (y0 - e.clientY) * per)));
+      if (v !== +input.value) dsSet(key, v, false);
+    });
+    const end = () => { if (on) { on = false; dsSet(key, +input.value, true); } };
+    out.addEventListener("pointerup", end);
+    out.addEventListener("pointercancel", end);
+    out.addEventListener("dblclick", () => dsSet(key, dsDefault(key), true));
+  }
+  const row = el("div", { class: "knob" + (names ? " enum" : "") }, el("span", { class: "kl", text: label }), out, input);
+  dsCtl.set(key, { input, out, fmt, names, min, max });
+  dsShowValue(key, o[key], o);
+  return row;
+}
+function dsShowValue(key, v, o) {
+  const c = dsCtl.get(key);
+  if (!c) return;
+  c.input.value = String(v);
+  const [txt, unit] = c.fmt(v, o);
+  c.out.replaceChildren(String(txt), ...(unit ? [el("small", { text: unit })] : []));
+  c.out.classList.toggle("long", String(txt).length + (unit ? Math.ceil(unit.length / 2) : 0) > 6);
+  if (!c.names) {
+    const pc = (x) => ((x - c.min) / (c.max - c.min)) * 100, p = pc(v), z = c.min < 0 ? pc(0) : 0;
+    c.input.style.setProperty("--a", Math.min(p, z).toFixed(1) + "%");
+    c.input.style.setProperty("--p", Math.max(p, z).toFixed(1) + "%");
+  }
+}
+/* the value of the sound the kit started from (a double-click puts it back) */
+function dsDefault(key) {
+  const f = DS.src && DS.src.sounds[DS.lane];
+  return f ? DSYN.decode(f)[key] : dsSound()[key];
+}
+function dsSet(key, v, done) {
+  const o = dsSound();
+  o[key] = v;
+  DS.kit.sounds[DS.lane] = DSYN.encode(o);
+  const n = DSYN.decode(DS.kit.sounds[DS.lane]);
+  for (const k of dsCtl.keys()) dsShowValue(k, n[k], n);
+  DS.pend.add(DS.lane);
+  dsDirty(true);
+  clearTimeout(DS.timer);
+  DS.timer = setTimeout(() => op(() => dsFlush(done && $("dsauto").checked)), done ? 0 : 80);
+}
+async function dsFlush(play) {
+  const k = DS.k;
+  for (const l of [...DS.pend]) {
+    DS.pend.delete(l);
+    const r = parse[CMD.DSYN_PUT](await rq(req.dsynSound(k, l, DS.kit.sounds[l])));
+    if (r.rc) { sayK("dsBad"); return; }
+  }
+  if (play) await dsPlay();
+}
+async function dsPlay(lane = DS.lane) {
+  const r = parse[CMD.DSYN_PLAY](await rq(req.dsynPlay(DS.k, lane, 110)));
+  if (r.rc) sayK("dsBad");
+}
+function dsDirty(on) {
+  if (DS.list) DS.list.stored = !on && DS.list.stored;
+  if (on && DS.list) DS.list.stored = false;
+  $("dsstore").classList.toggle("pri", !!DS.list && !DS.list.stored);
+  $("dsstate").textContent = DS.list && !DS.list.stored ? t("dsNotStored") : t("dsStored");
+}
+async function dsLoad(k = DS.k) {
+  DS.list = parse[CMD.DSYN_LIST](await rq(req.dsynList()));
+  const r = parse[CMD.DSYN_GET](await rq(req.dsynGet(DSYN.USER + k)));
+  if (r.rc) throw new Error(`DSYN_GET rc ${r.rc}`);
+  DS.k = k;
+  DS.kit = { name: r.name, crush: r.crush, src: r.src, sounds: r.sounds };
+  const f = parse[CMD.DSYN_GET](await rq(req.dsynGet(r.src)));   /* the kit it started from: double-click resets to it */
+  DS.src = f.rc ? null : { sounds: f.sounds };
+  renderDs();
+}
+function renderDs() {
+  const box = $("dsbody");
+  $("dsold").hidden = dsOk();
+  box.hidden = !dsOk() || !DS.kit;
+  if (box.hidden) return;
+  for (const b of $("dsk").children) b.setAttribute("aria-pressed", +b.dataset.v === DS.k ? "true" : "false");
+  $("dsname").value = DS.kit.name;
+  const from = $("dsfrom"), keep = from.value;
+  from.replaceChildren(...DS.list.names.map((n, i) => el("option", { value: i, text: n })));
+  from.value = keep !== "" ? keep : String(DS.kit.src);
+  $("dsbits").value = String(DS.kit.crush & 15);
+  $("dssh").value = String((DS.kit.crush >> 4) + 1);
+  $("dsbitsv").textContent = (DS.kit.crush & 15) ? `-${DS.kit.crush & 15} bits` : t("dsOff");
+  $("dsshv").textContent = (DS.kit.crush >> 4) ? `1/${(DS.kit.crush >> 4) + 1}` : t("dsOff");
+  for (const id of ["dsbits", "dssh"]) {
+    const i = $(id), p = ((+i.value - +i.min) / (+i.max - +i.min)) * 100;
+    i.style.setProperty("--a", "0%"); i.style.setProperty("--p", p.toFixed(1) + "%");
+  }
+  $("dslanes").replaceChildren(...DSYN.LANES_N.map((n, l) => el("button", { type: "button", "data-l": l,
+    "aria-pressed": l === DS.lane ? "true" : "false", onclick: () => { DS.lane = l; renderDsSound(); dsLaneMarks(); op(() => dsPlay(l)); } }, n)));
+  renderDsSound();
+  dsDirty(!DS.list.stored);
+}
+function dsLaneMarks() { for (const b of $("dslanes").children) b.setAttribute("aria-pressed", +b.dataset.l === DS.lane ? "true" : "false"); }
+function renderDsSound() {
+  dsCtl.clear();
+  $("dslane").textContent = `${dsKitName()} · ${DSYN.LANES_N[DS.lane]}`;
+  $("dsgroups").replaceChildren(...DS_GROUPS.map(([title, ks]) => el("div", { class: "group" },
+    el("h3", { text: t(title) }), el("div", { class: "knobs" }, ...ks.map(dsKnob)))));
+}
+async function dsHead() {
+  const r = parse[CMD.DSYN_PUT](await rq(req.dsynHead(DS.k, DS.kit.name, DS.kit.crush, DS.kit.src)));
+  if (r.rc) sayK("dsBad");
+}
+$("dsk").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-v]");
+  if (b && dev) op(() => dsLoad(+b.dataset.v));
+});
+$("dsname").addEventListener("change", (e) => {
+  if (!DS.kit) return;
+  DS.kit.name = e.target.value.replace(/[^\x20-\x7E]/g, "").slice(0, 8) || dsKitName();
+  e.target.value = DS.kit.name;
+  dsDirty(true);
+  op(dsHead);
+});
+for (const id of ["dsbits", "dssh"]) $(id).addEventListener("input", () => {
+  if (!DS.kit) return;
+  DS.kit.crush = (+$("dsbits").value & 15) | ((+$("dssh").value - 1) & 15) << 4;
+  renderDs();
+  dsDirty(true);
+  clearTimeout(DS.timer);
+  DS.timer = setTimeout(() => op(dsHead), 80);
+});
+$("dscopy").addEventListener("click", () => {
+  if (!DS.kit) return;
+  const i = +$("dsfrom").value;
+  if (!confirm(t("dsCopyAsk").replace("{x}", DS.list.names[i]).replace("{k}", dsKitName()))) return;
+  op(async () => {
+    const r = parse[CMD.DSYN_PUT](await rq(req.dsynCopy(DS.k, i)));
+    if (r.rc) { sayK("dsBad"); return; }
+    await dsLoad(DS.k);
+    dsDirty(true);
+    sayK("dsCopied", ` ${DS.list.names[i]}`);
+  });
+});
+$("dsstore").addEventListener("click", () => op(async () => {
+  const r = parse[CMD.DSYN_STORE](await rq(req.dsynStore(), { timeout: 5000, retries: 0 }));
+  if (r.rc === 3) { sayK("dsStop"); return; }
+  if (r.rc) { sayK("dsFlash"); return; }
+  if (DS.list) DS.list.stored = true;
+  dsDirty(false);
+  sayK("dsSaved");
+}));
+$("dsplay").addEventListener("click", () => { if (DS.kit) op(() => dsPlay()); });
+$("dsuse").addEventListener("click", () => {
+  if (!dev || !hasTracks() || !DS.kit) return;
+  op(async () => {
+    const drum = dev.info.ntrk - 1;
+    if (dev.sel !== drum) { dev.sel = parse[CMD.TRACK](await rq(req.track(drum))).sel; await afterSoundChange(); }
+    const d = dev.pdesc[dev.info.pe0], i = d && d.names ? d.names.indexOf(dsKitName()) : -1;
+    if (i < 0) { sayK("kitNoKit"); return; }
+    userSet(0, dev.info.pe0, i + d.min, true);
+    sayK("kitUsing", dsKitName());
+  });
+});
+$("dssave").addEventListener("click", () => {
+  if (!DS.kit) return;
+  downloadBytes(`${fileSlug(DS.kit.name || dsKitName())}.sloopdrums.json`, new TextEncoder().encode(JSON.stringify(DSYN.toFile(DS.kit))));
+});
+$("dsopen").addEventListener("click", () => $("dsfile").click());
+$("dsfile").addEventListener("change", async (e) => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!f || !DS.kit) return;
+  let kit;
+  try { kit = DSYN.fromFile(JSON.parse(await f.text())); } catch (err) { sayK("dsFileBad"); return; }
+  if (!confirm(t("dsOpenAsk").replace("{x}", kit.name).replace("{k}", dsKitName()))) return;
+  op(async () => {
+    DS.kit.name = kit.name;
+    DS.kit.crush = kit.crush;
+    for (let l = 0; l < DSYN.LANES; l++) {
+      DS.kit.sounds[l] = kit.sounds[l];
+      const r = parse[CMD.DSYN_PUT](await rq(req.dsynSound(DS.k, l, kit.sounds[l])));
+      if (r.rc) { sayK("dsBad"); return; }
+    }
+    await dsHead();
+    renderDs();
+    dsDirty(true);
+    sayK("dsOpened", ` ${kit.name}`);
+  });
+});
+
+/* ---- SLOOP 2.5: the Song page: the order of the sections A..D (the device's SONG screen, from the browser) ---- */
+const SG = { rows: null, loop: false, bytes: null, err: "", dirty: false };
+async function readSong() {
+  if (!dev || !(dev.info.proto >= 6)) { Object.assign(SG, { rows: null, err: "songOld" }); renderSong(); return; }
+  const L = parse[CMD.BK_LIST](await rq(req.bkList(), { timeout: 5000, retries: 0 }));
+  const it = L.rc ? null : L.items.find((x) => x.id === 1);
+  if (!it) throw new Error("the settings are not readable (rc " + L.rc + ")");
+  const data = new Uint8Array(it.len);
+  for (let off = 0; off < it.len; off += 256) {
+    const n = Math.min(256, it.len - off);
+    const g = parse[CMD.BK_GET](await rq(req.bkGet(1, off, n), { timeout: 1500, retries: 2 }));
+    if (g.rc || g.data.length !== n) throw new Error(`settings: GET rc ${g.rc}`);
+    data.set(g.data, off);
+  }
+  if (!ARR.ok(data)) { Object.assign(SG, { rows: null, err: "songOld" }); renderSong(); return; }
+  const song = ARR.decode(data);
+  Object.assign(SG, { bytes: data, rows: ARR.group(song.entries), loop: song.loop, err: "", dirty: false });
+  renderSong();
+}
+async function sendSong() {
+  if (!dev || !SG.rows) return;
+  const song = { loop: SG.loop, entries: ARR.expand(SG.rows) };
+  if (!ARR.valid(song)) { sayK("songBad"); return; }
+  const d = ARR.encode(SG.bytes, song);
+  let r = parse[CMD.BK_PUT](await rq(req.bkBegin(1, d.length, crc32(d)), { timeout: 1500, retries: 1 }));
+  if (r.rc) throw new Error(`song: begin rc ${r.rc}`);
+  for (let off = 0; off < d.length; off += 256) {
+    r = parse[CMD.BK_PUT](await rq(req.bkData(1, off, d.subarray(off, off + 256)), { timeout: 1500, retries: 1 }));
+    if (r.rc) throw new Error(`song: data rc ${r.rc}`);
+  }
+  r = parse[CMD.BK_PUT](await rq(req.bkCommit(1), { timeout: 5000, retries: 0 }));
+  if (r.rc === 3) { sayK("songRefused"); return; }          /* (project.c settings_restore: the song is playing) */
+  if (r.rc) throw new Error(`song: commit rc ${r.rc}`);
+  await readSong();
+  sayK("songSent");
+}
+const songCount = () => (SG.rows || []).reduce((a, r) => a + Math.max(1, r.times | 0), 0);
+function songEdit(fn) { fn(); SG.dirty = true; renderSong(); }
+function renderSong() {
+  const box = $("songrows");
+  if (!dev || !dev.dump) return;
+  $("songerr").hidden = !SG.err;
+  if (SG.err) $("songerr").textContent = t(SG.err);
+  $("songbody").hidden = !SG.rows;
+  if (!SG.rows) return;
+  const LET = "ABCD", n = songCount(), bars = (SG.rows || []).reduce((a, r) => a + r.bars * Math.max(1, r.times | 0), 0);
+  box.replaceChildren(...SG.rows.map((r, k) => {
+    const sec = el("select", { onchange: (e) => songEdit(() => { r.scene = +e.target.value; }) },
+      ...[0, 1, 2, 3].map((s) => el("option", { value: s, text: LET[s] + (dev.slotUsed[s] === false ? ` (${t("empty")})` : "") })));
+    sec.value = String(r.scene);
+    const num = (v, max, set) => el("input", { type: "number", min: 1, max, value: String(v), onchange: (e) =>
+      songEdit(() => set(Math.max(1, Math.min(max, Math.round(+e.target.value) || 1)))) });
+    const empty = dev.slotUsed[r.scene] === false;
+    return el("tr", { class: empty ? "bad" : null },
+      el("td", { class: "i", text: String(k + 1) }), el("td", {}, sec),
+      el("td", {}, num(r.bars, ARR.MAX_BARS, (v) => { r.bars = v; })),
+      el("td", {}, num(r.times, ARR.STEPS, (v) => { r.times = v; })),
+      el("td", { class: "acts" },
+        el("button", { type: "button", title: t("songUp"), disabled: k === 0, onclick: () => songEdit(() => { SG.rows.splice(k - 1, 0, SG.rows.splice(k, 1)[0]); }) }, "▲"),
+        el("button", { type: "button", title: t("songDown"), disabled: k === SG.rows.length - 1, onclick: () => songEdit(() => { SG.rows.splice(k + 1, 0, SG.rows.splice(k, 1)[0]); }) }, "▼"),
+        el("button", { type: "button", title: t("songDel"), disabled: SG.rows.length < 2, onclick: () => songEdit(() => { SG.rows.splice(k, 1); }) }, "✕")));
+  }));
+  $("songsum").textContent = t("songSum").replace("{n}", n).replace("{max}", ARR.STEPS).replace("{bars}", bars);
+  $("songsum").classList.toggle("bad", n > ARR.STEPS);
+  $("songadd").disabled = n >= ARR.STEPS;
+  $("songsend").disabled = n > ARR.STEPS || !n;
+  $("songsend").classList.toggle("pri", SG.dirty);
+  for (const b of $("songloop").children) b.setAttribute("aria-pressed", (b.dataset.v === "1") === SG.loop ? "true" : "false");
+  $("songempty").hidden = !SG.rows.some((r) => dev.slotUsed[r.scene] === false);
+}
+$("songadd").addEventListener("click", () => songEdit(() => {
+  const last = SG.rows[SG.rows.length - 1];
+  SG.rows.push({ scene: last ? (last.scene + 1) % 4 : 0, bars: last ? last.bars : 4, times: 1 });
+}));
+$("songread").addEventListener("click", () => op(readSong));
+$("songsend").addEventListener("click", () => op(sendSong));
+for (const b of $("songloop").children) b.addEventListener("click", () => songEdit(() => { SG.loop = b.dataset.v === "1"; }));
+
 /* ---- v7 (SLOOP 2.4): the selected step's nudge and parameter locks (a grid cell or a drum column picks it) */
 let selStep = 0;
 const stepLocked = (i) => !!dev && !!dev.micro && (dev.micro[i] !== 0 || dev.locks.some((l) => l.step === i));
@@ -5820,12 +7167,84 @@ function renderFm6Ops() {
     el("td", { class: "dim", text: FM6.freqText(fm6v, n) })));
   $("fm6ops").replaceChildren(el("div", { class: "fm6ops" }, el("table", {}, head, ...rows)), el("p", { class: "dim", text: t("fm6Legend") }));
 }
+/* the imported voices: click one to edit it; tick the ones that go to the bank (2.5: Store cartridge, B1.. in order) */
+let fm6Tick = new Set(), fm6File = "", fm6Up = "none";   /* fm6Up: also as user presets? "none", "free" or a first slot */
 function renderFm6Imported() {
   const box = $("fm6imported");
   if (!fm6Imported.length) { box.replaceChildren(); return; }
-  box.replaceChildren(el("p", { class: "dim", text: t("fm6Pick") }),
-    el("p", { class: "bar" }, ...fm6Imported.map((x, k) => el("button", { text: `${k + 1} ${x.name}`,
-      onclick: () => { fm6v = Uint8Array.from(x.v); renderFm6(); sayK("fm6Picked", ` ${x.name}`); } }))));
+  const nb = dev && dev.fm6 ? dev.fm6.bank : FM6.BANK_N, order = [...fm6Tick].sort((a, b) => a - b), n = order.length;
+  const items = fm6Imported.map((x, k) => {
+    const at = order.indexOf(k);
+    const cb = el("input", { type: "checkbox", title: t("fm6CartTick"), onchange: (e) => {
+      if (e.target.checked && fm6Tick.size >= nb) { e.target.checked = false; sayK("fm6CartFull", ` ${nb}`); return; }
+      if (e.target.checked) fm6Tick.add(k); else fm6Tick.delete(k);
+      renderFm6Imported();
+    } });
+    cb.checked = fm6Tick.has(k);
+    return el("span", { class: "fm6v" + (at >= 0 ? " on" : "") }, cb,
+      el("button", { type: "button", text: `${k + 1} ${x.name}`, onclick: () => { fm6v = Uint8Array.from(x.v); renderFm6(); sayK("fm6Picked", ` ${x.name}`); } }),
+      el("span", { class: "dim", text: at >= 0 ? `B${at + 1}` : "" }));
+  });
+  const cart = el("button", { type: "button", class: "pri", disabled: !n || !fm6Ok(), onclick: fm6StoreCart },
+    t("fm6Cart").replace("{n}", n).replace("{b}", n ? `B1–B${n}` : "B1"));
+  box.replaceChildren(el("p", { class: "dim", text: t(fm6Imported.length > 1 ? "fm6PickMany" : "fm6Pick") }),
+    el("div", { class: "fm6list" }, ...items),
+    ...(fm6Imported.length > 1 || n ? [el("p", { class: "bar" }, el("label", { for: "fm6up", text: t("fm6UpWhere") + " " }), fm6UpSelect()),
+      el("p", { class: "bar" },
+      el("button", { type: "button", onclick: () => { fm6Tick = new Set(fm6Imported.slice(0, nb).map((_, k) => k)); renderFm6Imported(); } }, t("fm6CartFirst").replace("{n}", Math.min(nb, fm6Imported.length))),
+      el("button", { type: "button", onclick: () => { fm6Tick.clear(); renderFm6Imported(); } }, t("fm6CartNone")), cart)] : []));
+}
+/* 2.5: the choice before the store: the bank only (PTCH), or also user presets (PRESETS / SELECT on the FM-1) */
+function fm6UpSelect() {
+  const b = dev && dev.bank, free = b ? b.slots.filter((x) => !x.used).length : 0, total = b ? b.total : 32;
+  const s = el("select", { id: "fm6up", onchange: (e) => { fm6Up = e.target.value === "none" || e.target.value === "free" ? e.target.value : +e.target.value; } },
+    el("option", { value: "none", text: t("fm6UpNone") }),
+    el("option", { value: "free", text: t("fm6UpFree").replace("{k}", b ? free : "?") }),
+    ...Array.from({ length: total }, (_, i) => el("option", { value: String(i), text: t("fm6UpFrom").replace("{u}", slotName(i)) })));
+  s.value = String(fm6Up);
+  return s;
+}
+/* the ticked voices into B1..Bn in one write: the bank is read whole (backup object 8), those slots replaced, the rest
+   kept, and written back whole (BK_PUT: one flash write, stopped only, as a restore) */
+async function fm6StoreCart() {
+  if (!fm6Ok()) return;
+  const order = [...fm6Tick].sort((a, b) => a - b), n = order.length, nf = dev.fm6.factory;
+  if (!n) return;
+  const busyN = order.filter((_, i) => dev.fm6.slots[nf + i] && dev.fm6.slots[nf + i].used).length;
+  op(async () => {
+    let puts = [], upTxt = "";
+    if (fm6Up !== "none") {                       /* the user presets: read the slots now, then ask */
+      const list = await bank.list(rq);
+      const slots = fm6CartSlots(list, n, fm6Up);
+      if (!slots) {
+        sayK(fm6Up === "free" ? "fm6UpNoRoom" : "fm6UpPast", fm6Up === "free" ? ` ${list.slots.filter((x) => !x.used).length}` : ` ${slotName(fm6Up)} + ${n}`);
+        return;
+      }
+      const base = dev.pdesc.slice(0, dev.info.pcount).map((d) => (d ? d.def : 0));
+      puts = order.map((k, i) => ({ slot: slots[i], pt: fm6CartPreset(dev.info, base, nf, i, fm6Imported[k].name) }));
+      const over = slots.map((s) => list.slots[s]).filter((x) => x && x.used);
+      upTxt = "\n" + t("fm6UpAsk").replace("{n}", n).replace("{u}", fm6SlotsTxt(slots))
+        + (over.length ? "\n" + t("fm6UpOver").replace("{k}", over.length).replace("{names}", over.slice(0, 6).map((x) => `${slotName(x.slot)} ${x.name}`).join(", ") + (over.length > 6 ? "…" : "")) : "");
+    }
+    if (!confirm(t("fm6CartAsk").replace("{n}", n).replace("{b}", `B1–B${n}`).replace("{x}", fm6File || "SysEx")
+      + (busyN ? "\n" + t("fm6CartOver").replace("{k}", busyN) : "") + upTxt)) return;
+    const rc = await fm6CartWrite(rq, order.map((k) => FM6.pack(Uint8Array.from(fm6Imported[k].v))));
+    if (rc === "old") { sayK("fm6CartOld"); return; }
+    if (rc === 3) { sayK("fm6CartStop"); return; }
+    await fm6Refresh();
+    if (!puts.length) { sayK("fm6CartDone", ` ${n} → B1–B${n}`); return; }
+    const ru = await fm6CartPresets(rq, puts);
+    try { dev.bank = await bank.list(rq); renderBank(); } catch (e) { /* (the list comes back at the next connect) */ }
+    renderFm6Imported();
+    if (ru === 3) { sayK("fm6UpStop"); return; }
+    checkRc(ru);
+    sayK("fm6UpDone", ` ${n} → B1–B${n}, ${fm6SlotsTxt(puts.map((x) => x.slot))}`);
+  });
+}
+/* U04–U08 when they follow each other, else U04, U05, U07… */
+function fm6SlotsTxt(sl) {
+  if (sl.length > 1 && sl.every((x, i) => !i || x === sl[i - 1] + 1)) return `${slotName(sl[0])}–${slotName(sl[sl.length - 1])}`;
+  return sl.slice(0, 8).map(slotName).join(", ") + (sl.length > 8 ? "…" : "");
 }
 function renderFm6Slots() {
   if (!fm6Ok()) return;
@@ -5897,19 +7316,33 @@ $("fm6erase").addEventListener("click", () => {
 });
 $("fm6init").addEventListener("click", () => { fm6v = FM6.init(); renderFm6(); });
 $("fm6import").addEventListener("click", () => $("fm6file").click());
-$("fm6file").addEventListener("change", async (e) => {
-  const f = e.target.files[0];
-  e.target.value = "";
+async function fm6ImportFile(f) {
   if (!f) return;
   try {
     const r = FM6.parseSysex(new Uint8Array(await f.arrayBuffer()));
     if (!r.voices.length) { const [k, x] = fm6Why(r); sayK(k, `${x}: ${f.name}`); return; }
     fm6Imported = r.voices;
+    fm6File = f.name;
+    fm6Tick = new Set(r.voices.length > 1 ? r.voices.slice(0, dev && dev.fm6 ? dev.fm6.bank : FM6.BANK_N).map((_, k) => k) : []);
     if (r.voices.length === 1) fm6v = Uint8Array.from(r.voices[0].v);
     renderFm6();
     const notes = [r.badSum && t("fm6BadSum"), r.short && t("fm6Short"), r.skipped && t("fm6Skipped").replace("{x}", r.skipped)].filter(Boolean);
     sayK("imported", `${f.name}: ${r.voices.length}` + (notes.length ? ` (${notes.join(", ")})` : ""));
   } catch (err) { sayK("badfile", err.message); }
+}
+$("fm6file").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; fm6ImportFile(f); });
+/* 2.5: drop a .syx on the FM6 panel */
+$("fm6panel").addEventListener("dragover", (e) => {
+  if (![...(e.dataTransfer.types || [])].includes("Files")) return;
+  e.preventDefault();
+  $("fm6panel").classList.add("drop");
+});
+$("fm6panel").addEventListener("dragleave", (e) => { if (e.target === $("fm6panel")) $("fm6panel").classList.remove("drop"); });
+$("fm6panel").addEventListener("drop", (e) => {
+  e.preventDefault();
+  $("fm6panel").classList.remove("drop");
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) fm6ImportFile(f);
 });
 /* why a file had no 6-operator voice: [message key, what to add before the file name] (after Felucca 1.0.3) */
 function fm6Why(r) {

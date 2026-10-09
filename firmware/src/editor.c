@@ -7,7 +7,8 @@
  * DRUM_STEP (33) reads / writes the drum track's 16 lanes, TRACK ends with the solo mask;
  * v6 = SLOOP 2.3: backup / restore (34-36); v7 = SLOOP 2.4: the steps' nudges and parameter locks (37-40);
  * v8 = SLOOP 2.4: the steps' fill conditions (41-42); v9 = SLOOP 2.4: the FM6 engine's patches (68-71,
- * editor_fm6.c: Felucca 1.0's numbers) and the patch bank as backup object 8).
+ * editor_fm6.c: Felucca 1.0's numbers) and the patch bank as backup object 8); v10 = SLOOP 2.5: the SYN drum
+ * kits (72-76, editor_dsyn.c) and backup object 9.
  *   F0 7D 46 4C cmd args.. F7     (7D = non-commercial ID, "FL")
  * Values are 14 bit, two 7-bit bytes LSB first, offset by 8192 (so -8192..8191).
  * Every request gets a reply with the same cmd; 23/24/26 are also pushed
@@ -27,7 +28,8 @@ enum { ED_INFO = 1, ED_GET, ED_SET, ED_DUMP, ED_DESC, ED_STEP_GET, ED_STEP_SET, 
        ED_LOCK_GET, ED_LOCK_SET, ED_MICRO_GET, ED_MICRO_SET,                    /* v7: parameter locks, nudges */
        ED_FILL_GET, ED_FILL_SET,                                                /* v8: fill conditions */
        ED_FM6_GET = 68, ED_FM6_PUT, ED_FM6_LIST, ED_FM6_ERASE };                /* v9: FM6 patches (Felucca's numbers) */
-#define ED_PROTO 9u                                   /* the protocol version INFO ends with */
+/* v10 (SLOOP 2.5): DSYN_LIST .. DSYN_PLAY = 72..76, editor_dsyn.c; backup object 9 = the SYN kits */
+#define ED_PROTO 10u                                   /* the protocol version INFO ends with */
 
 static uint8_t ed_out[600];
 static uint32_t ed_n;
@@ -404,6 +406,10 @@ static uint32_t ed_bk_r32(const uint8_t *a)
     return (uint32_t)a[0] | (uint32_t)a[1] << 7 | (uint32_t)a[2] << 14 | (uint32_t)a[3] << 21 | (uint32_t)a[4] << 28;
 }
 
+/* the fork's DX7 banks as backup objects: ED_BK_DX.. (up to the fork on 2.4.1 they were 9..20, and 2.5 gave 9 to the SYN kits;
+ * the editor reads a backup file of either generation) */
+#define ED_BK_DX 100u
+static uint32_t ed_bk_isdx(uint32_t id) { return id >= ED_BK_DX && id < ED_BK_DX + DX_USER_BANKS; }
 static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such object; *len 0 = empty */
 {
     *len = 0;
@@ -430,10 +436,15 @@ static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such obj
             *len = sizeof(fm6_bank_t);
         return (const uint8_t *)fm6_bank_flash(fm6_bank_cur < 0 ? 0u : (uint32_t)fm6_bank_cur);
     }
-    if (id >= 9u && id < 9u + DX_USER_BANKS) {           /* a DX7 voice bank, in flash (XIP): 4096 bytes, 0 = empty */
-        if (dx_bank_used(id - 9u))
+    if (id == 9u) {                                       /* SLOOP 2.5: the SYN drum kits (drum_synth.c dsu) */
+        (void)dsu_kit(0);
+        *len = sizeof dsu;
+        return (const uint8_t *)&dsu;
+    }
+    if (ed_bk_isdx(id)) {                                 /* a DX7 voice bank, in flash (XIP): 4096 bytes, 0 = empty */
+        if (dx_bank_used(id - ED_BK_DX))
             *len = DX_BANK_N * DX_VOICE;
-        return dx_user_xip() + (id - 9u) * 0x1000u;
+        return dx_user_xip() + (id - ED_BK_DX) * 0x1000u;
     }
     if (id >= 32u && id < 32u + SMP_USER_SLOTS) {
         const smp_user_hdr_t *h = (const smp_user_hdr_t *)smp_user_xip(id - 32u);
@@ -444,7 +455,9 @@ static const uint8_t *ed_bk_obj(uint32_t id, uint32_t *len)   /* 0 = no such obj
     }
     return 0;
 }
-static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 32, 33, 34, 35};   /* 9..20: the DX7 banks (the fork); 35: USR4 (2.4) */
+static const uint8_t ED_BK_IDS[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35,       /* 35: USR4 (2.4), 9: SYN kits (2.5) */
+                                    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111};   /* the fork: the DX7 banks */
+_Static_assert(DX_USER_BANKS == 12u, "ED_BK_IDS lists one object per DX7 bank");
 static uint8_t ed_dx_stage[DX_BANK_N * DX_VOICE] __attribute__((aligned(4)));   /* a DX7 bank being restored */
 /* DX7 bank b <- 32 packed voices (data: the staging RAM, 4 KiB; 0 = erase the bank): 0 ok, 4 flash. A damaged
  * voice (an 8-bit byte, a bad name: a write cut by a power loss leaves one) is blanked, not refused, so a bank
@@ -467,7 +480,7 @@ static uint32_t dx_bank_write(uint32_t b, uint8_t *data)
     return data && memcmp(dx_user_xip() + b * 0x1000u, data, DX_BANK_N * DX_VOICE) ? 4u : 0u;
 }
 /* the staging RAM of object id: the project buffer, or the DX7 bank's own */
-static uint8_t *ed_bk_raw(uint32_t id) { return id >= 9u && id < 9u + DX_USER_BANKS ? ed_dx_stage : ED_BK_RAW; }
+static uint8_t *ed_bk_raw(uint32_t id) { return ed_bk_isdx(id) ? ed_dx_stage : ED_BK_RAW; }
 
 /* a flash erase silences the audio for ~50 ms and stalls USB: only while stopped (as the panel) */
 static uint32_t ed_flash_busy(void) { return song.playing || transport_req; }
@@ -478,14 +491,14 @@ static uint32_t ed_bk_commit(void)
     uint32_t id = ed_bk_id, n = ed_bk_len;
     if (ed_bk_pos != n || st_crc32(raw, n) != ed_bk_crc)
         return 2;
-    if (id >= 9u && id < 9u + DX_USER_BANKS) {            /* a DX7 bank (n 0: erase it) */
+    if (ed_bk_isdx(id)) {                                 /* a DX7 bank (n 0: erase it) */
         if (n && n != sizeof ed_dx_stage)
             return 2;
         if (ed_flash_busy())
             return 3;
         if (!flash_ok)
             return 4;
-        return dx_bank_write(id - 9u, n ? raw : 0);
+        return dx_bank_write(id - ED_BK_DX, n ? raw : 0);
     }
     if (id == 1u)
         return settings_restore(raw, n);
@@ -515,6 +528,22 @@ static uint32_t ed_bk_commit(void)
             return 4;
         fm6_bank_scan();
         fm6_bank_changed();
+        return 0;
+    }
+    if (id == 9u) {                                       /* SLOOP 2.5: the SYN drum kits, written with the settings */
+        persist_t p;
+        uint32_t k;
+        if (ed_flash_busy())
+            return 3;
+        if (n != sizeof(dsu_bank_t) || !dsu_valid((const dsu_bank_t *)raw))
+            return 2;
+        memcpy(&dsu, raw, sizeof dsu);
+        for (k = 0; k < DSU_N; k++)
+            dsu_fix_kit(&dsu.k[k]);
+        persist_fill(&p);
+        if (!flash_ok || settings_write(&p))
+            return 4;
+        persist_saved = p;
         return 0;
     }
     return 1;
@@ -562,10 +591,10 @@ static int ed_backup(uint32_t cmd, const uint8_t *a, uint32_t na)   /* 1: a back
         rc = 1;
         if (!flash_ok) {
             rc = 4;
-        } else if (op == 0u && na == 12u && (id < 9u + DX_USER_BANKS)) {  /* begin: id, length (5), CRC-32 (5) */
+        } else if (op == 0u && na == 12u && (id <= 9u || ed_bk_isdx(id))) {  /* begin: id, length (5), CRC-32 (5) */
             len = ed_bk_r32(a + 2);
             if (id >= 2u || len) {                        /* (the working project and the settings are never empty) */
-                if (len <= (id >= 9u ? sizeof ed_dx_stage : sizeof proj_tmp)) {
+                if (len <= (ed_bk_isdx(id) ? sizeof ed_dx_stage : sizeof proj_tmp)) {
                     ed_bk_put = 1;
                     ed_bk_valid = 0;                      /* (the staging RAM is the snapshot's) */
                     ed_bk_id = (uint8_t)id;
@@ -617,6 +646,7 @@ static int ed_backup(uint32_t cmd, const uint8_t *a, uint32_t na)   /* no flash:
 #endif
 
 #include "editor_fm6.c"                               /* v9: the FM6 patches (68..71) */
+#include "editor_dsyn.c"                              /* v10: the SYN drum kits (72..76) */
 
 static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0 and F7 */
 {
@@ -634,6 +664,10 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
         ed_send();
         return;
     }
+    if (ed_dsyn_handle(cmd, a, na)) {                      /* v10: the SYN drum kits */
+        ed_send();
+        return;
+    }
     switch (cmd) {
     case ED_INFO:
         ed_str("FELUCCA " FELUCCA_VERSION, 24);
@@ -645,9 +679,10 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
         for (i = 0; i < NENGINES; i++)
             ed_str(ENGINES[i]->name, 8);
         ed_b(NTRK);                                       /* v3 */
-        ed_b(ED_PROTO);                                   /* v5..: the protocol version (9: FM6 patches) */
-        ed_b(DX_USER_BANKS);                              /* the fork: the number of DX7 voice banks (1 meant four on the first builds; backup objects 9..,
-                                                           * PTCH D1..D128) and FX > FILTER KEEP; upstream ends after 9 */
+        ed_b(ED_PROTO);                                   /* v5..: the protocol version (9: FM6 patches, 10: SYN kits) */
+        ed_b(DX_USER_BANKS);                              /* the fork: the number of DX7 voice banks (1 meant four on the first builds;
+                                                           * backup objects 9.. up to protocol 9, ED_BK_DX.. from 10, where 9 is
+                                                           * upstream's SYN kits) and the KEEP page; upstream ends after ED_PROTO */
         break;
     case ED_GET:
     case ED_SET:
