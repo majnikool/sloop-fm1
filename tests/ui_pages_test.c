@@ -232,6 +232,8 @@ int main(int argc, char **argv)
                 check(TSEL->p[P_CHOR] == 45 && TSEL->p[P_DLY] == 25 && TSEL->p[P_REV] == 35, "FM6's own TINE EP keeps its effects");
                 preset_go(NBANK + 40u); fm6_poll();
                 TSEL->p[P_ED_FX] = 5; fm6_slot[0] = 0xFFu; fm6_track_loaded(TSEL);
+                check(TSEL->p[P_ED_FX] == 5, "loaded from a project (the audio ISR, for a song section): no level work there");
+                fm6_poll();
                 check(TSEL->p[P_ED_FX] == (int16_t)dx_trim_of(dx_host_store + 40u * 128u), "a project or user preset on it: the trim is the voice's again");
                 TSEL->p[P_E7] = 2; fm6_poll();
                 check(TSEL->p[P_ED_FX] == preset_trim(ENGI_FM6, TSEL->preset), "PTCH back to F3: the FM6 sound's own trim");

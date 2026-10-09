@@ -138,6 +138,7 @@ static const char *const DX_KIND[DX_USER_BANKS] = {"DX1", "DX2", "DX3", "DX4", "
 static uint8_t fm6_patch[NPART][FP_SIZE + 1u];  /* the parts' patches (main loop writes, then fm6_pgen) */
 static volatile uint8_t fm6_pgen[NPART];         /* +1 after each write of fm6_patch[t] */
 static uint8_t fm6_slot[NPART];                  /* the PTCH value last loaded (main loop); 0xFF = none */
+static volatile uint8_t fm6_trim_due;             /* the fork: bit tr: track tr loaded a voice, its level is due */
 static struct {                                  /* the patch through the macros: the audio ISR's copy */
     uint8_t p[FP_SIZE + 1u];
     uint8_t gen, alg, fb, ok;
@@ -349,11 +350,47 @@ static void fm6_load_slot(uint32_t tr, uint32_t s)
     fm6_slot_get(s, pk);
     fm6_unpack(pk, v);
     fm6_set_patch(tr, v);
-    if (s >= FM6_DX0 && s < FM6_NSLOT && dx_user_ok(s - FM6_DX0))
-        trk[tr].p[P_ED_FX] = (int16_t)dx_trim_of(pk);  /* the fork: the voice's own level (a pick, PTCH, a project) */
-    else if (fm6_slot[tr] != 0xFFu && fm6_slot[tr] >= FM6_DX0)
-        trk[tr].p[P_ED_FX] = preset_trim(ENGI_FM6, trk[tr].preset);   /* back from a DX7 voice: the sound's own */
     fm6_slot[tr] = (uint8_t)s;
+    fm6_trim_due |= (uint8_t)(1u << tr);             /* the fork: its level, set by fm6_poll (main loop): a song
+                                                      * section loads its tracks from the audio ISR (proj_apply), and an
+                                                      * estimate there would cost a block */
+}
+
+/* the fork: the level of each track whose voice was loaded (main loop): a DX7 voice its own (dx_trim_of, cached per
+ * slot), back from one the FM6 sound's own trim */
+static int8_t dx_tcache[DX_USER_SLOTS];
+static uint8_t dx_tvalid[DX_USER_SLOTS / 8u], fm6_trim_dx;   /* fm6_trim_dx bit tr: the track's trim is a DX7 voice's */
+static uint32_t dx_tgen = 0xFFFFFFFFu;
+static void fm6_trim_poll(void)
+{
+    uint32_t tr, due;
+    if (!fm6_trim_due)
+        return;
+    fm1_irq_off();                                    /* (the audio ISR sets bits: read and clear as one) */
+    due = fm6_trim_due;
+    fm6_trim_due = 0;
+    fm1_irq_on();
+    if (dx_tgen != dx_gen) {                          /* a bank was written: the voices may have changed */
+        memset(dx_tvalid, 0, sizeof dx_tvalid);
+        dx_tgen = dx_gen;
+    }
+    for (tr = 0; tr < NPART; tr++) {
+        uint32_t s = fm6_slot[tr], k;
+        if (!((due >> tr) & 1u) || trk[tr].eng_req != ENGI_FM6 || s == 0xFFu)
+            continue;
+        if (s >= FM6_DX0 && s < FM6_NSLOT && dx_user_ok(s - FM6_DX0)) {
+            k = s - FM6_DX0;
+            if (!((dx_tvalid[k >> 3] >> (k & 7u)) & 1u)) {
+                dx_tcache[k] = (int8_t)dx_trim_of(dx_user_slot(k));
+                dx_tvalid[k >> 3] |= (uint8_t)(1u << (k & 7u));
+            }
+            trk[tr].p[P_ED_FX] = dx_tcache[k];
+            fm6_trim_dx |= (uint8_t)(1u << tr);
+        } else if ((fm6_trim_dx >> tr) & 1u) {
+            trk[tr].p[P_ED_FX] = preset_trim(ENGI_FM6, trk[tr].preset);   /* back from a DX7 voice: the sound's own */
+            fm6_trim_dx &= (uint8_t)~(1u << tr);
+        }
+    }
 }
 
 /* a sound load put a PTCH value in (a preset, a user preset, a project, an engine change): its patch */
@@ -390,6 +427,7 @@ static void fm6_poll(void)
     for (tr = 0; tr < NPART; tr++)
         if (trk[tr].eng_req == ENGI_FM6 && trk[tr].p[P_E7] != fm6_slot[tr])
             fm6_load_slot(tr, (uint32_t)clamp(trk[tr].p[P_E7], 0, FM6_NSLOT - 1));
+    fm6_trim_poll();
 }
 
 /* -------------------------------------------------------------- macros --- */

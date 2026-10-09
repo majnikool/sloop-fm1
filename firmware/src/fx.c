@@ -475,7 +475,9 @@ static void djf_process(int32_t *l, int32_t *r, uint32_t n)
 
 #include "punch.c"            /* PUNCH-IN FX on the whole mix (FX held + a white key) */
 static int32_t master_cur = -1;                        /* the volume knob, ramped per sample (no zipper) */
-static void mix_block(int32_t *out, uint32_t n)
+/* (the fork: noinline, as upstream's build compiles it — the fork's additions tipped GCC into inlining it into the audio
+ * ISR, which tests/target_budget.py then counts as the ISR's own loops: the same work, a +19000 % line that hides real growth) */
+static __attribute__((noinline)) void mix_block(int32_t *out, uint32_t n)
 {
     uint32_t i;
     int32_t m0, m1;
